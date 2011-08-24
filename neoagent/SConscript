@@ -1,0 +1,18 @@
+# -*- coding: utf-8 -*-
+
+import util.build_util as build_util
+import util.build_config as build_config
+
+env = Environment(
+    CFLAGS=build_config.cflags,
+    CPPPATH=build_config.includes,
+)
+
+prog = env.Program(
+    'neoagent',
+    [ Glob('*.c'), Glob('ext/*.c') ],
+    LIBS=build_config.libs,
+)
+
+if 'install' in COMMAND_LINE_TARGETS:
+    build_util.install(env, prog, ARGUMENTS.get('prefix', '/usr/local/'), '../doc/')
