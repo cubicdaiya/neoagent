@@ -1,0 +1,15 @@
+*~
+GTAGS
+GRTAGS
+GPATH
+GSYMS
+*.o
+*.pyc
+.sconf_temp/
+.sconsign.dblite
+config.log
+neoagent
+debian/neoagent
+neoagent_*.deb
+doc/build/doctrees
+doc/build/html

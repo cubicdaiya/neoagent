@@ -1,0 +1,12 @@
+# -*- coding: utf-8 -*-
+
+import os
+
+targets = [
+    'man',
+    'html',
+]
+
+for target in targets:
+    Alias(target, None)
+    os.system('make ' + target)

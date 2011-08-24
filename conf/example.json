@@ -1,0 +1,15 @@
+{
+    "environments" :
+    [
+        {
+            "name"            : "test1",
+            "port"            : 30001,
+            "sockpath"        : "/tmp/neoagent.sock",
+            "access_mask"     : "0666",
+            "target_server"   : "127.0.0.1:11211",
+            "backup_server"   : "127.0.0.1:11212",
+            "connpool_max"    : 30,
+            "error_count_max" : 1000,
+        },
+    ],
+}

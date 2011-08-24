@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+
+import os
+import shutil
+import sys
+import util.dpkg_util as dpkg_util
+
+arch = ARGUMENTS.get('arch', 'amd64')
+
+DEBNAME          = "neoagent"
+DEBVERSION       = "0.1.0"
+SUBVERSION       = "1"
+DEBMAINT         = "Tatsuhiko Kubo [cubicdaiya@gmail.com]"
+DEBARCH          = arch
+DEBDEPENDS       = "libev-dev, libjson0-dev"
+DEBDESC          = "A Yet Another Memcached Proxy Server"
+DEBCONTROLFILE   = os.path.join(DEBNAME, "DEBIAN/control")
+DEBCOPYRIGHTFILE = os.path.join(DEBNAME, "DEBIAN/copyright")
+DEBCHANGELOGFILE = os.path.join(DEBNAME, "DEBIAN/changelog")
+
+DEBFILES = [
+    # TODO: generate following tupples
+    ("usr/bin/neoagent", "neoagent"),
+    ("usr/share/doc/neoagent/copyright", "debian/copyright"),
+    ("usr/share/doc/neoagent/changelog", "debian/changelog"),
+    ("usr/share/man/man1/neoagent.1",    "doc/build/man/neoagent.1"),
+]
+
+dpkg_util.dpkg_scons(Environment(),
+                     DEBNAME,
+                     DEBVERSION,
+                     SUBVERSION,
+                     DEBMAINT,
+                     DEBARCH,
+                     DEBDEPENDS,
+                     DEBDESC,
+                     DEBCONTROLFILE,
+                     DEBCOPYRIGHTFILE,
+                     DEBCHANGELOGFILE,
+                     DEBFILES)
