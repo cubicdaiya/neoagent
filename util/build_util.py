@@ -19,11 +19,14 @@ def configure(conf, libs):
     conf.Finish()
     return True
 
-def install(env, prog, prefix):
+def install(env, prog, prefix, doc_dir):
+    if not prefix[-1] == '/':
+        prefix += '/'
+    if not doc_dir[-1] == '/':
+        doc_dir += '/'
     bin_dir = prefix + 'bin/'
     man_dir = prefix + 'share/man/man1/'
     env.Alias(target="install", source=env.Install(bin_dir, prog))
     env.Install(bin_dir, prog)
-    env.Alias(target="install", source=env.Install(man_dir, 'doc/build/man/neoagent.1'))
-    env.Install(man_dir, 'doc/build/man/neoagent.1')
-
+    env.Alias(target="install", source=env.Install(man_dir, doc_dir + 'build/man/neoagent.1'))
+    env.Install(man_dir, doc_dir + 'build/man/neoagent.1')
