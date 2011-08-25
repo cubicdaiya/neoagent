@@ -30,7 +30,9 @@ A Yet Another Memcached Proxy Server written by C99.
 
     scons doc
 
-## TODO
+The documents of neoagent are generated with [Sphinx](http://sphinx.pocoo.org/).
+
+## Todo
 
   - send update command to backup server
   - make each environment a process (currently each environment is a thread)
