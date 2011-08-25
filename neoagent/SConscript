@@ -20,4 +20,6 @@ if 'configure' in COMMAND_LINE_TARGETS:
     else:
         Exit(0)
 elif 'install' in COMMAND_LINE_TARGETS:
-    build_util.install(env, prog, ARGUMENTS.get('prefix', '/usr/local/'), '../doc/')
+    prefix  = ARGUMENTS.get('prefix', '/usr/local/')
+    doc_dir = '../doc'
+    build_util.install(env, prog, prefix, doc_dir)
