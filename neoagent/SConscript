@@ -14,5 +14,10 @@ prog = env.Program(
     LIBS=build_config.libs,
 )
 
-if 'install' in COMMAND_LINE_TARGETS:
+if 'configure' in COMMAND_LINE_TARGETS:
+    if build_util.configure(Configure(env), build_config.libs) is False:
+        Exit(1)
+    else:
+        Exit(0)
+elif 'install' in COMMAND_LINE_TARGETS:
     build_util.install(env, prog, ARGUMENTS.get('prefix', '/usr/local/'), '../doc/')
