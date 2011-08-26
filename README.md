@@ -2,7 +2,7 @@ neoagent
 ===========
 A Yet Another Memcached Proxy Server written by C99.
 
-## Functions
+## Features
 
   - connection pooling
   - configuration with JSON
@@ -30,7 +30,9 @@ A Yet Another Memcached Proxy Server written by C99.
 
     scons doc
 
-The documents of neoagent are generated with [Sphinx](http://sphinx.pocoo.org/).
+The documents of neoagent are generated with [Sphinx](http://sphinx.pocoo.org/), and requires following extension.
+
+  -  [sphinxtogithub](https://github.com/michaeljones/sphinx-to-github)
 
 ## Todo
 
