@@ -8,8 +8,8 @@ def info_print():
     print "SCons  " + SCons.__version__
 
 def configure(conf, libs):
-    if not conf.CheckCXX():
-        print "c++ compiler is not installed!"
+    if not conf.CheckCC():
+        print "c compiler is not installed!"
         return False
 
     for lib in libs:
