@@ -30,7 +30,7 @@ A Yet Another Memcached Proxy Server written by C99.
 
     scons doc
 
-The documents of neoagent are generated with [Sphinx](http://sphinx.pocoo.org/), and requires following extension.
+The documents of neoagent are generated with [Sphinx](http://sphinx.pocoo.org/), and requires following extension for generating html documents.
 
   -  [sphinxtogithub](https://github.com/michaeljones/sphinx-to-github)
 
