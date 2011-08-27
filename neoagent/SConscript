@@ -15,7 +15,10 @@ prog = env.Program(
 )
 
 if 'configure' in COMMAND_LINE_TARGETS:
-    if build_util.configure(Configure(env), build_config.libs) is False:
+    if build_util.configure(Configure(env),
+                            build_config.libs,
+                            build_config.headers,
+                            build_config.funcs) is False:
         Exit(1)
     else:
         Exit(0)

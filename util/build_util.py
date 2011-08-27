@@ -7,7 +7,7 @@ def info_print():
     print "Python " + ".".join([ str(i) for i in sys.version_info ])
     print "SCons  " + SCons.__version__
 
-def configure(conf, libs):
+def configure(conf, libs, headers, funcs):
     if not conf.CheckCC():
         print "c compiler is not installed!"
         return False
@@ -16,6 +16,17 @@ def configure(conf, libs):
         if not conf.CheckLib(lib):
             print "library " + lib + " not installed!"
             return False
+
+    for header in headers:
+        if not conf.CheckHeader(header):
+            print header + " does not exist!"
+            return False
+
+    for func in funcs:
+        if not conf.CheckFunc(func):
+            print func + " does not exist!"
+            return False
+    
     conf.Finish()
     return True
 
