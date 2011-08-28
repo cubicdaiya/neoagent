@@ -145,31 +145,37 @@ void neoagent_conf_env_init(struct json_object *environments_obj, neoagent_env_t
             if (!json_object_is_type(param_obj, json_type_int)) {
                 neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->fsport          = json_object_get_int(param_obj);
+            neoagent_env->fsport = json_object_get_int(param_obj);
             break;
         case NEOAGENT_PARAM_STPORT:
             if (!json_object_is_type(param_obj, json_type_int)) {
                 neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->stport          = json_object_get_int(param_obj);
+            neoagent_env->stport = json_object_get_int(param_obj);
             break;
         case NEOAGENT_PARAM_ACCESS_MASK:
             if (!json_object_is_type(param_obj, json_type_string)) {
                 neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->access_mask     = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
+            neoagent_env->access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
+            break;
+        case NEOAGENT_PARAM_IS_CONNPOOL_ONLY:
+            if (!json_object_is_type(param_obj, json_type_boolean)) {
+                neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+            }
+            neoagent_env->is_connpool_only = json_object_get_boolean(param_obj) == 1 ? true : false;
             break;
         case NEOAGENT_PARAM_CONN_MAX:
             if (!json_object_is_type(param_obj, json_type_int)) {
                 neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->conn_max        = json_object_get_int(param_obj);
+            neoagent_env->conn_max = json_object_get_int(param_obj);
             break;
         case NEOAGENT_PARAM_CONNPOOL_MAX:
             if (!json_object_is_type(param_obj, json_type_int)) {
                 neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->connpool_max    = json_object_get_int(param_obj);
+            neoagent_env->connpool_max = json_object_get_int(param_obj);
             break;
         case NEOAGENT_PARAM_ERROR_COUNT_MAX:
             if (!json_object_is_type(param_obj, json_type_int)) {

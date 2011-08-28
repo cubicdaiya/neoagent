@@ -37,12 +37,13 @@
 #include "env.h"
 #include "mpool.h"
 
-static const int NEOAGENT_PORT_DEFAULT            = 30001;
-static const int NEOAGENT_STPORT_DEFAULT          = 30011;
-static const int NEOAGENT_CONN_MAX_DEFAULT        = 1000;
-static const int NEOAGENT_CONNPOOL_MAX_DEFAULT    = 20;
-static const int NEOAGENT_ERROR_COUNT_MAX_DEFAULT = 1000;
-static const int NEOAGENT_ACCESS_MASK_DEFAULT     = 0664;
+static const int  NEOAGENT_PORT_DEFAULT             = 30001;
+static const int  NEOAGENT_STPORT_DEFAULT           = 30011;
+static const int  NEOAGENT_CONN_MAX_DEFAULT         = 1000;
+static const int  NEOAGENT_CONNPOOL_MAX_DEFAULT     = 20;
+static const int  NEOAGENT_ERROR_COUNT_MAX_DEFAULT  = 1000;
+static const int  NEOAGENT_ACCESS_MASK_DEFAULT      = 0664;
+static const bool NEOAGENT_IS_CONNPOOL_ONLY_DEFAULT = false;
 
 // private functions
 static void neoagent_connpool_destory (neoagent_connpool_t *connpool);
@@ -101,6 +102,7 @@ void neoagent_env_setup_default(neoagent_env_t *env, int idx)
     env->conn_max        = NEOAGENT_CONN_MAX_DEFAULT;
     env->connpool_max    = NEOAGENT_CONNPOOL_MAX_DEFAULT;
     env->error_count_max = NEOAGENT_ERROR_COUNT_MAX_DEFAULT;
+    env->is_connpool_only = NEOAGENT_IS_CONNPOOL_ONLY_DEFAULT;
 }
 
 void neoagent_connpool_create (neoagent_connpool_t *connpool, int c)
