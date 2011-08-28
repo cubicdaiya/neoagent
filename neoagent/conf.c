@@ -54,6 +54,7 @@ const char *neoagent_params[NEOAGENT_PARAM_MAX] = {
     [NEOAGENT_PARAM_ACCESS_MASK]       = "access_mask",
     [NEOAGENT_PARAM_TARGET_SERVER]     = "target_server",
     [NEOAGENT_PARAM_BACKUP_SERVER]     = "backup_server",
+    [NEOAGENT_PARAM_STPORT]            = "stport",
     [NEOAGENT_PARAM_CONN_MAX]          = "conn_max",
     [NEOAGENT_PARAM_CONNPOOL_MAX]      = "connpool_max",
     [NEOAGENT_PARAM_IS_CONNPOOL_ONLY]  = "is_connpool_only",
@@ -145,6 +146,12 @@ void neoagent_conf_env_init(struct json_object *environments_obj, neoagent_env_t
                 neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
             }
             neoagent_env->fsport          = json_object_get_int(param_obj);
+            break;
+        case NEOAGENT_PARAM_STPORT:
+            if (!json_object_is_type(param_obj, json_type_int)) {
+                neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+            }
+            neoagent_env->stport          = json_object_get_int(param_obj);
             break;
         case NEOAGENT_PARAM_ACCESS_MASK:
             if (!json_object_is_type(param_obj, json_type_string)) {

@@ -324,3 +324,43 @@ int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask)
 
     return fsfd;
 }
+
+int neoagent_stat_server_tcpsock_init (uint16_t port)
+{
+    int stfd;
+    struct sockaddr_in iaddr;
+    
+    if ((stfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        NEOAGENT_STDERR("socket()");
+        return -1;
+    }
+
+    neoagent_set_sockopt(stfd, SO_REUSEADDR);
+    neoagent_set_sockopt(stfd, SO_LINGER);
+
+    if (port > 0) {
+        memset(&iaddr, 0, sizeof(iaddr));
+        iaddr.sin_family      = AF_INET;
+        iaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        iaddr.sin_port        = htons(port);
+    } else {
+        close(stfd);
+        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_PORT);
+    }
+
+    if (bind(stfd, (struct sockaddr *)&iaddr, sizeof(iaddr)) < 0) {
+        close(stfd);
+        NEOAGENT_STDERR("bind()");
+        return -1;
+    }
+
+    if (listen(stfd, NEOAGENT_BACKLOG_MAX) == -1) {
+        close(stfd);
+        NEOAGENT_STDERR("listen()");
+        return -1;
+    }
+
+    return stfd;
+}
+
+

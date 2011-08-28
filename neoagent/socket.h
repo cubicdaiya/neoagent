@@ -51,6 +51,7 @@ void neoagent_set_sockaddr (neoagent_host_t *host, struct sockaddr_in *addr);
 neoagent_host_t neoagent_create_host(char *host);
 int neoagent_front_server_tcpsock_init (uint16_t port);
 int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask);
+int neoagent_stat_server_tcpsock_init (uint16_t port);
 bool neoagent_server_connect (int tsfd, struct sockaddr_in *tsaddr);
 int neoagent_server_accept (int sfd);
 

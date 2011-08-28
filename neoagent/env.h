@@ -66,6 +66,8 @@ typedef struct neoagent_env_t {
     char name[NEOAGENT_NAME_MAX + 1];
     int fsfd;
     uint16_t fsport;
+    int stfd;
+    uint16_t stport;
     char fssockpath[NEOAGENT_SOCKPATH_MAX + 1];
     mode_t access_mask;
     neoagent_server_t target_server;

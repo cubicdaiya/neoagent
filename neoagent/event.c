@@ -63,6 +63,7 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
 static int  neoagent_remaining_size (int fd);
 static void neoagent_make_spare(neoagent_client_t *client);
 static void neoagent_health_check_callback (EV_P_ ev_timer *w, int revents);
+static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents);
 
 inline static void neoagent_spare_free (neoagent_client_t *client)
 {
@@ -201,6 +202,57 @@ static void neoagent_health_check_callback (EV_P_ ev_timer *w, int revents)
     ev_timer_stop (loop, w);
     ev_timer_set (w, 5., 0.);
     ev_timer_start (loop, w);
+}
+
+static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents)
+{
+    int cfd, stfd;
+    int size;
+    neoagent_env_t *env;
+    char buf[BUFSIZ + 1];
+
+    stfd = w->fd;
+    env    = (neoagent_env_t *)w->data;
+
+    if ((cfd = neoagent_server_accept(stfd)) < 0) {
+        NEOAGENT_STDERR("accept()");
+        return;
+    }
+
+    snprintf(buf, 
+             BUFSIZ, 
+             "environment stats\n\n"
+             "name               :%s\n"
+             "fsfd               :%d\n"
+             "fsport             :%d\n"
+             "fssockpath         :%s\n"
+             "target host        :%s\n"
+             "target port        :%d\n"
+             "backup host        :%s\n"
+             "backup port        :%d\n"
+             "current target host:%s\n"
+             "current target port:%d\n"
+             "error count max    :%d\n"
+             "conn max           :%d\n"
+             "connpool max       :%d\n"
+             "is_connpool_only   :%s\n"
+             "current conn       :%d\n",
+             env->name, env->fsfd, env->fsport, env->fssockpath, 
+             env->target_server.host.ipaddr, env->target_server.host.port,
+             env->backup_server.host.ipaddr, env->backup_server.host.port,
+             env->is_refused_active ? env->backup_server.host.ipaddr : env->target_server.host.ipaddr,
+             env->is_refused_active ? env->backup_server.host.port   : env->target_server.host.port,
+             env->error_count_max, env->conn_max, env->connpool_max, 
+             env->is_connpool_only ? "true" : "false",
+             env->current_conn
+             );
+
+    if ((size = write(cfd, buf, strlen(buf))) < 0) {
+        close(cfd);
+        return;
+    }
+
+    close(cfd);
 }
 
 void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
@@ -586,6 +638,7 @@ void *neoagent_event_loop (void *args)
 {
     struct ev_loop *loop;
     ev_timer hc_watcher;
+    ev_io    st_watcher;
     neoagent_env_t *env;
 
     env = (neoagent_env_t *)args;
@@ -595,6 +648,9 @@ void *neoagent_event_loop (void *args)
     } else {
         env->fsfd = neoagent_front_server_tcpsock_init(env->fsport);
     }
+
+    env->stfd = neoagent_stat_server_tcpsock_init(env->stport);
+ 
 
     loop = ev_loop_new(0);
     env->fs_watcher.data = loop;
@@ -606,6 +662,10 @@ void *neoagent_event_loop (void *args)
     hc_watcher.data = env;
     ev_timer_init (&hc_watcher, neoagent_health_check_callback, 5., 0.);
     ev_timer_start (loop, &hc_watcher);
+
+    st_watcher.data = env;
+    ev_io_init(&st_watcher, neoagent_stat_callback, env->stfd, EV_READ);
+    ev_io_start(loop, &st_watcher);
  
     env->fs_watcher.data = env;
     ev_io_init(&env->fs_watcher, neoagent_front_server_callback, env->fsfd, EV_READ);
