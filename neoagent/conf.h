@@ -46,8 +46,9 @@ typedef enum neoagent_param_t {
     NEOAGENT_PARAM_STPORT,
     NEOAGENT_PARAM_CONN_MAX,
     NEOAGENT_PARAM_CONNPOOL_MAX,
-    NEOAGENT_PARAM_IS_CONNPOOL_ONLY,
     NEOAGENT_PARAM_ERROR_COUNT_MAX,
+    NEOAGENT_PARAM_IS_CONNPOOL_ONLY,
+    NEOAGENT_PARAM_BUFSIZE,
     NEOAGENT_PARAM_MAX // Always add new codes to the end before this one
 } neoagent_param_t;
 

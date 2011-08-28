@@ -57,8 +57,9 @@ const char *neoagent_params[NEOAGENT_PARAM_MAX] = {
     [NEOAGENT_PARAM_STPORT]            = "stport",
     [NEOAGENT_PARAM_CONN_MAX]          = "conn_max",
     [NEOAGENT_PARAM_CONNPOOL_MAX]      = "connpool_max",
-    [NEOAGENT_PARAM_IS_CONNPOOL_ONLY]  = "is_connpool_only",
     [NEOAGENT_PARAM_ERROR_COUNT_MAX]   = "error_count_max",
+    [NEOAGENT_PARAM_IS_CONNPOOL_ONLY]  = "is_connpool_only",
+    [NEOAGENT_PARAM_BUFSIZE]           = "bufsize",
 };
 
 static const char *neoagent_param_name (neoagent_param_t param);
@@ -164,6 +165,12 @@ void neoagent_conf_env_init(struct json_object *environments_obj, neoagent_env_t
                 neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
             }
             neoagent_env->is_connpool_only = json_object_get_boolean(param_obj) == 1 ? true : false;
+            break;
+        case NEOAGENT_PARAM_BUFSIZE:
+            if (!json_object_is_type(param_obj, json_type_int)) {
+                neoagent_die_with_error(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+            }
+            neoagent_env->bufsize = json_object_get_int(param_obj);
             break;
         case NEOAGENT_PARAM_CONN_MAX:
             if (!json_object_is_type(param_obj, json_type_int)) {

@@ -43,6 +43,7 @@ static const int  NEOAGENT_CONN_MAX_DEFAULT         = 1000;
 static const int  NEOAGENT_CONNPOOL_MAX_DEFAULT     = 20;
 static const int  NEOAGENT_ERROR_COUNT_MAX_DEFAULT  = 1000;
 static const int  NEOAGENT_ACCESS_MASK_DEFAULT      = 0664;
+static const int  NEOAGENT_BUFSIZE_DEFAULT          = 65536;
 static const bool NEOAGENT_IS_CONNPOOL_ONLY_DEFAULT = false;
 
 // private functions
@@ -90,19 +91,20 @@ void neoagent_env_setup_default(neoagent_env_t *env, int idx)
     char *backup_server_s = "127.0.0.1:11212";
     neoagent_host_t host;
     sprintf(env->name, "env%d", idx);
-    env->fsport          = NEOAGENT_PORT_DEFAULT + idx;
-    env->access_mask     = NEOAGENT_ACCESS_MASK_DEFAULT;
-    host                 = neoagent_create_host(target_server_s);
+    env->fsport           = NEOAGENT_PORT_DEFAULT + idx;
+    env->access_mask      = NEOAGENT_ACCESS_MASK_DEFAULT;
+    host                  = neoagent_create_host(target_server_s);
     memcpy(&env->target_server.host, &host, sizeof(host));
     neoagent_set_sockaddr(&host, &env->target_server.addr);
-    host                 = neoagent_create_host(backup_server_s);
+    host                  = neoagent_create_host(backup_server_s);
     memcpy(&env->backup_server.host, &host, sizeof(host));
     neoagent_set_sockaddr(&host, &env->backup_server.addr);
-    env->stport          = NEOAGENT_STPORT_DEFAULT + idx;
-    env->conn_max        = NEOAGENT_CONN_MAX_DEFAULT;
-    env->connpool_max    = NEOAGENT_CONNPOOL_MAX_DEFAULT;
-    env->error_count_max = NEOAGENT_ERROR_COUNT_MAX_DEFAULT;
+    env->stport           = NEOAGENT_STPORT_DEFAULT + idx;
+    env->conn_max         = NEOAGENT_CONN_MAX_DEFAULT;
+    env->connpool_max     = NEOAGENT_CONNPOOL_MAX_DEFAULT;
+    env->error_count_max  = NEOAGENT_ERROR_COUNT_MAX_DEFAULT;
     env->is_connpool_only = NEOAGENT_IS_CONNPOOL_ONLY_DEFAULT;
+    env->bufsize          = NEOAGENT_BUFSIZE_DEFAULT;
 }
 
 void neoagent_connpool_create (neoagent_connpool_t *connpool, int c)

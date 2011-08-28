@@ -61,7 +61,7 @@ inline static void neoagent_event_switch (EV_P_ struct ev_io *old, ev_io *new, i
 
 static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *env);
 static int  neoagent_remaining_size (int fd);
-static void neoagent_make_spare(neoagent_client_t *client);
+static void neoagent_make_spare(neoagent_client_t *client, neoagent_env_t *env);
 static void neoagent_health_check_callback (EV_P_ ev_timer *w, int revents);
 static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents);
 
@@ -71,6 +71,7 @@ inline static void neoagent_spare_free (neoagent_client_t *client)
     p = client->head_spare;
     while (p != NULL) {
         pp = p->next;
+        free(p->buf);
         free(p);
         p = NULL;
         p = pp;
@@ -100,6 +101,8 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
     close(client->cfd);
     client->cfd = -1;
     neoagent_spare_free(client);
+    free(client->buf);
+    client->buf = NULL;
     free(client);
     client = NULL;
 
@@ -143,7 +146,7 @@ static int neoagent_remaining_size (int fd)
     return size;
 }
 
-static void neoagent_make_spare(neoagent_client_t *client)
+static void neoagent_make_spare(neoagent_client_t *client, neoagent_env_t *env)
 {
     int c = client->req_cnt - 1;
     neoagent_spare_buf_t *p = NULL;
@@ -151,11 +154,13 @@ static void neoagent_make_spare(neoagent_client_t *client)
         if (i == 0) {
             client->current_spare = (neoagent_spare_buf_t *)malloc(sizeof(neoagent_spare_buf_t));
             memset(client->current_spare, 0, sizeof(neoagent_spare_buf_t));
+            client->current_spare->buf = (char *)malloc(env->bufsize + 1);
             client->head_spare = client->current_spare;
             p                  = client->current_spare;
         } else {
             p->next = (neoagent_spare_buf_t *)malloc(sizeof(neoagent_spare_buf_t));
             memset(p->next, 0, sizeof(neoagent_spare_buf_t));
+            p->next->buf = (char *)malloc(env->bufsize + 1);
             p = p->next;
         }
     }
@@ -236,7 +241,9 @@ static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents)
              "conn max           :%d\n"
              "connpool max       :%d\n"
              "is_connpool_only   :%s\n"
-             "current conn       :%d\n",
+             "current conn       :%d\n"
+             "bufsize            :%d\n"
+             ,
              env->name, env->fsfd, env->fsport, env->fssockpath, 
              env->target_server.host.ipaddr, env->target_server.host.port,
              env->backup_server.host.ipaddr, env->backup_server.host.port,
@@ -244,7 +251,7 @@ static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents)
              env->is_refused_active ? env->backup_server.host.port   : env->target_server.host.port,
              env->error_count_max, env->conn_max, env->connpool_max, 
              env->is_connpool_only ? "true" : "false",
-             env->current_conn
+             env->current_conn, env->bufsize
              );
 
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
@@ -412,7 +419,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
         if (client->cmd == NEOAGENT_MEMPROTO_CMD_GET) {
             client->req_cnt = neoagent_memproto_count_request(client->buf, client->bufsize);
             if (neoagent_memproto_is_request_divided(client->req_cnt)) {
-                neoagent_make_spare(client);
+                neoagent_make_spare(client, env);
             }
         } else if (client->cmd == NEOAGENT_MEMPROTO_CMD_SET) {
             client->req_cnt++;
@@ -618,6 +625,7 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
     client                    = (neoagent_client_t *)malloc(sizeof(neoagent_client_t));
     memset(client, 0, sizeof(*client));
+    client->buf               = (char *)malloc(env->bufsize + 1);
     client->cfd               = cfd;
     client->req_cnt           = 0;
     client->ts_pos            = 0;

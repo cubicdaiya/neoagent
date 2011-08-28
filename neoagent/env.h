@@ -45,7 +45,6 @@
 #include "socket.h"
 #include "memproto.h"
 
-#define NEOAGENT_BUF_MAX      (512 * 1024)
 #define NEOAGENT_NAME_MAX     64
 #define NEOAGENT_SOCKPATH_MAX 256
 
@@ -73,6 +72,7 @@ typedef struct neoagent_env_t {
     neoagent_server_t target_server;
     neoagent_server_t backup_server;
     int current_conn;
+    int bufsize;
     ev_io fs_watcher;
     bool is_refused_active;
     bool is_connpool_only;
@@ -84,7 +84,7 @@ typedef struct neoagent_env_t {
 } neoagent_env_t;
 
 typedef struct neoagent_spare_buf_t {
-    char buf[NEOAGENT_BUF_MAX + 1];
+    char *buf;
     int bufsize;
     int ts_pos;
     struct neoagent_spare_buf_t *next;
@@ -93,7 +93,7 @@ typedef struct neoagent_spare_buf_t {
 typedef struct neoagent_client_t {
     int cfd;
     int tsfd;
-    char buf[NEOAGENT_BUF_MAX + 1];
+    char *buf;
     int bufsize;
     int ts_pos;
     int req_cnt;

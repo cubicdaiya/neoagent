@@ -13,6 +13,7 @@
             "connpool_max"    : 20,
             "error_count_max" : 1000,
             "is_connpool_only": false,
+            "bufsize"         : 65536,
         },
     ],
 }
