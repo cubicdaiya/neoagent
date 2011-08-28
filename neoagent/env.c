@@ -37,7 +37,8 @@
 #include "env.h"
 #include "mpool.h"
 
-static const int NEOAGENT_PORT_DEFAULT            = 20000;
+static const int NEOAGENT_PORT_DEFAULT            = 30001;
+static const int NEOAGENT_STPORT_DEFAULT          = 30011;
 static const int NEOAGENT_CONN_MAX_DEFAULT        = 1000;
 static const int NEOAGENT_CONNPOOL_MAX_DEFAULT    = 20;
 static const int NEOAGENT_ERROR_COUNT_MAX_DEFAULT = 1000;
