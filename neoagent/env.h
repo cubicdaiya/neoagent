@@ -73,8 +73,10 @@ typedef struct neoagent_env_t {
     int current_conn;
     ev_io fs_watcher;
     bool is_refused_active;
+    bool is_connpool_only;
     neoagent_connpool_t connpool_active;
     int error_count;
+    int conn_max;
     int connpool_max;
     int error_count_max;
 } neoagent_env_t;
@@ -97,6 +99,7 @@ typedef struct neoagent_client_t {
     int current_req_cnt;
     int cur_pool;
     bool is_refused_active;
+    bool is_use_connpool;
     neoagent_spare_buf_t *head_spare;
     neoagent_spare_buf_t *current_spare;
     neoagent_env_t *env;

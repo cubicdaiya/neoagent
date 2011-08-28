@@ -38,7 +38,6 @@
 #include <stdlib.h>
 
 typedef enum neoagent_error_t {
-    NEOAGENT_ERROR_OVER_CONN,
     NEOAGENT_ERROR_INVALID_ENV,
     NEOAGENT_ERROR_INVALID_FD,
     NEOAGENT_ERROR_INVALID_HOSTNAME,
@@ -61,7 +60,6 @@ typedef enum neoagent_error_t {
 #define NEOAGENT_STDERR_MESSAGE(neoagent_error) fprintf(stderr, "%s: %s %d\n", neoagent_error_message(neoagent_error), __FILE__, __LINE__)
 
 const char *neoagent_error_message (neoagent_error_t error);
-size_t neoagent_write_error_message (int fd, neoagent_error_t error);
 void neoagent_die (const char *s);
 void neoagent_die_with_error (neoagent_error_t error);
 

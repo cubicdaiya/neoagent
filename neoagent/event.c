@@ -62,7 +62,7 @@ inline static void neoagent_event_switch (EV_P_ struct ev_io *old, ev_io *new, i
 static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *env);
 static int  neoagent_remaining_size (int fd);
 static void neoagent_make_spare(neoagent_client_t *client);
-static void health_check_callback (EV_P_ ev_timer *w, int revents);
+static void neoagent_health_check_callback (EV_P_ ev_timer *w, int revents);
 
 inline static void neoagent_spare_free (neoagent_client_t *client)
 {
@@ -89,9 +89,11 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
 {
     int tsfd, size, cur_pool;
     neoagent_connpool_t *connpool;
+    bool is_use_connpool;
 
-    tsfd     = client->tsfd;
-    cur_pool = client->cur_pool;
+    tsfd            = client->tsfd;
+    cur_pool        = client->cur_pool;
+    is_use_connpool = client->is_use_connpool;
 
     // release client resources
     close(client->cfd);
@@ -108,19 +110,21 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
     }
     
     connpool = &env->connpool_active;
+
+    if (is_use_connpool) {
+        connpool->fd_pool[cur_pool] = tsfd;
+        connpool->mark[cur_pool]    = 0;
     
-    connpool->fd_pool[cur_pool] = tsfd;
-    connpool->mark[cur_pool]    = 0;
-    
-    if (connpool->cur == connpool->max) {
+        if (connpool->cur == connpool->max) {
         
-        if (!connpool->is_full) {
-            connpool->is_full = true;
+            if (!connpool->is_full) {
+                connpool->is_full = true;
+            }
+        
+            connpool->cur = 0;
         }
-        
-        connpool->cur = 0;
-        
-        goto finish;
+    } else {
+        close(tsfd);
     }
     
  finish:
@@ -156,7 +160,7 @@ static void neoagent_make_spare(neoagent_client_t *client)
     }
 }
 
-static void health_check_callback (EV_P_ ev_timer *w, int revents)
+static void neoagent_health_check_callback (EV_P_ ev_timer *w, int revents)
 {
     int tsfd;
     neoagent_env_t *env;
@@ -364,31 +368,71 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
 
         connpool = &env->connpool_active;
 
-        // connection pool is not full
-        if (connpool->is_full) {
-            client->tsfd = connpool->fd_pool[client->cur_pool];
-            tsfd         = client->tsfd;
-        }
-        
-        if (tsfd <= 0 || !connpool->is_full) {
-            if (client->cmd == NEOAGENT_MEMPROTO_CMD_SET) {
-                if (tsfd <= 0) {
-                    if (connpool->fd_pool[client->cur_pool] <= 0) {
+        if (client->is_use_connpool) {
+
+            // connection pool is not full
+            if (connpool->is_full) {
+                client->tsfd = connpool->fd_pool[client->cur_pool];
+                tsfd         = client->tsfd;
+            }
+            
+            if (tsfd <= 0 || !connpool->is_full) {
+                if (client->cmd == NEOAGENT_MEMPROTO_CMD_SET) {
+                    if (tsfd <= 0) {
+                        if (connpool->fd_pool[client->cur_pool] <= 0) {
+                            client->tsfd = neoagent_target_server_tcpsock_init();
+                            tsfd         = client->tsfd;
+                        }
+                        connpool->fd_pool[client->cur_pool] = tsfd;
+                        connpool->mark[client->cur_pool]    = 1;
+                    } else {
+                        is_use_pool = true;
+                    }
+                } else {
+                    if (tsfd <= 0) {
                         client->tsfd = neoagent_target_server_tcpsock_init();
                         tsfd         = client->tsfd;
+                    } else {
+                        is_use_pool = true;
                     }
-                    connpool->fd_pool[client->cur_pool] = tsfd;
-                    connpool->mark[client->cur_pool]    = 1;
-                } else {
-                    is_use_pool = true;
                 }
-            } else {
+                
                 if (tsfd <= 0) {
-                    client->tsfd = neoagent_target_server_tcpsock_init();
-                    tsfd         = client->tsfd;
-                } else {
-                    is_use_pool = true;
+                    NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_INVALID_FD);
+                    env->error_count++;
+                    ev_io_stop(EV_A_ w);
+                    neoagent_client_close(client, env);
+                    return;
                 }
+                
+                neoagent_target_server_tcpsock_setup(tsfd);
+                
+                if (client->is_refused_active) {
+                    server = &env->backup_server;
+                } else {
+                    server = &env->target_server;
+                }
+                
+                if (!is_use_pool && !neoagent_server_connect(tsfd, &server->addr)) {
+                    if (errno != EINPROGRESS && errno != EALREADY) {
+                        NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_CONNECTION_FAILED);
+                        env->error_count++;
+                        ev_io_stop(EV_A_ w);
+                        neoagent_client_close(client, env);
+                        return;
+                    }
+                }
+            }
+            
+        } else {
+
+            bool is_connected = false;
+
+            if (client->tsfd <= 0) {
+                client->tsfd = neoagent_target_server_tcpsock_init();
+                tsfd         = client->tsfd;
+            } else {
+                is_connected = true;
             }
 
             if (tsfd <= 0) {
@@ -397,17 +441,17 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                 ev_io_stop(EV_A_ w);
                 neoagent_client_close(client, env);
                 return;
-            }
-            
+            } 
+
             neoagent_target_server_tcpsock_setup(tsfd);
-            
+
             if (client->is_refused_active) {
                 server = &env->backup_server;
             } else {
                 server = &env->target_server;
             }
 
-            if (!is_use_pool && !neoagent_server_connect(tsfd, &server->addr)) {
+            if (!is_connected && !neoagent_server_connect(tsfd, &server->addr)) {
                 if (errno != EINPROGRESS && errno != EALREADY) {
                     NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_CONNECTION_FAILED);
                     env->error_count++;
@@ -416,9 +460,9 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                     return;
                 }
             }
-            
+             
         }
-
+        
         ev_io_stop(EV_A_ w);
         ev_io_init(&client->ts_watcher, neoagent_target_server_callback, tsfd, EV_WRITE);
         ev_io_start(EV_A_ &client->ts_watcher);
@@ -489,7 +533,7 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
     
     connpool = &env->connpool_active;
 
-    if (env->current_conn >= connpool->max) {
+    if (env->current_conn >= connpool->max && env->is_connpool_only) {
         return;
     }
 
@@ -505,7 +549,11 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
         }
     }
 
-    if (is_connpool_full) {
+    if (is_connpool_full && env->is_connpool_only) {
+        return;
+    }
+
+    if (env->current_conn >= env->conn_max) {
         return;
     }
 
@@ -525,8 +573,9 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->env               = env;
     client->c_watcher.data    = client;
     client->ts_watcher.data   = client;
-    client->cur_pool          = connpool->cur++;
+    client->cur_pool          = is_connpool_full ? -1 : connpool->cur++;
     client->is_refused_active = env->is_refused_active;
+    client->is_use_connpool   = is_connpool_full ? false : true;
 
     ev_io_init(&client->c_watcher, neoagent_client_callback, cfd, EV_READ);
     ev_io_start(EV_A_ &client->c_watcher);
@@ -555,7 +604,7 @@ void *neoagent_event_loop (void *args)
     }
 
     hc_watcher.data = env;
-    ev_timer_init (&hc_watcher, health_check_callback, 5., 0.);
+    ev_timer_init (&hc_watcher, neoagent_health_check_callback, 5., 0.);
     ev_timer_start (loop, &hc_watcher);
  
     env->fs_watcher.data = env;

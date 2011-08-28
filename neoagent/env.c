@@ -38,6 +38,7 @@
 #include "mpool.h"
 
 static const int NEOAGENT_PORT_DEFAULT            = 20000;
+static const int NEOAGENT_CONN_MAX_DEFAULT        = 1000;
 static const int NEOAGENT_CONNPOOL_MAX_DEFAULT    = 20;
 static const int NEOAGENT_ERROR_COUNT_MAX_DEFAULT = 1000;
 static const int NEOAGENT_ACCESS_MASK_DEFAULT     = 0664;
@@ -95,6 +96,7 @@ void neoagent_env_setup_default(neoagent_env_t *env, int idx)
     host                 = neoagent_create_host(backup_server_s);
     memcpy(&env->backup_server.host, &host, sizeof(host));
     neoagent_set_sockaddr(&host, &env->backup_server.addr);
+    env->conn_max        = NEOAGENT_CONN_MAX_DEFAULT;
     env->connpool_max    = NEOAGENT_CONNPOOL_MAX_DEFAULT;
     env->error_count_max = NEOAGENT_ERROR_COUNT_MAX_DEFAULT;
 }

@@ -38,7 +38,6 @@
 #include "error.h"
 
 const char *neoagent_error_messages[NEOAGENT_ERROR_MAX] = {
-    [NEOAGENT_ERROR_OVER_CONN]             = "over max connection",
     [NEOAGENT_ERROR_INVALID_ENV]           = "invalid environment",
     [NEOAGENT_ERROR_INVALID_FD]            = "invalid file descriptor",
     [NEOAGENT_ERROR_INVALID_HOSTNAME]      = "invalid hostname",
@@ -62,19 +61,6 @@ const char *neoagent_error_message (neoagent_error_t error)
         return neoagent_error_messages[NEOAGENT_ERROR_UNKNOWN];
     }
     return neoagent_error_messages[error];
-}
-
-size_t neoagent_write_error_message (int fd, neoagent_error_t error)
-{
-    size_t size;
-    const char *msg = neoagent_error_message(error);
-    char errmsg[BUFSIZ];
-    sprintf(errmsg, "%s\n", msg);
-    size_t len = strlen(errmsg);
-    if ((size = write(fd, msg, len)) < 0) {
-        return -1;
-    }
-    return size;
 }
 
 void neoagent_die (const char *s)
