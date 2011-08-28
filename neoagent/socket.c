@@ -52,7 +52,7 @@
 #include "error.h"
 #include "socket.h"
 
-const int NEOAGENT_BACKLOG_MAX = 512;
+const int NEOAGENT_BACKLOG_MAX = 1024;
 const int NEOAGENT_IPADDR_MAX  = 15;
 
 inline static bool neoagent_is_ipaddr (const char *ipaddr);
