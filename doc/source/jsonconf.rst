@@ -22,6 +22,7 @@ Sample configuration
              "connpool_max": 30,
              "error_count_max": 1000,
              "is_connpool_only": false,
+             "bufsize":65536,
          }
      ]
  }
@@ -65,3 +66,7 @@ Sample configuration
 **is_connpool_only**
 
  If this paramenter is true, neoagent don't create connection more than 'connpool_max'.
+
+**bufsize**
+
+ buffer size of each client uses
