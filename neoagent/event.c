@@ -64,6 +64,9 @@ static int  neoagent_remaining_size (int fd);
 static void neoagent_make_spare(neoagent_client_t *client, neoagent_env_t *env);
 static void neoagent_health_check_callback (EV_P_ ev_timer *w, int revents);
 static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents);
+static void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents);
+static void neoagent_client_callback (EV_P_ struct ev_io *w, int revents);
+static void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents);
 
 inline static void neoagent_spare_free (neoagent_client_t *client)
 {

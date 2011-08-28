@@ -38,9 +38,6 @@
 
 #include "env.h"
 
-void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents);
-void neoagent_client_callback (EV_P_ struct ev_io *w, int revents);
-void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents);
 void *neoagent_event_loop (void *args);
 
 #endif // NEOAGENT_EVENT_H
