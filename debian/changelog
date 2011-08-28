@@ -1,3 +1,19 @@
+neoagent (0.1.1-1) unstable; urgency=low
+
+  * change default port
+
+  * add paramenter 'conn_max' and 'is_connpool_only'
+
+  * add statictics server function
+
+  * change directory layout
+
+  * use sphinxtogithub
+
+  * check whether standard header files and some funcion exist
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 29 Aug 2011 01:35:16 +0900
+
 neoagent (0.1.0-1) unstable; urgency=low
 
   * Initial release
