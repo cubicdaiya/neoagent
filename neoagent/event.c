@@ -247,6 +247,7 @@ static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents)
              "backup port        :%d\n"
              "current target host:%s\n"
              "current target port:%d\n"
+             "error count        :%d\n"
              "error count max    :%d\n"
              "conn max           :%d\n"
              "connpool max       :%d\n"
@@ -260,7 +261,7 @@ static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents)
              env->backup_server.host.ipaddr, env->backup_server.host.port,
              env->is_refused_active ? env->backup_server.host.ipaddr : env->target_server.host.ipaddr,
              env->is_refused_active ? env->backup_server.host.port   : env->target_server.host.port,
-             env->error_count_max, env->conn_max, env->connpool_max, 
+             env->error_count, env->error_count_max, env->conn_max, env->connpool_max, 
              env->is_connpool_only ? "true" : "false",
              env->bufsize, env->current_conn, available_conn
              );
