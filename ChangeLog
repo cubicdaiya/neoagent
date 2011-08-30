@@ -1,3 +1,11 @@
+2011-08-30 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fixes bug(connection pool is unused fully)
+
+	* add parameter 'bufsize'
+
+	* 0.1.2 released
+
 2011-08-29 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* change default port
@@ -12,8 +20,8 @@
 
 	* check whether standard header files and some funcion exist
 
-        * 0.1.1 released
+	* 0.1.1 released
 
 2011-08-24 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
-        * 0.1.0 released
+	* 0.1.0 released

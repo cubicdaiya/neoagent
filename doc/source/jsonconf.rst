@@ -14,6 +14,7 @@ Sample configuration
          {
              "name": "envname",
              "port": 30001,
+             "stport": 30011,
              "sockpath": "/var/run/neoagent.sock",
              "access_mask": "0666",
              "target_server": "127.0.0.1:11211",
@@ -34,6 +35,10 @@ Sample configuration
 **port**
 
  front server port number
+
+**stport**
+
+ statictics server port number
 
 **sockpath**
 

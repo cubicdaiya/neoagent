@@ -1,3 +1,11 @@
+neoagent (0.1.2-1) natty; urgency=low
+
+  * fixes bug(connection pool is unused fully)
+
+  * add parameter 'bufsize'
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 30 Aug 2011 09:25:30 +0900
+
 neoagent (0.1.1-1) unstable; urgency=low
 
   * change default port
