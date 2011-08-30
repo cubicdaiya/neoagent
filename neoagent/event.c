@@ -58,6 +58,7 @@ extern inline bool neoagent_memproto_is_request_divided (int req_cnt);
 // private functions
 inline static void neoagent_spare_free (neoagent_client_t *client);
 inline static void neoagent_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
+inline static void neoagent_error_count_up (neoagent_env_t *env);
 
 static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *env);
 static int  neoagent_remaining_size (int fd);
@@ -90,6 +91,13 @@ inline static void neoagent_event_switch (EV_P_ struct ev_io *old, struct ev_io 
     ev_io_start(EV_A_ new);
 }
 
+inline static void neoagent_error_count_up (neoagent_env_t *env)
+{
+    if (env->error_count_max > 0) {
+        env->error_count++;
+    }
+}
+
 static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *env)
 {
     int tsfd, size, cur_pool;
@@ -111,7 +119,7 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
 
     if ((size = neoagent_remaining_size(tsfd)) > 0) {
         NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_REMAIN_DATA);
-        env->error_count++;
+        neoagent_error_count_up(env);
         close(tsfd);
         goto finish;
     }
@@ -180,7 +188,7 @@ static void neoagent_health_check_callback (EV_P_ ev_timer *w, int revents)
 
     if (tsfd <= 0) {
         NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_INVALID_FD);
-        env->error_count++;
+        neoagent_error_count_up(env);
         return;
     }
 
@@ -468,7 +476,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                 
                 if (tsfd <= 0) {
                     NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_INVALID_FD);
-                    env->error_count++;
+                    neoagent_error_count_up(env);
                     ev_io_stop(EV_A_ w);
                     neoagent_client_close(client, env);
                     return;
@@ -485,7 +493,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                 if (!is_use_pool && !neoagent_server_connect(tsfd, &server->addr)) {
                     if (errno != EINPROGRESS && errno != EALREADY) {
                         NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_CONNECTION_FAILED);
-                        env->error_count++;
+                        neoagent_error_count_up(env);
                         ev_io_stop(EV_A_ w);
                         neoagent_client_close(client, env);
                         return;
@@ -506,7 +514,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
 
             if (tsfd <= 0) {
                 NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_INVALID_FD);
-                env->error_count++;
+                neoagent_error_count_up(env);
                 ev_io_stop(EV_A_ w);
                 neoagent_client_close(client, env);
                 return;
@@ -523,7 +531,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
             if (!is_connected && !neoagent_server_connect(tsfd, &server->addr)) {
                 if (errno != EINPROGRESS && errno != EALREADY) {
                     NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_CONNECTION_FAILED);
-                    env->error_count++;
+                    neoagent_error_count_up(env);
                     ev_io_stop(EV_A_ w);
                     neoagent_client_close(client, env);
                     return;
