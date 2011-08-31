@@ -682,7 +682,6 @@ void *neoagent_event_loop (void *args)
     }
 
     env->stfd = neoagent_stat_server_tcpsock_init(env->stport);
- 
 
     loop = ev_loop_new(0);
     env->fs_watcher.data = loop;
