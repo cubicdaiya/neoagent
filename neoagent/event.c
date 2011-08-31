@@ -332,7 +332,7 @@ void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
             }
             client->current_spare->ts_pos                             += size;
             client->current_spare->buf[client->current_spare->ts_pos]  = '\0';
-            client->current_spare->bufsize                             = client->ts_pos;
+            client->current_spare->bufsize                             = client->current_spare->ts_pos;
 
             req_cnt = neoagent_memproto_count_response(client->current_spare->buf, client->current_spare->bufsize);
             if (req_cnt == 0) {
