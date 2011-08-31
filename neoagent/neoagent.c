@@ -85,6 +85,7 @@ static void neoagent_setup_signals (void)
 {
     struct sigaction sig_handler;
 
+    sigemptyset(&sig_handler.sa_mask);
     sig_handler.sa_handler = neoagent_signal_handler;
     sig_handler.sa_flags   = 0;
 
