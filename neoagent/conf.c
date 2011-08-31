@@ -80,6 +80,7 @@ struct json_object *neoagent_cnf_get_environments(const char *conf_file_json, in
         neoagent_die_with_error(NEOAGENT_ERROR_INVALID_CONFPATH);
     }
 
+    memset(json_buf, 0, NEOAGENT_JSON_BUF_MAX + 1);
     if ((size = read(json_fd, json_buf, NEOAGENT_JSON_BUF_MAX)) < 0) {
         neoagent_die_with_error(NEOAGENT_ERROR_INVALID_CONFPATH);
     }
