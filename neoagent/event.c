@@ -434,8 +434,17 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
             neoagent_spare_free(client);
         }
 
-        // for get command specific(request piplining)
         client->cmd = neoagent_memproto_detect_command(client->buf);
+
+        if (client->cmd == NEOAGENT_MEMPROTO_CMD_UNKNOWN) {
+            NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_INVALID_CMD);
+            neoagent_error_count_up(env);
+            ev_io_stop(EV_A_ w);
+            neoagent_client_close(client, env);
+            return;
+        }
+
+        // for get command specific(request piplining)
         if (client->cmd == NEOAGENT_MEMPROTO_CMD_GET) {
             client->req_cnt = neoagent_memproto_count_request(client->buf, client->bufsize);
             if (neoagent_memproto_is_request_divided(client->req_cnt)) {

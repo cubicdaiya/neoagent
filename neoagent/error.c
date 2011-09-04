@@ -39,6 +39,7 @@
 
 const char *neoagent_error_messages[NEOAGENT_ERROR_MAX] = {
     [NEOAGENT_ERROR_INVALID_ENV]           = "invalid environment",
+    [NEOAGENT_ERROR_INVALID_CMD]           = "invalid memcached command",
     [NEOAGENT_ERROR_INVALID_FD]            = "invalid file descriptor",
     [NEOAGENT_ERROR_INVALID_HOSTNAME]      = "invalid hostname",
     [NEOAGENT_ERROR_INVALID_PORT]          = "invalid port number",
