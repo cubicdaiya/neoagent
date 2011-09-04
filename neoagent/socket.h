@@ -45,7 +45,7 @@ typedef struct neoagent_host_t {
 } neoagent_host_t;
 
 int neoagent_target_server_tcpsock_init (void);
-void neoagent_target_server_tcpsock_setup (int tsfd);
+void neoagent_target_server_tcpsock_setup (int tsfd, bool is_keepalive);
 void neoagent_target_server_healthchecksock_setup (int tsfd);
 void neoagent_set_sockaddr (neoagent_host_t *host, struct sockaddr_in *addr);
 neoagent_host_t neoagent_create_host(char *host);

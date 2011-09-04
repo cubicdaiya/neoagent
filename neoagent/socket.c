@@ -129,10 +129,12 @@ int neoagent_target_server_tcpsock_init (void)
     return tsfd;
 }
 
-void neoagent_target_server_tcpsock_setup (int tsfd)
+void neoagent_target_server_tcpsock_setup (int tsfd, bool is_keepalive)
 {
     neoagent_set_nonblock(tsfd);
-    neoagent_set_sockopt(tsfd, SO_KEEPALIVE);
+    if (is_keepalive) {
+        neoagent_set_sockopt(tsfd, SO_KEEPALIVE);
+    }
     neoagent_set_sockopt(tsfd, SO_REUSEADDR);
     neoagent_set_sockopt(tsfd, SO_LINGER);
 }

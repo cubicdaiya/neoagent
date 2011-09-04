@@ -123,7 +123,7 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
         if (is_use_connpool) {
             close(tsfd);
             tsfd = neoagent_target_server_tcpsock_init();
-            neoagent_target_server_tcpsock_setup(tsfd);
+            neoagent_target_server_tcpsock_setup(tsfd, true);
         }
     }
     
@@ -499,8 +499,8 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                     neoagent_client_close(client, env);
                     return;
                 }
-                
-                neoagent_target_server_tcpsock_setup(tsfd);
+
+                neoagent_target_server_tcpsock_setup(tsfd, true);
                 
                 if (client->is_refused_active) {
                     server = &env->backup_server;
@@ -538,7 +538,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                 return;
             } 
 
-            neoagent_target_server_tcpsock_setup(tsfd);
+            neoagent_target_server_tcpsock_setup(tsfd, false);
 
             if (client->is_refused_active) {
                 server = &env->backup_server;
