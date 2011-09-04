@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef enum neoagent_error_t {
     NEOAGENT_ERROR_INVALID_ENV,
@@ -60,9 +61,13 @@ typedef enum neoagent_error_t {
 
 #define NEOAGENT_STDERR(s) fprintf(stderr, "%s: %s %d\n", s, __FILE__, __LINE__)
 #define NEOAGENT_STDERR_MESSAGE(neoagent_error) fprintf(stderr, "%s: %s %d\n", neoagent_error_message(neoagent_error), __FILE__, __LINE__)
+#define NEOAGENT_DIE_WITH_ERROR(neoagent_error)                         \
+    do {                                                                \
+        fprintf(stderr, "%s: %s %d\n", neoagent_error_message(neoagent_error), __FILE__, __LINE__); \
+        exit(1);                                                        \
+    } while (false)
 
 const char *neoagent_error_message (neoagent_error_t error);
-void neoagent_die_with_error (neoagent_error_t error);
 
 #endif // NEOAGENT_ERROR_H
 

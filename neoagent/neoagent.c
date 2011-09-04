@@ -94,11 +94,11 @@ static void neoagent_setup_signals (void)
         sigaction(SIGALRM, &sig_handler, NULL) == -1 ||
         sigaction(SIGHUP,  &sig_handler, NULL) == -1)
     {
-        neoagent_die_with_error(NEOAGENT_ERROR_FAILED_SETUP_SIGNAL);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_FAILED_SETUP_SIGNAL);
     }
 
     if (sigignore(SIGPIPE) == -1) {
-        neoagent_die_with_error(NEOAGENT_ERROR_FAILED_IGNORE_SIGNAL);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_FAILED_IGNORE_SIGNAL);
     }
 
     SigCatched = 0;
@@ -149,11 +149,11 @@ int main (int argc, char *argv[])
     }
 
     if (is_daemon && daemon(0, 0) == -1) {
-        neoagent_die_with_error(NEOAGENT_ERROR_FAILED_DAEMONIZE);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_FAILED_DAEMONIZE);
     }
 
     if (env_cnt > NEOAGENT_ENV_MAX) {
-        neoagent_die_with_error(NEOAGENT_ERROR_TOO_MANY_ENVIRONMENTS);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_TOO_MANY_ENVIRONMENTS);
     }
 
     neoagent_setup_signals();

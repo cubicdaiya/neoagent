@@ -68,14 +68,14 @@ static void neoagent_set_nonblock (int fd)
     if (fd > 0) {
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL)|O_NONBLOCK);
     } else {
-        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_FD);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_FD);
     }
 }
 
 static void neoagent_set_sockopt(int fd, int optname)
 {
     if (fd <= 0) {
-        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_FD);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_FD);
     }
 
     switch (optname) {
@@ -162,7 +162,7 @@ neoagent_host_t neoagent_create_host(char *host)
     }
 
     if (p == NULL || hostname_len <= 0 || hostname_len > NEOAGENT_HOSTNAME_MAX) {
-        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_HOSTNAME);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_HOSTNAME);
     }
 
     strncpy(host_info.ipaddr, host, hostname_len);
@@ -173,7 +173,7 @@ neoagent_host_t neoagent_create_host(char *host)
     port = atoi(p);
 
     if (port <= 0) {
-        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_PORT);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_PORT);
     }
 
     host_info.port = port;
@@ -201,7 +201,7 @@ void neoagent_set_sockaddr (neoagent_host_t *host, struct sockaddr_in *addr)
 
         if ((ai_res = getaddrinfo(host->ipaddr, port_buf, &hints, &ais)) != 0) {
             NEOAGENT_STDERR(gai_strerror(ai_res));
-            neoagent_die_with_error(NEOAGENT_ERROR_INVALID_HOSTNAME);
+            NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_HOSTNAME);
         }
 
         for (ai=ais;ai!=NULL;ai=ai->ai_next) {
@@ -225,7 +225,7 @@ void neoagent_set_sockaddr (neoagent_host_t *host, struct sockaddr_in *addr)
         }
 
         if (ai == NULL) {
-            neoagent_die_with_error(NEOAGENT_ERROR_INVALID_HOSTNAME);
+            NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_HOSTNAME);
         }
 
         freeaddrinfo(ais);
@@ -254,7 +254,7 @@ int neoagent_front_server_tcpsock_init (uint16_t port)
         iaddr.sin_port        = htons(port);
     } else {
         close(fsfd);
-        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_PORT);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_PORT);
     }
 
     if (bind(fsfd, (struct sockaddr *)&iaddr, sizeof(iaddr)) < 0) {
@@ -302,7 +302,7 @@ int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask)
         strncpy(uaddr.sun_path, sockpath, sizeof(uaddr.sun_path) - 1);
     }  else {
         close(fsfd);
-        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_SOCKPATH);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_SOCKPATH);
     }
 
     old_umask = umask(~(mask & 0777));
@@ -345,7 +345,7 @@ int neoagent_stat_server_tcpsock_init (uint16_t port)
         iaddr.sin_port        = htons(port);
     } else {
         close(stfd);
-        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_PORT);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_PORT);
     }
 
     if (bind(stfd, (struct sockaddr *)&iaddr, sizeof(iaddr)) < 0) {

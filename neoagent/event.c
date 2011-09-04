@@ -701,7 +701,7 @@ void *neoagent_event_loop (void *args)
     env->fs_watcher.data = loop;
 
     if (env->fsfd < 0) {
-        neoagent_die_with_error(NEOAGENT_ERROR_INVALID_FD);
+        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_FD);
     }
 
     hc_watcher.data = env;

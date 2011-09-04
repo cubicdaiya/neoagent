@@ -64,9 +64,3 @@ const char *neoagent_error_message (neoagent_error_t error)
     }
     return neoagent_error_messages[error];
 }
-
-void neoagent_die_with_error (neoagent_error_t error)
-{
-    fprintf(stderr, "%s\n", neoagent_error_message(error));
-    exit(1);
-}
