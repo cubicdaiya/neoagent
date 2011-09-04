@@ -43,7 +43,7 @@ typedef enum neoagent_memproto_cmd_t {
     NEOAGENT_MEMPROTO_CMD_ADD,
     NEOAGENT_MEMPROTO_CMD_DELETE,
     NEOAGENT_MEMPROTO_CMD_UNKNOWN,
-    NEOAGENT_MEMPROTO_CMD_MAX,
+    NEOAGENT_MEMPROTO_CMD_MAX // Always add new codes to the end before this one
 } neoagent_memproto_cmd_t;
 
 void neoagent_memproto_bm_skip_init (void);

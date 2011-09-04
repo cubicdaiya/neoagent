@@ -39,7 +39,7 @@
 typedef enum neoagent_memproto_bm_skip_t {
     NEOAGENT_MEMPROTO_BM_SKIP_CRLF,
     NEOAGENT_MEMPROTO_BM_SKIP_ENDCRLF,
-    NEOAGENT_MEMPROTO_BM_SKIP_MAX
+    NEOAGENT_MEMPROTO_BM_SKIP_MAX // Always add new codes to the end before this one
 } neoagent_memproto_bm_skip_t;
 
 static int neoagent_bm_skip[NEOAGENT_MEMPROTO_BM_SKIP_MAX][NEOAGENT_BM_SKIP_SIZE] = {
