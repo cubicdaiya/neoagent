@@ -276,6 +276,7 @@ static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents)
              env->bufsize, env->current_conn, available_conn
              );
 
+    // send stat to client
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
         close(cfd);
         return;
