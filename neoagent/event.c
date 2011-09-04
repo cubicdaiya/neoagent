@@ -121,7 +121,9 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
         NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_REMAIN_DATA);
         neoagent_error_count_up(env);
         if (is_use_connpool) {
-            close(tsfd);
+            if (tsfd > 0) {
+                close(tsfd);
+            }
             tsfd = neoagent_target_server_tcpsock_init();
             neoagent_target_server_tcpsock_setup(tsfd, true);
         }
@@ -130,6 +132,10 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
     connpool = &env->connpool_active;
 
     if (is_use_connpool) {
+        if (tsfd <= 0) {
+            tsfd = neoagent_target_server_tcpsock_init();
+            neoagent_target_server_tcpsock_setup(tsfd, true);
+        }
         connpool->fd_pool[cur_pool] = tsfd;
         connpool->mark[cur_pool]    = 0;
     
@@ -142,7 +148,9 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
             connpool->cur = 0;
         }
     } else {
-        close(tsfd);
+        if (tsfd > 0) {
+            close(tsfd);
+        }
     }
     
     // update environment
@@ -455,12 +463,12 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
             if (neoagent_memproto_is_request_divided(client->req_cnt)) {
                 neoagent_make_spare(client, env);
             }
-        } else if (client->cmd == NEOAGENT_MEMPROTO_CMD_SET) {
-            client->req_cnt++;
         } else if (client->cmd == NEOAGENT_MEMPROTO_CMD_QUIT) {
             ev_io_stop(EV_A_ w);
             neoagent_client_close(client, env);
             return;
+        } else {
+            client->req_cnt++;
         }
 
         connpool = &env->connpool_active;
