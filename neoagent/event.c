@@ -50,7 +50,7 @@
 #include "memproto.h"
 
 // external globals
-volatile sig_atomic_t SigCatched;
+volatile sig_atomic_t SigExit;
 
 // external functions
 extern inline bool neoagent_memproto_is_request_divided (int req_cnt);
@@ -615,7 +615,7 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
     cur              = -1;
 
     // wait until connections are empty, after signal is catched
-    if (SigCatched == 1 && env->current_conn == 0) {
+    if (SigExit == 1 && env->current_conn == 0) {
         pthread_exit(&th_ret);
         return;
     }

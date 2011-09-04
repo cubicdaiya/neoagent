@@ -53,7 +53,7 @@
 static const int NEOAGENT_ENV_MAX = 10;
 
 // external globals
-extern volatile sig_atomic_t SigCatched;
+extern volatile sig_atomic_t SigExit;
 
 static void neoagent_version(void);
 static void neoagent_usage(void);
@@ -78,7 +78,7 @@ static void neoagent_usage(void)
 
 static void neoagent_signal_handler (int sig)
 {
-    SigCatched = 1;
+    SigExit = 1;
 }
 
 static void neoagent_setup_signals (void)
@@ -101,7 +101,7 @@ static void neoagent_setup_signals (void)
         NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_FAILED_IGNORE_SIGNAL);
     }
 
-    SigCatched = 0;
+    SigExit = 0;
 
 }
 
@@ -186,7 +186,7 @@ int main (int argc, char *argv[])
     // monitoring signal
     while (true) {
 
-        if (SigCatched == 1) {
+        if (SigExit == 1) {
             break;
         }
 
