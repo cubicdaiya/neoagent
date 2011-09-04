@@ -51,6 +51,7 @@ const char *neoagent_error_messages[NEOAGENT_ERROR_MAX] = {
     [NEOAGENT_ERROR_PARSE_JSON_CONFIG]     = "json configuration parse error",
     [NEOAGENT_ERROR_FAILED_SETUP_SIGNAL]   = "failed to set signal handler",
     [NEOAGENT_ERROR_FAILED_IGNORE_SIGNAL]  = "failed to ignore signal",
+    [NEOAGENT_ERROR_FAILED_DAEMONIZE]      = "failed to daemonize",
     [NEOAGENT_ERROR_REMAIN_DATA]           = "still data remains",
     [NEOAGENT_ERROR_TOO_MANY_ENVIRONMENTS] = "too many environments",
     [NEOAGENT_ERROR_UNKNOWN]               = "unknown error",
@@ -62,12 +63,6 @@ const char *neoagent_error_message (neoagent_error_t error)
         return neoagent_error_messages[NEOAGENT_ERROR_UNKNOWN];
     }
     return neoagent_error_messages[error];
-}
-
-void neoagent_die (const char *s)
-{
-    fprintf(stderr, "%s\n", s);
-    exit(1);
 }
 
 void neoagent_die_with_error (neoagent_error_t error)

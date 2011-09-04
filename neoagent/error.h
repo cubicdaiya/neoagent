@@ -51,6 +51,7 @@ typedef enum neoagent_error_t {
     NEOAGENT_ERROR_PARSE_JSON_CONFIG,
     NEOAGENT_ERROR_FAILED_SETUP_SIGNAL,
     NEOAGENT_ERROR_FAILED_IGNORE_SIGNAL,
+    NEOAGENT_ERROR_FAILED_DAEMONIZE,
     NEOAGENT_ERROR_REMAIN_DATA,
     NEOAGENT_ERROR_TOO_MANY_ENVIRONMENTS,
     NEOAGENT_ERROR_UNKNOWN,
@@ -61,7 +62,6 @@ typedef enum neoagent_error_t {
 #define NEOAGENT_STDERR_MESSAGE(neoagent_error) fprintf(stderr, "%s: %s %d\n", neoagent_error_message(neoagent_error), __FILE__, __LINE__)
 
 const char *neoagent_error_message (neoagent_error_t error);
-void neoagent_die (const char *s);
 void neoagent_die_with_error (neoagent_error_t error);
 
 #endif // NEOAGENT_ERROR_H

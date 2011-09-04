@@ -149,7 +149,7 @@ int main (int argc, char *argv[])
     }
 
     if (is_daemon && daemon(0, 0) == -1) {
-        neoagent_die("daemonize failed\n");
+        neoagent_die_with_error(NEOAGENT_ERROR_FAILED_DAEMONIZE);
     }
 
     if (env_cnt > NEOAGENT_ENV_MAX) {
