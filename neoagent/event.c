@@ -312,7 +312,13 @@ void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
     if (client->is_refused_active != env->is_refused_active) {
         ev_io_stop(EV_A_ w);
-        close(cfd);
+        neoagent_client_close(client, env);
+        return;
+    }
+
+    if (client->switch_cnt++ >= env->switch_max) {
+        ev_io_stop(EV_A_ w);
+        neoagent_client_close(client, env);
         return;
     }
 
@@ -420,7 +426,13 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
 
     if (client->is_refused_active != env->is_refused_active) {
         ev_io_stop(EV_A_ w);
-        close(cfd);
+        neoagent_client_close(client, env);
+        return;
+    }
+
+    if (client->switch_cnt++ >= env->switch_max) {
+        ev_io_stop(EV_A_ w);
+        neoagent_client_close(client, env);
         return;
     }
 
@@ -680,6 +692,7 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->buf               = (char *)malloc(env->bufsize + 1);
     client->cfd               = cfd;
     client->req_cnt           = 0;
+    client->switch_cnt        = 0;
     client->ts_pos            = 0;
     client->current_req_cnt   = 0;
     client->env               = env;

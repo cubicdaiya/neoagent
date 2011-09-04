@@ -81,6 +81,7 @@ typedef struct neoagent_env_t {
     int conn_max;
     int connpool_max;
     int error_count_max;
+    int switch_max;
 } neoagent_env_t;
 
 typedef struct neoagent_spare_buf_t {
@@ -97,6 +98,7 @@ typedef struct neoagent_client_t {
     int bufsize;
     int ts_pos;
     int req_cnt;
+    int switch_cnt;
     neoagent_memproto_cmd_t cmd;
     int current_req_cnt;
     int cur_pool;
