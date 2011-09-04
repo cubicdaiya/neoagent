@@ -80,11 +80,13 @@ int neoagent_bm_search (char *haystack, char *pattern, int *skip, int hlen, int 
                 goto loop;
             }
         }
+
         if (skip[(int)haystack[i + plen - 1]] != 0) {
             i += skip[(int)haystack[i + plen - 1]];
         } else {
             i += plen;
         }
+
         ++cnt;
     }
 
