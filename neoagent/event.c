@@ -120,8 +120,11 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
     if ((size = neoagent_remaining_size(tsfd)) > 0) {
         NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_REMAIN_DATA);
         neoagent_error_count_up(env);
-        close(tsfd);
-        goto finish;
+        if (is_use_connpool) {
+            close(tsfd);
+            tsfd = neoagent_target_server_tcpsock_init();
+            neoagent_target_server_tcpsock_setup(tsfd);
+        }
     }
     
     connpool = &env->connpool_active;
@@ -142,7 +145,6 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
         close(tsfd);
     }
     
- finish:
     // update environment
     env->current_conn--;
 
