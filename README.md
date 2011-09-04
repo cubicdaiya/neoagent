@@ -7,7 +7,7 @@ A Yet Another Memcached Proxy Server written by C99.
   - connection pooling
   - configuration with JSON
   - fail over with backup server function
-  - support some memcached command(get, set, add, delete, incr)
+  - support some memcached command(get, set, add, delete, incr, quit)
 
 ## Dependencies
 
