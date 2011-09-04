@@ -325,7 +325,7 @@ void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
     if (revents & EV_WRITE) {
 
         size = write(tsfd, client->buf, client->bufsize);
-        if (size <= 0) {
+        if (size < 0) {
             ev_io_stop(EV_A_ w);
             neoagent_client_close(client, env);
             return;
@@ -599,7 +599,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
             spare = client->head_spare;
             while (spare != NULL && spare->bufsize > 0) {
                 size = write(cfd, spare->buf, spare->bufsize);
-                if (size <= 0) {
+                if (size < 0) {
                     ev_io_stop(EV_A_ w);
                     NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_FAILED_WRITE);
                     neoagent_error_count_up(env);
@@ -619,6 +619,8 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
             neoagent_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
             return;
         }
+
+        client->switch_cnt = 0;
 
         neoagent_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_READ);
 
