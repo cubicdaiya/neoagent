@@ -293,6 +293,7 @@ void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
     cfd    = client->cfd;
 
     if (client == NULL) {
+        ev_io_stop(EV_A_ w);
         return;
     }
 
@@ -402,6 +403,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
     is_use_pool = false;
 
     if (client == NULL) {
+        ev_io_stop(EV_A_ w);
         return;
     }
 
