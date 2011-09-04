@@ -65,6 +65,8 @@ neoagent_memproto_cmd_t neoagent_memproto_detect_command (char *buf)
         return NEOAGENT_MEMPROTO_CMD_ADD;
     } else if (strncmp(buf, "delete", 6) == 0) {
         return NEOAGENT_MEMPROTO_CMD_DELETE;
+    } else if (strncmp(buf, "quit", 4) == 0) {
+        return NEOAGENT_MEMPROTO_CMD_QUIT;
     }
     return NEOAGENT_MEMPROTO_CMD_UNKNOWN;
 }

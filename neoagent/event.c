@@ -457,6 +457,10 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
             }
         } else if (client->cmd == NEOAGENT_MEMPROTO_CMD_SET) {
             client->req_cnt++;
+        } else if (client->cmd == NEOAGENT_MEMPROTO_CMD_QUIT) {
+            ev_io_stop(EV_A_ w);
+            neoagent_client_close(client, env);
+            return;
         }
 
         connpool = &env->connpool_active;
