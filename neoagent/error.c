@@ -52,6 +52,7 @@ const char *neoagent_error_messages[NEOAGENT_ERROR_MAX] = {
     [NEOAGENT_ERROR_FAILED_SETUP_SIGNAL]   = "failed to set signal handler",
     [NEOAGENT_ERROR_FAILED_IGNORE_SIGNAL]  = "failed to ignore signal",
     [NEOAGENT_ERROR_FAILED_DAEMONIZE]      = "failed to daemonize",
+    [NEOAGENT_ERROR_FAILED_WRITE]          = "failed to write",
     [NEOAGENT_ERROR_REMAIN_DATA]           = "still data remains",
     [NEOAGENT_ERROR_TOO_MANY_ENVIRONMENTS] = "too many environments",
     [NEOAGENT_ERROR_UNKNOWN]               = "unknown error",
