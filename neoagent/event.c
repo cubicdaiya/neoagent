@@ -597,7 +597,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
 
         if (client->head_spare != NULL) {
             spare = client->head_spare;
-            while (spare != NULL) {
+            while (spare != NULL && spare->bufsize > 0) {
                 size = write(cfd, spare->buf, spare->bufsize);
                 if (size <= 0) {
                     ev_io_stop(EV_A_ w);
