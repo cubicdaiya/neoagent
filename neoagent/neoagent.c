@@ -47,7 +47,7 @@
 #include "memproto.h"
 
 // version number
-#define NEOAGENT_VERSION "0.1.2"
+#define NEOAGENT_VERSION "0.1.3"
 
 // constants
 static const int NEOAGENT_ENV_MAX = 10;

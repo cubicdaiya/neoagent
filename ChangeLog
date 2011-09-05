@@ -1,3 +1,17 @@
+2011-09-06 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* add event switch count and max
+
+	* unuse keep-alive when connection pool is full
+
+	* fix bug(when too long command string, get command fail)
+
+	* support command 'quit'
+
+	* output file-name and line-number when error occurred
+
+	* 0.1.3 released
+
 2011-08-30 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fixes bug(connection pool is unused fully)
