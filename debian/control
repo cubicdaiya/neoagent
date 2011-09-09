@@ -1,0 +1,11 @@
+
+Package: neoagent
+Priority: extra
+Section: utils
+Installed-Size: 111512
+Maintainer: Tatsuhiko Kubo [cubicdaiya@gmail.com]
+Architecture: amd64
+Version: 0.1.3
+Depends: libev-dev, libjson0-dev
+Description: A Yet Another Memcached Proxy Server
+

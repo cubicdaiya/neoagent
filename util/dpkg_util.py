@@ -3,6 +3,11 @@
 import os
 import shutil
 
+def write_file(fpath, content):
+    f = open(fpath, 'w')
+    f.write(content)
+    f.close()
+
 def copy_file(target=None, source=None, env=None):
     shutil.copy2(str(source[0]), str(target[0]))
 
@@ -24,12 +29,11 @@ Description: %s
         installed_size = 0
         for i in DEBFILES:
             installed_size += os.stat(str(env.File(i[1])))[6]
-            control_info = CONTROL_TEMPLATE % (
-                DEBNAME, installed_size, DEBMAINT, DEBARCH, DEBVERSION,
-                DEBDEPENDS, DEBDESC)
-            f = open(str(target[0]), 'w')
-            f.write(control_info)
-            f.close()
+        control_info = CONTROL_TEMPLATE % (
+            DEBNAME, installed_size, DEBMAINT, DEBARCH, DEBVERSION,
+            DEBDEPENDS, DEBDESC)
+        write_file(str(target[0]), control_info)
+        write_file(os.path.dirname(os.path.dirname(os.path.dirname(str(target[0])))) + '/' + os.path.basename(str(target[0])), control_info)
     
     debpkg = '#%s_%s-%s-%s.deb' % (DEBNAME, DEBVERSION, SUBVERSION, DEBARCH)
     env.Alias("debian", debpkg)
