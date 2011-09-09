@@ -75,7 +75,10 @@ inline static void neoagent_spare_free (neoagent_client_t *client)
     p = client->head_spare;
     while (p != NULL) {
         pp = p->next;
-        free(p->buf);
+        if (p->buf != NULL) {
+            free(p->buf);
+            p->buf = NULL;
+        }
         free(p);
         p = NULL;
         p = pp;
@@ -98,6 +101,15 @@ inline static void neoagent_error_count_up (neoagent_env_t *env)
     }
 }
 
+static int neoagent_remaining_size (int fd)
+{
+    int size = 0;
+    if (ioctl(fd, FIONREAD, &size) != 0) {
+        return 0;
+    }
+    return size;
+}
+
 static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *env)
 {
     int tsfd, size, cur_pool;
@@ -111,11 +123,15 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
     // release client resources
     close(client->cfd);
     client->cfd = -1;
-    neoagent_spare_free(client);
-    free(client->buf);
-    client->buf = NULL;
-    free(client);
-    client = NULL;
+    if (client != NULL) {
+        neoagent_spare_free(client);
+        if (client->buf != NULL) {
+            free(client->buf);
+            client->buf = NULL;
+        }
+        free(client);
+        client = NULL;
+    }
 
     if ((size = neoagent_remaining_size(tsfd)) > 0) {
         NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_REMAIN_DATA);
@@ -132,14 +148,10 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
     connpool = &env->connpool_active;
 
     if (is_use_connpool) {
-        if (tsfd <= 0) {
-            tsfd = neoagent_target_server_tcpsock_init();
-            neoagent_target_server_tcpsock_setup(tsfd, true);
-        }
         connpool->fd_pool[cur_pool] = tsfd;
         connpool->mark[cur_pool]    = 0;
     
-        if (connpool->cur == connpool->max) {
+        if (connpool->cur >= connpool->max) {
         
             if (!connpool->is_full) {
                 connpool->is_full = true;
@@ -152,19 +164,10 @@ static void neoagent_client_close (neoagent_client_t *client, neoagent_env_t *en
             close(tsfd);
         }
     }
-    
+
     // update environment
     env->current_conn--;
 
-}
-
-static int neoagent_remaining_size (int fd)
-{
-    int size;
-    if (ioctl(fd, FIONREAD, &size) != 0) {
-        return 0;
-    }
-    return size;
 }
 
 static void neoagent_make_spare(neoagent_client_t *client, neoagent_env_t *env)
@@ -297,26 +300,19 @@ void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
 {
     int cfd, tsfd, size, req_cnt;
     neoagent_client_t *client;
-    neoagent_env_t * env;
+    neoagent_env_t    *env;
+    neoagent_server_t *server;
 
     tsfd   = w->fd;
     client = (neoagent_client_t *)w->data;
-    cfd    = client->cfd;
-
     if (client == NULL) {
         ev_io_stop(EV_A_ w);
-        return;
+        return;        
     }
-
-    env = client->env;
+    cfd    = client->cfd;
+    env    = client->env;
 
     if (client->is_refused_active != env->is_refused_active) {
-        ev_io_stop(EV_A_ w);
-        neoagent_client_close(client, env);
-        return;
-    }
-
-    if (client->switch_cnt++ >= env->switch_max) {
         ev_io_stop(EV_A_ w);
         neoagent_client_close(client, env);
         return;
@@ -325,7 +321,27 @@ void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
     if (revents & EV_WRITE) {
 
         size = write(tsfd, client->buf, client->bufsize);
-        if (size < 0) {
+        if (size <= 0) {
+            if (size == 0 || errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+                return;
+            }
+            if (errno == EPIPE) {
+                if (client->is_refused_active) {
+                    server = &env->backup_server;
+                } else {
+                    server = &env->target_server;
+                }
+                if (!neoagent_server_connect(tsfd, &server->addr)) {
+                    if (errno != EINPROGRESS && errno != EALREADY) {
+                        NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_CONNECTION_FAILED);
+                        neoagent_error_count_up(env);
+                        ev_io_stop(EV_A_ w);
+                        neoagent_client_close(client, env);
+                        return;
+                    }
+                }
+                return;
+            }
             ev_io_stop(EV_A_ w);
             neoagent_client_close(client, env);
             return;
@@ -338,14 +354,23 @@ void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
         // use spare buffer
         if (client->cmd == NEOAGENT_MEMPROTO_CMD_GET && neoagent_memproto_is_request_divided(client->req_cnt) && client->current_req_cnt > 0) {
             size = neoagent_remaining_size(tsfd);
-            if (size == 0) {
-                neoagent_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
+            if (size <= 0) {
+                if (size == 0) {
+                    neoagent_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
+                }  else {
+                    ev_io_stop(EV_A_ w);
+                    neoagent_client_close(client, env);
+                }
                 return;
             }
 
             size = read(tsfd, client->current_spare->buf + client->current_spare->ts_pos, size);
             if (size <= 0) {
-                neoagent_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
+                if (size == 0 || errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+                    return;
+                }
+                ev_io_stop(EV_A_ w);
+                neoagent_client_close(client, env);
                 return;
             }
             client->current_spare->ts_pos                             += size;
@@ -368,14 +393,23 @@ void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents)
         }
 
         size = neoagent_remaining_size(tsfd);
-        if (size == 0) {
-            neoagent_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
+        if (size <= 0) {
+            if (size == 0) {
+                neoagent_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
+            } else {
+                ev_io_stop(EV_A_ w);
+                neoagent_client_close(client, env);
+            }
             return;            
         }
 
         size = read(tsfd, client->buf + client->ts_pos, size);
         if (size <= 0) {
-            neoagent_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
+            if (size == 0 || errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+                return;
+            }
+            ev_io_stop(EV_A_ w);
+            neoagent_client_close(client, env);
             return;
         }
         client->ts_pos              += size;
@@ -415,22 +449,15 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
 
     cfd    = w->fd;
     client = (neoagent_client_t *)w->data;
+    if (client == NULL) {
+        ev_io_stop(EV_A_ w);
+        return;        
+    }
     env    = client->env;
     tsfd   = client->tsfd;
     is_use_pool = false;
 
-    if (client == NULL) {
-        ev_io_stop(EV_A_ w);
-        return;
-    }
-
     if (client->is_refused_active != env->is_refused_active) {
-        ev_io_stop(EV_A_ w);
-        neoagent_client_close(client, env);
-        return;
-    }
-
-    if (client->switch_cnt++ >= env->switch_max) {
         ev_io_stop(EV_A_ w);
         neoagent_client_close(client, env);
         return;
@@ -440,7 +467,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
 
         size = neoagent_remaining_size(cfd);
 
-        if (size == 0)  {
+        if (size <= 0)  {
             ev_io_stop(EV_A_ w);
             neoagent_client_close(client, env);
             return;
@@ -448,6 +475,9 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
 
         size = read(cfd, client->buf, size);
         if (size <= 0) {
+            if (size == 0 || errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+                return;
+            }
             ev_io_stop(EV_A_ w);
             neoagent_client_close(client, env);
             return;
@@ -460,14 +490,6 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
         }
 
         client->cmd = neoagent_memproto_detect_command(client->buf);
-
-        if (client->cmd == NEOAGENT_MEMPROTO_CMD_UNKNOWN) {
-            NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_INVALID_CMD);
-            neoagent_error_count_up(env);
-            ev_io_stop(EV_A_ w);
-            neoagent_client_close(client, env);
-            return;
-        }
 
         // for get command specific(request piplining)
         if (client->cmd == NEOAGENT_MEMPROTO_CMD_GET) {
@@ -487,7 +509,6 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
 
         if (client->is_use_connpool) {
 
-            // connection pool is not full
             if (connpool->is_full) {
                 client->tsfd = connpool->fd_pool[client->cur_pool];
                 tsfd         = client->tsfd;
@@ -527,7 +548,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                 } else {
                     server = &env->target_server;
                 }
-                
+
                 if (!is_use_pool && !neoagent_server_connect(tsfd, &server->addr)) {
                     if (errno != EINPROGRESS && errno != EALREADY) {
                         NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_CONNECTION_FAILED);
@@ -537,6 +558,7 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                         return;
                     }
                 }
+
             }
             
         } else {
@@ -575,9 +597,15 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
                     return;
                 }
             }
-             
+
         }
         
+        if (client->cmd == NEOAGENT_MEMPROTO_CMD_UNKNOWN) {
+            ev_io_stop(EV_A_ w);
+            neoagent_client_close(client, env);
+            return;
+        }
+
         ev_io_stop(EV_A_ w);
         ev_io_init(&client->ts_watcher, neoagent_target_server_callback, tsfd, EV_WRITE);
         ev_io_start(EV_A_ &client->ts_watcher);
@@ -585,7 +613,10 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
     } else if (revents & EV_WRITE) {
 
         size = write(cfd, client->buf, client->bufsize);
-        if (size <= 0) {
+        if (size < 0) {
+            if (size == 0 || errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+                return;
+            }
             ev_io_stop(EV_A_ w);
             NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_FAILED_WRITE);
             neoagent_error_count_up(env);
@@ -619,8 +650,6 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
             neoagent_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
             return;
         }
-
-        client->switch_cnt = 0;
 
         neoagent_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_READ);
 
@@ -661,8 +690,12 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    if (connpool->cur == connpool->max) {
+    if (connpool->cur >= connpool->max) {
         connpool->cur = 0;
+    }
+
+    if (env->current_conn >= env->conn_max) {
+        return;
     }
 
     for (int i=0;i<connpool->max;++i) {
@@ -678,23 +711,37 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    if (env->current_conn >= env->conn_max) {
-        return;
-    }
-
     if ((cfd = neoagent_server_accept(fsfd)) < 0) {
         NEOAGENT_STDERR("accept()");
+        if (!is_connpool_full) {
+            connpool->mark[cur] = 0;
+        }
         return;
     }
 
-    env->current_conn++;
-
     client                    = (neoagent_client_t *)malloc(sizeof(neoagent_client_t));
+    if (client == NULL) {
+        NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_OUTOF_MEMORY);
+        if (!is_connpool_full) {
+            connpool->mark[cur] = 0;
+        }
+        close(cfd);
+        return;
+    }
     memset(client, 0, sizeof(*client));
     client->buf               = (char *)malloc(env->bufsize + 1);
+    if (client->buf == NULL) {
+        NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_OUTOF_MEMORY);
+        if (!is_connpool_full) {
+            connpool->mark[cur] = 0;
+        }
+        free(client);
+        client = NULL;
+        close(cfd);
+        return;
+    }
     client->cfd               = cfd;
     client->req_cnt           = 0;
-    client->switch_cnt        = 0;
     client->ts_pos            = 0;
     client->current_req_cnt   = 0;
     client->env               = env;
@@ -703,7 +750,10 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->cur_pool          = is_connpool_full ? -1 : cur;
     client->is_refused_active = env->is_refused_active;
     client->is_use_connpool   = is_connpool_full ? false : true;
+    client->head_spare        = NULL;
+    client->current_spare     = NULL;
 
+    env->current_conn++;
     connpool->cur++;
 
     ev_io_init(&client->c_watcher, neoagent_client_callback, cfd, EV_READ);

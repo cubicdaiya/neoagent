@@ -42,7 +42,6 @@ static const int  NEOAGENT_STPORT_DEFAULT           = 30011;
 static const int  NEOAGENT_CONN_MAX_DEFAULT         = 1000;
 static const int  NEOAGENT_CONNPOOL_MAX_DEFAULT     = 20;
 static const int  NEOAGENT_ERROR_COUNT_MAX_DEFAULT  = 1000;
-static const int  NEOAGENT_SWITCH_MAX_DEFAULT       = 1000;
 static const int  NEOAGENT_ACCESS_MASK_DEFAULT      = 0664;
 static const int  NEOAGENT_BUFSIZE_DEFAULT          = 65536;
 static const bool NEOAGENT_IS_CONNPOOL_ONLY_DEFAULT = false;
@@ -103,7 +102,6 @@ void neoagent_env_setup_default(neoagent_env_t *env, int idx)
     env->stport           = NEOAGENT_STPORT_DEFAULT + idx;
     env->conn_max         = NEOAGENT_CONN_MAX_DEFAULT;
     env->connpool_max     = NEOAGENT_CONNPOOL_MAX_DEFAULT;
-    env->switch_max       = NEOAGENT_SWITCH_MAX_DEFAULT;
     env->error_count_max  = NEOAGENT_ERROR_COUNT_MAX_DEFAULT;
     env->is_connpool_only = NEOAGENT_IS_CONNPOOL_ONLY_DEFAULT;
     env->bufsize          = NEOAGENT_BUFSIZE_DEFAULT;
