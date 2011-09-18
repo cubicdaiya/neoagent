@@ -515,22 +515,11 @@ void neoagent_client_callback(EV_P_ struct ev_io *w, int revents)
             }
             
             if (tsfd <= 0 || !connpool->is_full) {
-                if (client->cmd == NEOAGENT_MEMPROTO_CMD_SET) {
-                    if (tsfd <= 0) {
-                        client->tsfd                        = neoagent_target_server_tcpsock_init();
-                        tsfd                                = client->tsfd;
-                        connpool->fd_pool[client->cur_pool] = tsfd;
-                        connpool->mark[client->cur_pool]    = 1;
-                    } else {
-                        is_use_pool = true;
-                    }
+                if (tsfd <= 0) {
+                    client->tsfd = neoagent_target_server_tcpsock_init();
+                    tsfd         = client->tsfd;
                 } else {
-                    if (tsfd <= 0) {
-                        client->tsfd = neoagent_target_server_tcpsock_init();
-                        tsfd         = client->tsfd;
-                    } else {
-                        is_use_pool = true;
-                    }
+                    is_use_pool = true;
                 }
                 
                 if (tsfd <= 0) {
