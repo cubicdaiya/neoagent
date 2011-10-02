@@ -51,7 +51,7 @@ void neoagent_bm_create_table (char *pattern, int *skip)
 
     len = strlen(pattern);
     for (int i=0;i<len-1;++i) {
-        skip[(int)(*(pattern + i))] = len - i - 1;
+        skip[(int)((unsigned char)*(pattern + i))] = len - i - 1;
     }
 }
 
@@ -72,17 +72,17 @@ int neoagent_bm_search (char *haystack, char *pattern, int *skip, int hlen, int 
 
         for (int j=plen-1;j>=0;--j) {
             if (pattern[j] != haystack[i + j]) {
-                if (skip[(int)haystack[i + j]] == 0) {
+                if (skip[(int)((unsigned char)haystack[i + j])] == 0) {
                     i += plen;
                 } else {
-                    i += skip[(int)haystack[i + j]];
+                    i += skip[(int)((unsigned char)haystack[i + j])];
                 }
                 goto loop;
             }
         }
 
-        if (skip[(int)haystack[i + plen - 1]] != 0) {
-            i += skip[(int)haystack[i + plen - 1]];
+        if (skip[(int)((unsigned char)haystack[i + plen - 1])] != 0) {
+            i += skip[(int)((unsigned char)haystack[i + plen - 1])];
         } else {
             i += plen;
         }
