@@ -68,6 +68,7 @@ static void neoagent_stat_callback (EV_P_ struct ev_io *w, int revents);
 static void neoagent_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void neoagent_client_callback (EV_P_ struct ev_io *w, int revents);
 static void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents);
+static void *neoagent_support (void *args);
 
 inline static void neoagent_spare_free (neoagent_client_t *client)
 {
@@ -750,12 +751,33 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
 }
 
+static void *neoagent_support (void *args)
+{
+    struct ev_loop *loop;
+    neoagent_env_t *env;
+    ev_timer hc_watcher;
+    ev_io    st_watcher;
+
+    env  = (neoagent_env_t *)args;
+    loop = ev_loop_new(0);
+
+    hc_watcher.data = env;
+    ev_timer_init(&hc_watcher, neoagent_health_check_callback, 5., 0.);
+    ev_timer_start(loop, &hc_watcher);
+
+    st_watcher.data = env;
+    ev_io_init(&st_watcher, neoagent_stat_callback, env->stfd, EV_READ);
+    ev_io_start(loop, &st_watcher);
+    ev_loop(loop, 0);
+
+    return NULL;
+}
+
 void *neoagent_event_loop (void *args)
 {
     struct ev_loop *loop;
-    ev_timer hc_watcher;
-    ev_io    st_watcher;
     neoagent_env_t *env;
+    pthread_t th_support;
 
     env = (neoagent_env_t *)args;
 
@@ -768,20 +790,13 @@ void *neoagent_event_loop (void *args)
     env->stfd = neoagent_stat_server_tcpsock_init(env->stport);
 
     loop = ev_loop_new(0);
-    env->fs_watcher.data = loop;
 
     if (env->fsfd < 0) {
         NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_FD);
     }
 
-    hc_watcher.data = env;
-    ev_timer_init (&hc_watcher, neoagent_health_check_callback, 5., 0.);
-    ev_timer_start (loop, &hc_watcher);
+    pthread_create(&th_support, NULL, neoagent_support, env);
 
-    st_watcher.data = env;
-    ev_io_init(&st_watcher, neoagent_stat_callback, env->stfd, EV_READ);
-    ev_io_start(loop, &st_watcher);
- 
     env->fs_watcher.data = env;
     ev_io_init(&env->fs_watcher, neoagent_front_server_callback, env->fsfd, EV_READ);
     ev_io_start(loop, &env->fs_watcher);
