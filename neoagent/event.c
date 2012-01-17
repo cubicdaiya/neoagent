@@ -708,7 +708,7 @@ void neoagent_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    client                    = (neoagent_client_t *)malloc(sizeof(neoagent_client_t));
+    client = (neoagent_client_t *)malloc(sizeof(neoagent_client_t));
     if (client == NULL) {
         NEOAGENT_STDERR_MESSAGE(NEOAGENT_ERROR_OUTOF_MEMORY);
         if (!is_connpool_full) {
