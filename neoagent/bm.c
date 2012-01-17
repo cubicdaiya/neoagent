@@ -73,9 +73,13 @@ int neoagent_bm_search (char *haystack, char *pattern, int *skip, int hlen, int 
         for (int j=plen-1;j>=0;--j) {
             if (pattern[j] != haystack[i + j]) {
                 if (skip[(int)((unsigned char)haystack[i + j])] == 0) {
-                    i += plen;
+                    if (j == plen - 1) {
+                        i += plen;
+                    } else {
+                        i += plen - j - 1;
+                    }
                 } else {
-                    i += skip[(int)((unsigned char)haystack[i + j])];
+                    i += skip[(int)((unsigned char)haystack[i + j])] - (plen - 1 - j);
                 }
                 goto loop;
             }
