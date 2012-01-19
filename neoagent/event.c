@@ -233,6 +233,7 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
         {
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
+            NA_STDERR_MESSAGE(NA_ERROR_INVALID_CMD);
             return; // request exit
         } else if (client->cmd == NA_MEMPROTO_CMD_GET) {
             client->req_cnt = na_memproto_count_request_get(client->client_rbuf, client->client_rbufsize);
