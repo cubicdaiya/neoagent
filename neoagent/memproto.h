@@ -51,6 +51,8 @@ void na_memproto_bm_skip_init (void);
 na_memproto_cmd_t na_memproto_detect_command (char *buf);
 int na_memproto_count_request_get(char *buf, int bufsize);
 int na_memproto_count_response_get(char *buf, int bufsize);
+int na_memproto_count_request_set(char *buf, int bufsize);
+int na_memproto_count_response_set(char *buf, int bufsize);
 
 inline bool na_memproto_is_request_divided (int req_cnt)
 {
