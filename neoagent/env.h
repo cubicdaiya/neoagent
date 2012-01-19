@@ -95,14 +95,14 @@ typedef struct na_env_t {
 typedef struct na_client_t {
     int cfd;
     int tsfd;
-    char *client_rbuf;
-    char *client_wbuf;
-    char *server_rbuf;
-    char *server_wbuf;
-    int client_rbufsize;
-    int client_wbufsize;
-    int server_rbufsize;
-    int server_wbufsize;
+    char *crbuf;
+    char *cwbuf;
+    char *srbuf;
+    char *swbuf;
+    int crbufsize;
+    int cwbufsize;
+    int srbufsize;
+    int swbufsize;
     na_memproto_cmd_t cmd;
     bool is_refused_active;
     bool is_use_connpool;

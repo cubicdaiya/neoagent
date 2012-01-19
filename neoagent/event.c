@@ -88,10 +88,10 @@ static void na_client_close (na_client_t *client, na_env_t *env)
     close(client->cfd);
     client->cfd = -1;
 
-    NA_FREE(client->client_rbuf);
-    NA_FREE(client->client_wbuf);
-    NA_FREE(client->server_rbuf);
-    NA_FREE(client->server_wbuf);
+    NA_FREE(client->crbuf);
+    NA_FREE(client->cwbuf);
+    NA_FREE(client->srbuf);
+    NA_FREE(client->swbuf);
     NA_FREE(client);
 
     --env->current_conn;
@@ -116,7 +116,7 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
     if (revents & EV_READ) {
 
-        if (client->server_rbufsize >= env->bufsize) {
+        if (client->srbufsize >= env->bufsize) {
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
             NA_STDERR_MESSAGE(NA_ERROR_OUTOF_BUFFER);
@@ -124,8 +124,8 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         }
 
         size = read(tsfd, 
-                    client->server_rbuf + client->server_rbufsize,
-                    env->bufsize - client->server_rbufsize);
+                    client->srbuf + client->srbufsize,
+                    env->bufsize - client->srbufsize);
 
         if (size == 0) {
             ev_io_stop(EV_A_ w);
@@ -140,17 +140,17 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             return;
         }
 
-        client->server_rbufsize                      += size;
-        client->server_rbuf[client->server_rbufsize]  = '\0';
+        client->srbufsize                += size;
+        client->srbuf[client->srbufsize]  = '\0';
 
         if (client->cmd == NA_MEMPROTO_CMD_GET) {
-            client->res_cnt = na_memproto_count_response_get(client->server_rbuf, client->server_rbufsize);
+            client->res_cnt = na_memproto_count_response_get(client->srbuf, client->srbufsize);
             if (client->res_cnt >= client->req_cnt) {
                 na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
                 return;
             }
         } else if (client->cmd == NA_MEMPROTO_CMD_SET) {
-            client->res_cnt = na_memproto_count_response_set(client->server_rbuf, client->server_rbufsize);
+            client->res_cnt = na_memproto_count_response_set(client->srbuf, client->srbufsize);
             if (client->res_cnt >= client->req_cnt) {
                 na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
                 return;
@@ -162,8 +162,8 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
     } else if (revents & EV_WRITE) {
 
         size = write(tsfd, 
-                     client->client_rbuf + client->server_wbufsize, 
-                     client->client_rbufsize - client->server_wbufsize);
+                     client->crbuf + client->swbufsize, 
+                     client->crbufsize - client->swbufsize);
 
         if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
@@ -174,10 +174,10 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             return; // request fail
         }
 
-        client->server_wbufsize                      += size;
-        client->server_wbuf[client->server_wbufsize]  = '\0';
+        client->swbufsize                += size;
+        client->swbuf[client->swbufsize]  = '\0';
 
-        if (client->server_wbufsize < client->client_rbufsize) {
+        if (client->swbufsize < client->crbufsize) {
             na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_WRITE);
         } else {
             na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
@@ -207,8 +207,8 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
     if (revents & EV_READ) {
 
         size = read(cfd, 
-                    client->client_rbuf + client->client_rbufsize,
-                    env->bufsize - client->client_rbufsize);
+                    client->crbuf + client->crbufsize,
+                    env->bufsize - client->crbufsize);
 
         if (size == 0) {
             ev_io_stop(EV_A_ w);
@@ -223,10 +223,10 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
             return; // request fail
         }
 
-        client->client_rbufsize                      += size;
-        client->client_rbuf[client->client_rbufsize]  = '\0';
+        client->crbufsize                += size;
+        client->crbuf[client->crbufsize]  = '\0';
 
-        client->cmd = na_memproto_detect_command(client->client_rbuf);
+        client->cmd = na_memproto_detect_command(client->crbuf);
 
         if (client->cmd == NA_MEMPROTO_CMD_QUIT    ||
             client->cmd == NA_MEMPROTO_CMD_UNKNOWN)
@@ -238,9 +238,9 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
             }
             return; // request exit
         } else if (client->cmd == NA_MEMPROTO_CMD_GET) {
-            client->req_cnt = na_memproto_count_request_get(client->client_rbuf, client->client_rbufsize);
+            client->req_cnt = na_memproto_count_request_get(client->crbuf, client->crbufsize);
         } else if (client->cmd == NA_MEMPROTO_CMD_SET) {
-            client->req_cnt = na_memproto_count_request_set(client->client_rbuf, client->client_rbufsize);
+            client->req_cnt = na_memproto_count_request_set(client->crbuf, client->crbufsize);
         }
 
         switch (client->event_state) {
@@ -260,8 +260,8 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
     } else if (revents & EV_WRITE) {
 
         size = write(cfd,
-                     client->server_rbuf + client->client_wbufsize,
-                     client->server_rbufsize - client->client_wbufsize);
+                     client->srbuf + client->cwbufsize,
+                     client->srbufsize - client->cwbufsize);
 
         if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
@@ -272,17 +272,17 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
             return; // request fail
         }
 
-        client->client_wbufsize += size;
-        if (client->client_wbufsize < client->server_rbufsize) {
+        client->cwbufsize += size;
+        if (client->cwbufsize < client->srbufsize) {
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
         } else {
-            client->client_rbufsize = 0;
-            client->client_wbufsize = 0;
-            client->server_rbufsize = 0;
-            client->server_wbufsize = 0;
-            client->event_state     = NA_EVENT_STATE_CLIENT_READ;
-            client->req_cnt         = 0;
-            client->res_cnt         = 0;
+            client->crbufsize   = 0;
+            client->cwbufsize   = 0;
+            client->srbufsize   = 0;
+            client->swbufsize   = 0;
+            client->event_state = NA_EVENT_STATE_CLIENT_READ;
+            client->req_cnt     = 0;
+            client->res_cnt     = 0;
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_READ);
         }
         
@@ -301,7 +301,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     fsfd   = w->fd;
     env    = (na_env_t *)w->data;
 
-    // wait until connections are empty, after signal is catched
     if (SigExit == 1 && env->current_conn == 0) {
         pthread_exit(&th_ret);
         return;
@@ -334,18 +333,18 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
     memset(client, 0, sizeof(*client));
-    client->client_rbuf = (char *)malloc(env->bufsize + 1);
-    client->client_wbuf = (char *)malloc(env->bufsize + 1);
-    client->server_rbuf = (char *)malloc(env->bufsize + 1);
-    client->server_wbuf = (char *)malloc(env->bufsize + 1);
-    if (client->client_rbuf == NULL ||
-        client->client_wbuf == NULL ||
-        client->server_rbuf == NULL ||
-        client->server_wbuf == NULL) {
-        NA_FREE(client->client_rbuf);
-        NA_FREE(client->client_wbuf);
-        NA_FREE(client->server_rbuf);
-        NA_FREE(client->server_wbuf);
+    client->crbuf = (char *)malloc(env->bufsize + 1);
+    client->cwbuf = (char *)malloc(env->bufsize + 1);
+    client->srbuf = (char *)malloc(env->bufsize + 1);
+    client->swbuf = (char *)malloc(env->bufsize + 1);
+    if (client->crbuf == NULL ||
+        client->cwbuf == NULL ||
+        client->srbuf == NULL ||
+        client->swbuf == NULL) {
+        NA_FREE(client->crbuf);
+        NA_FREE(client->cwbuf);
+        NA_FREE(client->srbuf);
+        NA_FREE(client->swbuf);
         NA_FREE(client);
         close(cfd);
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
@@ -356,10 +355,10 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->c_watcher.data    = client;
     client->ts_watcher.data   = client;
     client->is_refused_active = env->is_refused_active;
-    client->client_rbufsize   = 0;
-    client->client_wbufsize   = 0;
-    client->server_rbufsize   = 0;
-    client->server_wbufsize   = 0;
+    client->crbufsize         = 0;
+    client->cwbufsize         = 0;
+    client->srbufsize         = 0;
+    client->swbufsize         = 0;
     client->event_state       = NA_EVENT_STATE_CLIENT_READ;
     client->req_cnt           = 0;
     client->res_cnt           = 0;
@@ -398,10 +397,12 @@ static void *na_support_loop (void *args)
     env  = (na_env_t *)args;
     loop = ev_loop_new(0);
 
+    // health check event
     hc_watcher.data = env;
     ev_timer_init(&hc_watcher, na_health_check_callback, 5., 0.);
     ev_timer_start(loop, &hc_watcher);
 
+    // stat event
     st_watcher.data = env;
     ev_io_init(&st_watcher, na_stat_callback, env->stfd, EV_READ);
     ev_io_start(loop, &st_watcher);
@@ -424,16 +425,14 @@ void *na_event_loop (void *args)
         env->fsfd = na_front_server_tcpsock_init(env->fsport);
     }
 
-    env->stfd = na_stat_server_tcpsock_init(env->stport);
-
-    loop = ev_loop_new(0);
-
     if (env->fsfd < 0) {
         NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
     }
 
+    env->stfd = na_stat_server_tcpsock_init(env->stport);
     pthread_create(&th_support, NULL, na_support_loop, env);
 
+    loop = ev_loop_new(0);
     env->fs_watcher.data = env;
     ev_io_init(&env->fs_watcher, na_front_server_callback, env->fsfd, EV_READ);
     ev_io_start(loop, &env->fs_watcher);
@@ -445,9 +444,20 @@ void *na_event_loop (void *args)
 static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
 {
     int tsfd;
+    int th_ret;
     na_env_t *env;
 
     env = (na_env_t *)w->data;
+
+    if (SigExit == 1 && env->current_conn == 0) {
+        pthread_exit(&th_ret);
+        return;
+    }
+    
+    if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
+        pthread_exit(&th_ret);
+        return;
+    }
 
     tsfd = na_target_server_tcpsock_init();
 
@@ -470,7 +480,7 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
 
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
 {
-    int cfd, stfd;
+    int cfd, stfd, th_ret;
     int size, available_conn;
     na_env_t *env;
     char buf[BUFSIZ + 1];
@@ -478,6 +488,16 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     stfd           = w->fd;
     env            = (na_env_t *)w->data;
     available_conn = 0;
+
+    if (SigExit == 1 && env->current_conn == 0) {
+        pthread_exit(&th_ret);
+        return;
+    }
+    
+    if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
+        pthread_exit(&th_ret);
+        return;
+    }
 
     if ((cfd = na_server_accept(stfd)) < 0) {
         NA_STDERR("accept()");
