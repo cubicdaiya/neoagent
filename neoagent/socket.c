@@ -52,30 +52,30 @@
 #include "error.h"
 #include "socket.h"
 
-const int NEOAGENT_BACKLOG_MAX = 1024;
-const int NEOAGENT_IPADDR_MAX  = 15;
+const int NA_BACKLOG_MAX = 1024;
+const int NA_IPADDR_MAX  = 15;
 
-inline static bool neoagent_is_ipaddr (const char *ipaddr);
-static void neoagent_set_nonblock (int fd);
+inline static bool na_is_ipaddr (const char *ipaddr);
+static void na_set_nonblock (int fd);
 
-inline static bool neoagent_is_ipaddr (const char *ipaddr)
+inline static bool na_is_ipaddr (const char *ipaddr)
 {
     return inet_addr(ipaddr) != INADDR_NONE;
 }
 
-static void neoagent_set_nonblock (int fd)
+static void na_set_nonblock (int fd)
 {
     if (fd > 0) {
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL)|O_NONBLOCK);
     } else {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_FD);
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
     }
 }
 
-static void neoagent_set_sockopt(int fd, int optname)
+static void na_set_sockopt(int fd, int optname)
 {
     if (fd <= 0) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_FD);
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
     }
 
     switch (optname) {
@@ -99,7 +99,7 @@ static void neoagent_set_sockopt(int fd, int optname)
     }
 }
 
-bool neoagent_server_connect (int tsfd, struct sockaddr_in *tsaddr)
+bool na_server_connect (int tsfd, struct sockaddr_in *tsaddr)
 {
     if (connect(tsfd, (struct sockaddr *)tsaddr, sizeof(*tsaddr)) == -1) {
         return false;
@@ -107,7 +107,7 @@ bool neoagent_server_connect (int tsfd, struct sockaddr_in *tsaddr)
     return true;
 }
 
-int neoagent_server_accept (int sfd)
+int na_server_accept (int sfd)
 {
     int cfd;
     struct sockaddr_in caddr;
@@ -119,37 +119,37 @@ int neoagent_server_accept (int sfd)
     return cfd;
 }
 
-int neoagent_target_server_tcpsock_init (void)
+int na_target_server_tcpsock_init (void)
 {
     int tsfd;
     if ((tsfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        NEOAGENT_STDERR("socket()");
+        NA_STDERR("socket()");
         return -1;
     }
     return tsfd;
 }
 
-void neoagent_target_server_tcpsock_setup (int tsfd, bool is_keepalive)
+void na_target_server_tcpsock_setup (int tsfd, bool is_keepalive)
 {
-    neoagent_set_nonblock(tsfd);
+    na_set_nonblock(tsfd);
     if (is_keepalive) {
-        neoagent_set_sockopt(tsfd, SO_KEEPALIVE);
+        na_set_sockopt(tsfd, SO_KEEPALIVE);
     }
-    neoagent_set_sockopt(tsfd, SO_REUSEADDR);
-    neoagent_set_sockopt(tsfd, SO_LINGER);
+    na_set_sockopt(tsfd, SO_REUSEADDR);
+    na_set_sockopt(tsfd, SO_LINGER);
 }
 
-void neoagent_target_server_healthchecksock_setup (int tsfd)
+void na_target_server_healthchecksock_setup (int tsfd)
 {
-    neoagent_set_sockopt(tsfd, SO_REUSEADDR);
-    neoagent_set_sockopt(tsfd, SO_LINGER);
+    na_set_sockopt(tsfd, SO_REUSEADDR);
+    na_set_sockopt(tsfd, SO_LINGER);
 }
 
-neoagent_host_t neoagent_create_host(char *host)
+na_host_t na_create_host(char *host)
 {
     // hostname example
     // 192.168.0.11:11211, example.com:20001
-    neoagent_host_t host_info;
+    na_host_t host_info;
     char *p;
     int16_t port;
     int hostname_len = 0;
@@ -163,8 +163,8 @@ neoagent_host_t neoagent_create_host(char *host)
         p++;
     }
 
-    if (p == NULL || hostname_len <= 0 || hostname_len > NEOAGENT_HOSTNAME_MAX) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_HOSTNAME);
+    if (p == NULL || hostname_len <= 0 || hostname_len > NA_HOSTNAME_MAX) {
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_HOSTNAME);
     }
 
     strncpy(host_info.ipaddr, host, hostname_len);
@@ -175,7 +175,7 @@ neoagent_host_t neoagent_create_host(char *host)
     port = atoi(p);
 
     if (port <= 0) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_PORT);
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_PORT);
     }
 
     host_info.port = port;
@@ -183,11 +183,11 @@ neoagent_host_t neoagent_create_host(char *host)
     return host_info;
 }
 
-void neoagent_set_sockaddr (neoagent_host_t *host, struct sockaddr_in *addr)
+void na_set_sockaddr (na_host_t *host, struct sockaddr_in *addr)
 {
     memset(addr, 0, sizeof(*addr));
 
-    if (neoagent_is_ipaddr(host->ipaddr)) {
+    if (na_is_ipaddr(host->ipaddr)) {
         addr->sin_family      = AF_INET;
         addr->sin_addr.s_addr = inet_addr(host->ipaddr);
         addr->sin_port        = htons(host->port);
@@ -202,8 +202,8 @@ void neoagent_set_sockaddr (neoagent_host_t *host, struct sockaddr_in *addr)
         snprintf(port_buf, sizeof(port_buf), "%d", host->port);
 
         if ((ai_res = getaddrinfo(host->ipaddr, port_buf, &hints, &ais)) != 0) {
-            NEOAGENT_STDERR(gai_strerror(ai_res));
-            NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_HOSTNAME);
+            NA_STDERR(gai_strerror(ai_res));
+            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_HOSTNAME);
         }
 
         for (ai=ais;ai!=NULL;ai=ai->ai_next) {
@@ -227,27 +227,27 @@ void neoagent_set_sockaddr (neoagent_host_t *host, struct sockaddr_in *addr)
         }
 
         if (ai == NULL) {
-            NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_HOSTNAME);
+            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_HOSTNAME);
         }
 
         freeaddrinfo(ais);
     }
 }
 
-int neoagent_front_server_tcpsock_init (uint16_t port)
+int na_front_server_tcpsock_init (uint16_t port)
 {
     int fsfd;
     struct sockaddr_in iaddr;
     
     if ((fsfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        NEOAGENT_STDERR("socket()");
+        NA_STDERR("socket()");
         return -1;
     }
 
-    neoagent_set_nonblock(fsfd);
-    neoagent_set_sockopt(fsfd, SO_KEEPALIVE);
-    neoagent_set_sockopt(fsfd, SO_REUSEADDR);
-    neoagent_set_sockopt(fsfd, SO_LINGER);
+    na_set_nonblock(fsfd);
+    na_set_sockopt(fsfd, SO_KEEPALIVE);
+    na_set_sockopt(fsfd, SO_REUSEADDR);
+    na_set_sockopt(fsfd, SO_LINGER);
 
     if (port > 0) {
         memset(&iaddr, 0, sizeof(iaddr));
@@ -256,25 +256,25 @@ int neoagent_front_server_tcpsock_init (uint16_t port)
         iaddr.sin_port        = htons(port);
     } else {
         close(fsfd);
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_PORT);
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_PORT);
     }
 
     if (bind(fsfd, (struct sockaddr *)&iaddr, sizeof(iaddr)) < 0) {
         close(fsfd);
-        NEOAGENT_STDERR("bind()");
+        NA_STDERR("bind()");
         return -1;
     }
 
-    if (listen(fsfd, NEOAGENT_BACKLOG_MAX) == -1) {
+    if (listen(fsfd, NA_BACKLOG_MAX) == -1) {
         close(fsfd);
-        NEOAGENT_STDERR("listen()");
+        NA_STDERR("listen()");
         return -1;
     }
 
     return fsfd;
 }
 
-int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask)
+int na_front_server_unixsock_init (char *sockpath, mode_t mask)
 {
     int fsfd;
     mode_t old_umask;
@@ -282,7 +282,7 @@ int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask)
     struct sockaddr_un uaddr;
 
     if ((fsfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-        NEOAGENT_STDERR("socket()");
+        NA_STDERR("socket()");
         return -1;
     }
 
@@ -293,10 +293,10 @@ int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask)
         unlink(sockpath);
     }
 
-    neoagent_set_nonblock(fsfd);
-    neoagent_set_sockopt(fsfd, SO_KEEPALIVE);
-    neoagent_set_sockopt(fsfd, SO_REUSEADDR);
-    neoagent_set_sockopt(fsfd, SO_LINGER);
+    na_set_nonblock(fsfd);
+    na_set_sockopt(fsfd, SO_KEEPALIVE);
+    na_set_sockopt(fsfd, SO_REUSEADDR);
+    na_set_sockopt(fsfd, SO_LINGER);
 
     if (sockpath != NULL) {
         memset(&uaddr, 0, sizeof(uaddr));
@@ -304,7 +304,7 @@ int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask)
         strncpy(uaddr.sun_path, sockpath, sizeof(uaddr.sun_path) - 1);
     }  else {
         close(fsfd);
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_SOCKPATH);
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_SOCKPATH);
     }
 
     old_umask = umask(~(mask & 0777));
@@ -312,33 +312,33 @@ int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask)
     if (bind(fsfd, (struct sockaddr *)&uaddr, sizeof(uaddr)) < 0) {
         close(fsfd);
         umask(old_umask);
-        NEOAGENT_STDERR("bind()");
+        NA_STDERR("bind()");
         return -1;
     }
 
     umask(old_umask);
 
-    if (listen(fsfd, NEOAGENT_BACKLOG_MAX) == -1) {
+    if (listen(fsfd, NA_BACKLOG_MAX) == -1) {
         close(fsfd);
-        NEOAGENT_STDERR("listen()");
+        NA_STDERR("listen()");
         return -1;
     }
 
     return fsfd;
 }
 
-int neoagent_stat_server_tcpsock_init (uint16_t port)
+int na_stat_server_tcpsock_init (uint16_t port)
 {
     int stfd;
     struct sockaddr_in iaddr;
     
     if ((stfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        NEOAGENT_STDERR("socket()");
+        NA_STDERR("socket()");
         return -1;
     }
 
-    neoagent_set_sockopt(stfd, SO_REUSEADDR);
-    neoagent_set_sockopt(stfd, SO_LINGER);
+    na_set_sockopt(stfd, SO_REUSEADDR);
+    na_set_sockopt(stfd, SO_LINGER);
 
     if (port > 0) {
         memset(&iaddr, 0, sizeof(iaddr));
@@ -347,18 +347,18 @@ int neoagent_stat_server_tcpsock_init (uint16_t port)
         iaddr.sin_port        = htons(port);
     } else {
         close(stfd);
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_PORT);
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_PORT);
     }
 
     if (bind(stfd, (struct sockaddr *)&iaddr, sizeof(iaddr)) < 0) {
         close(stfd);
-        NEOAGENT_STDERR("bind()");
+        NA_STDERR("bind()");
         return -1;
     }
 
-    if (listen(stfd, NEOAGENT_BACKLOG_MAX) == -1) {
+    if (listen(stfd, NA_BACKLOG_MAX) == -1) {
         close(stfd);
-        NEOAGENT_STDERR("listen()");
+        NA_STDERR("listen()");
         return -1;
     }
 

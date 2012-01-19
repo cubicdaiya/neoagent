@@ -36,47 +36,47 @@
 #include "memproto.h"
 #include "bm.h"
 
-typedef enum neoagent_memproto_bm_skip_t {
-    NEOAGENT_MEMPROTO_BM_SKIP_CRLF,
-    NEOAGENT_MEMPROTO_BM_SKIP_ENDCRLF,
-    NEOAGENT_MEMPROTO_BM_SKIP_MAX // Always add new codes to the end before this one
-} neoagent_memproto_bm_skip_t;
+typedef enum na_memproto_bm_skip_t {
+    NA_MEMPROTO_BM_SKIP_CRLF,
+    NA_MEMPROTO_BM_SKIP_ENDCRLF,
+    NA_MEMPROTO_BM_SKIP_MAX // Always add new codes to the end before this one
+} na_memproto_bm_skip_t;
 
-static int neoagent_bm_skip[NEOAGENT_MEMPROTO_BM_SKIP_MAX][NEOAGENT_BM_SKIP_SIZE] = {
-    [NEOAGENT_MEMPROTO_BM_SKIP_CRLF]    = {},
-    [NEOAGENT_MEMPROTO_BM_SKIP_ENDCRLF] = {},
+static int na_bm_skip[NA_MEMPROTO_BM_SKIP_MAX][NA_BM_SKIP_SIZE] = {
+    [NA_MEMPROTO_BM_SKIP_CRLF]    = {},
+    [NA_MEMPROTO_BM_SKIP_ENDCRLF] = {},
 };
 
-void neoagent_memproto_bm_skip_init (void)
+void na_memproto_bm_skip_init (void)
 {
-    neoagent_bm_create_table("\r\n",    neoagent_bm_skip[NEOAGENT_MEMPROTO_BM_SKIP_CRLF]);
-    neoagent_bm_create_table("END\r\n", neoagent_bm_skip[NEOAGENT_MEMPROTO_BM_SKIP_ENDCRLF]);
+    na_bm_create_table("\r\n",    na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF]);
+    na_bm_create_table("END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF]);
 }
 
-neoagent_memproto_cmd_t neoagent_memproto_detect_command (char *buf)
+na_memproto_cmd_t na_memproto_detect_command (char *buf)
 {
     if (strncmp(buf, "get", 3) == 0) {
-        return NEOAGENT_MEMPROTO_CMD_GET;
+        return NA_MEMPROTO_CMD_GET;
     } else if (strncmp(buf, "set", 3) == 0) {
-        return NEOAGENT_MEMPROTO_CMD_SET;
+        return NA_MEMPROTO_CMD_SET;
     } else if (strncmp(buf, "incr", 4) == 0) {
-        return NEOAGENT_MEMPROTO_CMD_INCR;
+        return NA_MEMPROTO_CMD_INCR;
     } else if (strncmp(buf, "add", 3) == 0) {
-        return NEOAGENT_MEMPROTO_CMD_ADD;
+        return NA_MEMPROTO_CMD_ADD;
     } else if (strncmp(buf, "delete", 6) == 0) {
-        return NEOAGENT_MEMPROTO_CMD_DELETE;
+        return NA_MEMPROTO_CMD_DELETE;
     } else if (strncmp(buf, "quit", 4) == 0) {
-        return NEOAGENT_MEMPROTO_CMD_QUIT;
+        return NA_MEMPROTO_CMD_QUIT;
     }
-    return NEOAGENT_MEMPROTO_CMD_UNKNOWN;
+    return NA_MEMPROTO_CMD_UNKNOWN;
 }
 
-int neoagent_memproto_count_request (char *buf, int bufsize)
+int na_memproto_count_request (char *buf, int bufsize)
 {
-    return neoagent_bm_search(buf, "\r\n", neoagent_bm_skip[NEOAGENT_MEMPROTO_BM_SKIP_CRLF], bufsize, 2);
+    return na_bm_search(buf, "\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF], bufsize, 2);
 }
 
-int neoagent_memproto_count_response(char *buf, int bufsize)
+int na_memproto_count_response(char *buf, int bufsize)
 {
-    return neoagent_bm_search(buf, "END\r\n", neoagent_bm_skip[NEOAGENT_MEMPROTO_BM_SKIP_ENDCRLF], bufsize, 5);
+    return na_bm_search(buf, "END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF], bufsize, 5);
 }

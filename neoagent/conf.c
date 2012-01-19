@@ -45,49 +45,50 @@
 #include "socket.h"
 #include "error.h"
 
-static const int NEOAGENT_JSON_BUF_MAX = 65536;
+static const int NA_JSON_BUF_MAX = 65536;
 
-const char *neoagent_params[NEOAGENT_PARAM_MAX] = {
-    [NEOAGENT_PARAM_NAME]              = "name",
-    [NEOAGENT_PARAM_PORT]              = "port",
-    [NEOAGENT_PARAM_SOCKPATH]          = "sockpath",
-    [NEOAGENT_PARAM_ACCESS_MASK]       = "access_mask",
-    [NEOAGENT_PARAM_TARGET_SERVER]     = "target_server",
-    [NEOAGENT_PARAM_BACKUP_SERVER]     = "backup_server",
-    [NEOAGENT_PARAM_STPORT]            = "stport",
-    [NEOAGENT_PARAM_CONN_MAX]          = "conn_max",
-    [NEOAGENT_PARAM_CONNPOOL_MAX]      = "connpool_max",
-    [NEOAGENT_PARAM_ERROR_COUNT_MAX]   = "error_count_max",
-    [NEOAGENT_PARAM_IS_CONNPOOL_ONLY]  = "is_connpool_only",
-    [NEOAGENT_PARAM_BUFSIZE]           = "bufsize",
+const char *na_params[NA_PARAM_MAX] = {
+    [NA_PARAM_NAME]              = "name",
+    [NA_PARAM_PORT]              = "port",
+    [NA_PARAM_SOCKPATH]          = "sockpath",
+    [NA_PARAM_ACCESS_MASK]       = "access_mask",
+    [NA_PARAM_TARGET_SERVER]     = "target_server",
+    [NA_PARAM_BACKUP_SERVER]     = "backup_server",
+    [NA_PARAM_STPORT]            = "stport",
+    [NA_PARAM_CONN_MAX]          = "conn_max",
+    [NA_PARAM_CONNPOOL_MAX]      = "connpool_max",
+    [NA_PARAM_LOOP_MAX]          = "loop_max",
+    [NA_PARAM_ERROR_COUNT_MAX]   = "error_count_max",
+    [NA_PARAM_IS_CONNPOOL_ONLY]  = "is_connpool_only",
+    [NA_PARAM_BUFSIZE]           = "bufsize",
 };
 
-static const char *neoagent_param_name (neoagent_param_t param);
+static const char *na_param_name (na_param_t param);
 
-static const char *neoagent_param_name (neoagent_param_t param)
+static const char *na_param_name (na_param_t param)
 {
-    return neoagent_params[param];
+    return na_params[param];
 }
 
-struct json_object *neoagent_cnf_get_environments(const char *conf_file_json, int *env_cnt)
+struct json_object *na_cnf_get_environments(const char *conf_file_json, int *env_cnt)
 {
     struct json_object *overall_obj;
     struct json_object *environments_obj;
-    char json_buf[NEOAGENT_JSON_BUF_MAX + 1];
+    char json_buf[NA_JSON_BUF_MAX + 1];
     int json_fd, size;
 
     if ((json_fd = open(conf_file_json, O_RDONLY)) < 0) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_CONFPATH);
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_CONFPATH);
     }
 
-    memset(json_buf, 0, NEOAGENT_JSON_BUF_MAX + 1);
-    if ((size = read(json_fd, json_buf, NEOAGENT_JSON_BUF_MAX)) < 0) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_CONFPATH);
+    memset(json_buf, 0, NA_JSON_BUF_MAX + 1);
+    if ((size = read(json_fd, json_buf, NA_JSON_BUF_MAX)) < 0) {
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_CONFPATH);
     }
 
     overall_obj      = json_tokener_parse(json_buf);
     if (is_error(overall_obj)) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_PARSE_JSON_CONFIG);
+        NA_DIE_WITH_ERROR(NA_ERROR_PARSE_JSON_CONFIG);
     }
     environments_obj = json_object_object_get(overall_obj, "environments");
     *env_cnt         = json_object_array_length(environments_obj);
@@ -100,96 +101,102 @@ struct json_object *neoagent_cnf_get_environments(const char *conf_file_json, in
 }
 
 
-void neoagent_conf_env_init(struct json_object *environments_obj, neoagent_env_t *neoagent_env, int idx)
+void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, int idx)
 {
     char *e;
-    char host_buf[NEOAGENT_HOSTNAME_MAX + 1];
-    neoagent_host_t host;
+    char host_buf[NA_HOSTNAME_MAX + 1];
+    na_host_t host;
     struct json_object *environment_obj = json_object_array_get_idx(environments_obj, idx);
     struct json_object *param_obj;
-    for (int i=0;i<NEOAGENT_PARAM_MAX;++i) {
+    for (int i=0;i<NA_PARAM_MAX;++i) {
 
-        param_obj = json_object_object_get(environment_obj, neoagent_param_name(i));
+        param_obj = json_object_object_get(environment_obj, na_param_name(i));
 
         if (param_obj == NULL) {
             continue;
         }
 
         switch (i) {
-        case NEOAGENT_PARAM_NAME:
+        case NA_PARAM_NAME:
             if (!json_object_is_type(param_obj, json_type_string)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            strncpy(neoagent_env->name, json_object_get_string(param_obj), NEOAGENT_NAME_MAX);
+            strncpy(na_env->name, json_object_get_string(param_obj), NA_NAME_MAX);
             break;
-        case NEOAGENT_PARAM_SOCKPATH:
+        case NA_PARAM_SOCKPATH:
             if (!json_object_is_type(param_obj, json_type_string)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            strncpy(neoagent_env->fssockpath, json_object_get_string(param_obj), NEOAGENT_SOCKPATH_MAX);
+            strncpy(na_env->fssockpath, json_object_get_string(param_obj), NA_SOCKPATH_MAX);
             break;
-        case NEOAGENT_PARAM_TARGET_SERVER:
+        case NA_PARAM_TARGET_SERVER:
             if (!json_object_is_type(param_obj, json_type_string)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            strncpy(host_buf, json_object_get_string(param_obj), NEOAGENT_HOSTNAME_MAX);
-            host = neoagent_create_host(host_buf);
-            memcpy(&neoagent_env->target_server.host, &host, sizeof(host));
-            neoagent_set_sockaddr(&host, &neoagent_env->target_server.addr);
+            strncpy(host_buf, json_object_get_string(param_obj), NA_HOSTNAME_MAX);
+            host = na_create_host(host_buf);
+            memcpy(&na_env->target_server.host, &host, sizeof(host));
+            na_set_sockaddr(&host, &na_env->target_server.addr);
             break;
-        case NEOAGENT_PARAM_BACKUP_SERVER:
-            strncpy(host_buf, json_object_get_string(param_obj), NEOAGENT_HOSTNAME_MAX);
-            host = neoagent_create_host(host_buf);
-            memcpy(&neoagent_env->backup_server.host, &host, sizeof(host));
-            neoagent_set_sockaddr(&host, &neoagent_env->backup_server.addr);
+        case NA_PARAM_BACKUP_SERVER:
+            strncpy(host_buf, json_object_get_string(param_obj), NA_HOSTNAME_MAX);
+            host = na_create_host(host_buf);
+            memcpy(&na_env->backup_server.host, &host, sizeof(host));
+            na_set_sockaddr(&host, &na_env->backup_server.addr);
             break;
-        case NEOAGENT_PARAM_PORT:
+        case NA_PARAM_PORT:
             if (!json_object_is_type(param_obj, json_type_int)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->fsport = json_object_get_int(param_obj);
+            na_env->fsport = json_object_get_int(param_obj);
             break;
-        case NEOAGENT_PARAM_STPORT:
+        case NA_PARAM_STPORT:
             if (!json_object_is_type(param_obj, json_type_int)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->stport = json_object_get_int(param_obj);
+            na_env->stport = json_object_get_int(param_obj);
             break;
-        case NEOAGENT_PARAM_ACCESS_MASK:
+        case NA_PARAM_ACCESS_MASK:
             if (!json_object_is_type(param_obj, json_type_string)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
+            na_env->access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
             break;
-        case NEOAGENT_PARAM_IS_CONNPOOL_ONLY:
+        case NA_PARAM_IS_CONNPOOL_ONLY:
             if (!json_object_is_type(param_obj, json_type_boolean)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->is_connpool_only = json_object_get_boolean(param_obj) == 1 ? true : false;
+            na_env->is_connpool_only = json_object_get_boolean(param_obj) == 1 ? true : false;
             break;
-        case NEOAGENT_PARAM_BUFSIZE:
+        case NA_PARAM_BUFSIZE:
             if (!json_object_is_type(param_obj, json_type_int)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->bufsize = json_object_get_int(param_obj);
+            na_env->bufsize = json_object_get_int(param_obj);
             break;
-        case NEOAGENT_PARAM_CONN_MAX:
+        case NA_PARAM_CONN_MAX:
             if (!json_object_is_type(param_obj, json_type_int)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->conn_max = json_object_get_int(param_obj);
+            na_env->conn_max = json_object_get_int(param_obj);
             break;
-        case NEOAGENT_PARAM_CONNPOOL_MAX:
+        case NA_PARAM_CONNPOOL_MAX:
             if (!json_object_is_type(param_obj, json_type_int)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->connpool_max = json_object_get_int(param_obj);
+            na_env->connpool_max = json_object_get_int(param_obj);
             break;
-        case NEOAGENT_PARAM_ERROR_COUNT_MAX:
+        case NA_PARAM_LOOP_MAX:
             if (!json_object_is_type(param_obj, json_type_int)) {
-                NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_INVALID_JSON_CONFIG);
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            neoagent_env->error_count_max = json_object_get_int(param_obj);
+            na_env->loop_max = json_object_get_int(param_obj);
+            break;
+        case NA_PARAM_ERROR_COUNT_MAX:
+            if (!json_object_is_type(param_obj, json_type_int)) {
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+            }
+            na_env->error_count_max = json_object_get_int(param_obj);
             break;
         default:
             // no through

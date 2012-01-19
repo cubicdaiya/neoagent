@@ -31,29 +31,29 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef NEOAGENT_SOCKET_H
-#define NEOAGENT_SOCKET_H
+#ifndef NA_SOCKET_H
+#define NA_SOCKET_H
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define NEOAGENT_HOSTNAME_MAX 256
+#define NA_HOSTNAME_MAX 256
 
-typedef struct neoagent_host_t {
-    char ipaddr[NEOAGENT_HOSTNAME_MAX + 1];
+typedef struct na_host_t {
+    char ipaddr[NA_HOSTNAME_MAX + 1];
     uint16_t port;
-} neoagent_host_t;
+} na_host_t;
 
-int neoagent_target_server_tcpsock_init (void);
-void neoagent_target_server_tcpsock_setup (int tsfd, bool is_keepalive);
-void neoagent_target_server_healthchecksock_setup (int tsfd);
-void neoagent_set_sockaddr (neoagent_host_t *host, struct sockaddr_in *addr);
-neoagent_host_t neoagent_create_host(char *host);
-int neoagent_front_server_tcpsock_init (uint16_t port);
-int neoagent_front_server_unixsock_init (char *sockpath, mode_t mask);
-int neoagent_stat_server_tcpsock_init (uint16_t port);
-bool neoagent_server_connect (int tsfd, struct sockaddr_in *tsaddr);
-int neoagent_server_accept (int sfd);
+int na_target_server_tcpsock_init (void);
+void na_target_server_tcpsock_setup (int tsfd, bool is_keepalive);
+void na_target_server_healthchecksock_setup (int tsfd);
+void na_set_sockaddr (na_host_t *host, struct sockaddr_in *addr);
+na_host_t na_create_host(char *host);
+int na_front_server_tcpsock_init (uint16_t port);
+int na_front_server_unixsock_init (char *sockpath, mode_t mask);
+int na_stat_server_tcpsock_init (uint16_t port);
+bool na_server_connect (int tsfd, struct sockaddr_in *tsaddr);
+int na_server_accept (int sfd);
 
 
-#endif // NEOAGENT_SOCKET_H
+#endif // NA_SOCKET_H

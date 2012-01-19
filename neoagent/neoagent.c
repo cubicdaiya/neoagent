@@ -47,26 +47,26 @@
 #include "memproto.h"
 
 // version number
-#define NEOAGENT_VERSION "0.1.3"
+#define NA_VERSION "0.1.3"
 
 // constants
-static const int NEOAGENT_ENV_MAX = 10;
+static const int NA_ENV_MAX = 10;
 
 // external globals
 extern volatile sig_atomic_t SigExit;
 
-static void neoagent_version(void);
-static void neoagent_usage(void);
-static void neoagent_signal_handler (int sig);
-static void neoagent_setup_signals (void);
+static void na_version(void);
+static void na_usage(void);
+static void na_signal_handler (int sig);
+static void na_setup_signals (void);
 
-static void neoagent_version(void)
+static void na_version(void)
 {
-    const char *s = "neoagent " NEOAGENT_VERSION "\n";
+    const char *s = "neoagent " NA_VERSION "\n";
     printf("%s", s);
 }
 
-static void neoagent_usage(void)
+static void na_usage(void)
 {
     const char *s = "Usage:\n\n"
         "-d go to background\n"
@@ -76,17 +76,17 @@ static void neoagent_usage(void)
     printf("%s\n", s);
 }
 
-static void neoagent_signal_handler (int sig)
+static void na_signal_handler (int sig)
 {
     SigExit = 1;
 }
 
-static void neoagent_setup_signals (void)
+static void na_setup_signals (void)
 {
     struct sigaction sig_handler;
 
     sigemptyset(&sig_handler.sa_mask);
-    sig_handler.sa_handler = neoagent_signal_handler;
+    sig_handler.sa_handler = na_signal_handler;
     sig_handler.sa_flags   = 0;
 
     if (sigaction(SIGTERM, &sig_handler, NULL) == -1 ||
@@ -94,11 +94,11 @@ static void neoagent_setup_signals (void)
         sigaction(SIGALRM, &sig_handler, NULL) == -1 ||
         sigaction(SIGHUP,  &sig_handler, NULL) == -1)
     {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_FAILED_SETUP_SIGNAL);
+        NA_DIE_WITH_ERROR(NA_ERROR_FAILED_SETUP_SIGNAL);
     }
 
     if (sigignore(SIGPIPE) == -1) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_FAILED_IGNORE_SIGNAL);
+        NA_DIE_WITH_ERROR(NA_ERROR_FAILED_IGNORE_SIGNAL);
     }
 
     SigExit = 0;
@@ -107,8 +107,8 @@ static void neoagent_setup_signals (void)
 
 int main (int argc, char *argv[])
 {
-    pthread_t           th[NEOAGENT_ENV_MAX];
-    neoagent_env_t     *env[NEOAGENT_ENV_MAX];
+    pthread_t           th[NA_ENV_MAX];
+    na_env_t     *env[NA_ENV_MAX];
     mpool_t            *env_pool;
     int                 c;
     int                 env_cnt          = 0;
@@ -128,19 +128,19 @@ int main (int argc, char *argv[])
             is_daemon = true;
             break;
         case 'f':
-            environments_obj = neoagent_cnf_get_environments(optarg, &env_cnt);
+            environments_obj = na_cnf_get_environments(optarg, &env_cnt);
             break;
         case 't':
-            environments_obj = neoagent_cnf_get_environments(optarg, &env_cnt);
+            environments_obj = na_cnf_get_environments(optarg, &env_cnt);
             printf("JSON configuration is OK\n");
             return 0;
             break;
         case 'v':
-            neoagent_version();
+            na_version();
             return 0;
             break;
         case 'h':
-            neoagent_usage();
+            na_usage();
             return 0;
             break;
         default:
@@ -149,26 +149,26 @@ int main (int argc, char *argv[])
     }
 
     if (is_daemon && daemon(0, 0) == -1) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_FAILED_DAEMONIZE);
+        NA_DIE_WITH_ERROR(NA_ERROR_FAILED_DAEMONIZE);
     }
 
-    if (env_cnt > NEOAGENT_ENV_MAX) {
-        NEOAGENT_DIE_WITH_ERROR(NEOAGENT_ERROR_TOO_MANY_ENVIRONMENTS);
+    if (env_cnt > NA_ENV_MAX) {
+        NA_DIE_WITH_ERROR(NA_ERROR_TOO_MANY_ENVIRONMENTS);
     }
 
-    neoagent_setup_signals();
-    neoagent_memproto_bm_skip_init();
+    na_setup_signals();
+    na_memproto_bm_skip_init();
 
     env_pool = mpool_create(0);
     if (env_cnt == 0) {
         env_cnt = 1;
-        env[0]  = neoagent_env_add(&env_pool);
-        neoagent_env_setup_default(env[0], 0);
+        env[0]  = na_env_add(&env_pool);
+        na_env_setup_default(env[0], 0);
     } else {
         for (int i=0;i<env_cnt;++i) {
-            env[i] = neoagent_env_add(&env_pool);
-            neoagent_env_setup_default(env[i], i);
-            neoagent_conf_env_init(environments_obj, env[i], i);
+            env[i] = na_env_add(&env_pool);
+            na_env_setup_default(env[i], i);
+            na_conf_env_init(environments_obj, env[i], i);
         }
     }
 
@@ -176,11 +176,11 @@ int main (int argc, char *argv[])
         env[i]->current_conn      = 0;
         env[i]->is_refused_active = false;
         env[i]->error_count       = 0;
-        neoagent_connpool_create(&env[i]->connpool_active, env[i]->connpool_max);
+        na_connpool_create(&env[i]->connpool_active, env[i]->connpool_max);
     }
 
     for (int i=0;i<env_cnt;++i) {
-        pthread_create(&th[i], NULL, neoagent_event_loop, env[i]);
+        pthread_create(&th[i], NULL, na_event_loop, env[i]);
     }
 
     // monitoring signal

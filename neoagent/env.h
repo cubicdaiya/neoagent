@@ -31,8 +31,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef NEOAGENT_ENV_H
-#define NEOAGENT_ENV_H
+#ifndef NA_ENV_H
+#define NA_ENV_H
 
 #include <stdint.h>
 #include <netinet/in.h>
@@ -45,76 +45,82 @@
 #include "socket.h"
 #include "memproto.h"
 
-#define NEOAGENT_NAME_MAX     64
-#define NEOAGENT_SOCKPATH_MAX 256
+#define NA_NAME_MAX     64
+#define NA_SOCKPATH_MAX 256
 
-typedef struct neoagent_server_t {
-    neoagent_host_t host;
+typedef struct na_server_t {
+    na_host_t host;
     struct sockaddr_in addr;
-} neoagent_server_t;
+} na_server_t;
 
-typedef struct neoagent_connpool_t {
+typedef struct na_connpool_t {
     int *fd_pool;
     int *mark;
     int cur;
     int max;
     bool is_full;
-} neoagent_connpool_t;
+} na_connpool_t;
 
-typedef struct neoagent_env_t {
-    char name[NEOAGENT_NAME_MAX + 1];
+typedef enum na_event_state_t {
+    NA_EVENT_STATE_CLIENT_READ,
+    NA_EVENT_STATE_CLIENT_WRITE,
+    NA_EVENT_STATE_TARGET_READ,
+    NA_EVENT_STATE_TARGET_WRITE,
+    NA_EVENT_STATE_MAX // Always add new codes to the end before this one
+} na_event_state_t;
+
+typedef struct na_env_t {
+    char name[NA_NAME_MAX + 1];
     int fsfd;
     uint16_t fsport;
     int stfd;
     uint16_t stport;
-    char fssockpath[NEOAGENT_SOCKPATH_MAX + 1];
+    char fssockpath[NA_SOCKPATH_MAX + 1];
     mode_t access_mask;
-    neoagent_server_t target_server;
-    neoagent_server_t backup_server;
+    na_server_t target_server;
+    na_server_t backup_server;
     int current_conn;
     int bufsize;
     ev_io fs_watcher;
     bool is_refused_active;
     bool is_connpool_only;
-    neoagent_connpool_t connpool_active;
+    na_connpool_t connpool_active;
     int error_count;
     int conn_max;
     int connpool_max;
+    int loop_max;
     int error_count_max;
-} neoagent_env_t;
+} na_env_t;
 
-typedef struct neoagent_spare_buf_t {
-    char *buf;
-    int bufsize;
-    int ts_pos;
-    struct neoagent_spare_buf_t *next;
-} neoagent_spare_buf_t;
-
-typedef struct neoagent_client_t {
+typedef struct na_client_t {
     int cfd;
     int tsfd;
-    char *buf;
-    int bufsize;
-    int ts_pos;
-    int req_cnt;
-    neoagent_memproto_cmd_t cmd;
-    int current_req_cnt;
-    int cur_pool;
+    char *client_rbuf;
+    char *client_wbuf;
+    char *server_rbuf;
+    char *server_wbuf;
+    int client_rbufsize;
+    int client_wbufsize;
+    int server_rbufsize;
+    int server_wbufsize;
+    na_memproto_cmd_t cmd;
     bool is_refused_active;
     bool is_use_connpool;
-    neoagent_spare_buf_t *head_spare;
-    neoagent_spare_buf_t *current_spare;
-    neoagent_env_t *env;
+    na_env_t *env;
+    na_event_state_t event_state;
+    int req_cnt;
+    int res_cnt;
+    int loop_cnt;
     ev_io c_watcher;
     ev_io ts_watcher;
-} neoagent_client_t;
+} na_client_t;
 
-mpool_t *neoagent_pool_create (int size);
-void neoagent_pool_destroy (mpool_t *pool);
-neoagent_env_t *neoagent_env_add (mpool_t **env_pool);
-void neoagent_env_setup_default(neoagent_env_t *env, int idx);
+mpool_t *na_pool_create (int size);
+void na_pool_destroy (mpool_t *pool);
+na_env_t *na_env_add (mpool_t **env_pool);
+void na_env_setup_default(na_env_t *env, int idx);
 
-void neoagent_connpool_create (neoagent_connpool_t *connpool, int c);
-void neoagent_connpool_switch (neoagent_env_t *env, int c);
+void na_connpool_create (na_connpool_t *connpool, int c);
+void na_connpool_switch (na_env_t *env, int c);
 
-#endif // NEOAGENT_ENV_H
+#endif // NA_ENV_H

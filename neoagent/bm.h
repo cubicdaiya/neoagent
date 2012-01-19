@@ -31,15 +31,15 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef NEOAGENT_BM_H
-#define NEOAGENT_BM_H
+#ifndef NA_BM_H
+#define NA_BM_H
 
-#define NEOAGENT_BM_SKIP_SIZE 256
+#define NA_BM_SKIP_SIZE 256
 
-void neoagent_bm_create_table (char *pattern, int *skip);
-int neoagent_bm_search (char *haystack, char *pattern, int *skip, int hlen, int plen);
+void na_bm_create_table (char *pattern, int *skip);
+int na_bm_search (char *haystack, char *pattern, int *skip, int hlen, int plen);
 
-#endif // NEOAGENT_BM_H
+#endif // NA_BM_H
 
 
 

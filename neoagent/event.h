@@ -31,13 +31,13 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef NEOAGENT_EVENT_H
-#define NEOAGENT_EVENT_H
+#ifndef NA_EVENT_H
+#define NA_EVENT_H
 
 #include <ev.h>
 
 #include "env.h"
 
-void *neoagent_event_loop (void *args);
+void *na_event_loop (void *args);
 
-#endif // NEOAGENT_EVENT_H
+#endif // NA_EVENT_H

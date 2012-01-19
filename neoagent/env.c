@@ -37,19 +37,19 @@
 #include "env.h"
 #include "mpool.h"
 
-static const int  NEOAGENT_PORT_DEFAULT             = 30001;
-static const int  NEOAGENT_STPORT_DEFAULT           = 30011;
-static const int  NEOAGENT_CONN_MAX_DEFAULT         = 1000;
-static const int  NEOAGENT_CONNPOOL_MAX_DEFAULT     = 20;
-static const int  NEOAGENT_ERROR_COUNT_MAX_DEFAULT  = 1000;
-static const int  NEOAGENT_ACCESS_MASK_DEFAULT      = 0664;
-static const int  NEOAGENT_BUFSIZE_DEFAULT          = 65536;
-static const bool NEOAGENT_IS_CONNPOOL_ONLY_DEFAULT = false;
+static const int  NA_PORT_DEFAULT             = 30001;
+static const int  NA_STPORT_DEFAULT           = 30011;
+static const int  NA_CONN_MAX_DEFAULT         = 1000;
+static const int  NA_CONNPOOL_MAX_DEFAULT     = 20;
+static const int  NA_ERROR_COUNT_MAX_DEFAULT  = 1000;
+static const int  NA_ACCESS_MASK_DEFAULT      = 0664;
+static const int  NA_BUFSIZE_DEFAULT          = 65536;
+static const bool NA_IS_CONNPOOL_ONLY_DEFAULT = false;
 
 // private functions
-static void neoagent_connpool_destory (neoagent_connpool_t *connpool);
+static void na_connpool_destory (na_connpool_t *connpool);
 
-static void neoagent_connpool_destory (neoagent_connpool_t *connpool)
+static void na_connpool_destory (na_connpool_t *connpool)
 {
     for (int i=0;i<connpool->max;++i) {
         if (connpool->fd_pool[i] > 0) {
@@ -67,47 +67,47 @@ static void neoagent_connpool_destory (neoagent_connpool_t *connpool)
 }
 
 
-mpool_t *neoagent_pool_create (int size)
+mpool_t *na_pool_create (int size)
 {
     return mpool_create(size);
 }
 
-void neoagent_pool_destroy (mpool_t *pool)
+void na_pool_destroy (mpool_t *pool)
 {
     mpool_destroy(pool);
 }
 
-neoagent_env_t *neoagent_env_add (mpool_t **env_pool)
+na_env_t *na_env_add (mpool_t **env_pool)
 {
-    neoagent_env_t *env;
+    na_env_t *env;
     env = mpool_alloc(sizeof(*env), *env_pool);
     memset(env, 0, sizeof(*env));
     return env;
 }
 
-void neoagent_env_setup_default(neoagent_env_t *env, int idx)
+void na_env_setup_default(na_env_t *env, int idx)
 {
     char *target_server_s = "127.0.0.1:11211";
     char *backup_server_s = "127.0.0.1:11212";
-    neoagent_host_t host;
+    na_host_t host;
     sprintf(env->name, "env%d", idx);
-    env->fsport           = NEOAGENT_PORT_DEFAULT + idx;
-    env->access_mask      = NEOAGENT_ACCESS_MASK_DEFAULT;
-    host                  = neoagent_create_host(target_server_s);
+    env->fsport           = NA_PORT_DEFAULT + idx;
+    env->access_mask      = NA_ACCESS_MASK_DEFAULT;
+    host                  = na_create_host(target_server_s);
     memcpy(&env->target_server.host, &host, sizeof(host));
-    neoagent_set_sockaddr(&host, &env->target_server.addr);
-    host                  = neoagent_create_host(backup_server_s);
+    na_set_sockaddr(&host, &env->target_server.addr);
+    host                  = na_create_host(backup_server_s);
     memcpy(&env->backup_server.host, &host, sizeof(host));
-    neoagent_set_sockaddr(&host, &env->backup_server.addr);
-    env->stport           = NEOAGENT_STPORT_DEFAULT + idx;
-    env->conn_max         = NEOAGENT_CONN_MAX_DEFAULT;
-    env->connpool_max     = NEOAGENT_CONNPOOL_MAX_DEFAULT;
-    env->error_count_max  = NEOAGENT_ERROR_COUNT_MAX_DEFAULT;
-    env->is_connpool_only = NEOAGENT_IS_CONNPOOL_ONLY_DEFAULT;
-    env->bufsize          = NEOAGENT_BUFSIZE_DEFAULT;
+    na_set_sockaddr(&host, &env->backup_server.addr);
+    env->stport           = NA_STPORT_DEFAULT + idx;
+    env->conn_max         = NA_CONN_MAX_DEFAULT;
+    env->connpool_max     = NA_CONNPOOL_MAX_DEFAULT;
+    env->error_count_max  = NA_ERROR_COUNT_MAX_DEFAULT;
+    env->is_connpool_only = NA_IS_CONNPOOL_ONLY_DEFAULT;
+    env->bufsize          = NA_BUFSIZE_DEFAULT;
 }
 
-void neoagent_connpool_create (neoagent_connpool_t *connpool, int c)
+void na_connpool_create (na_connpool_t *connpool, int c)
 {
     connpool->fd_pool = calloc(sizeof(int), c);
     connpool->mark    = calloc(sizeof(int), c);
@@ -116,8 +116,8 @@ void neoagent_connpool_create (neoagent_connpool_t *connpool, int c)
     connpool->is_full = false;
 }
 
-void neoagent_connpool_switch (neoagent_env_t *env, int c)
+void na_connpool_switch (na_env_t *env, int c)
 {
-    neoagent_connpool_destory(&env->connpool_active);
-    neoagent_connpool_create(&env->connpool_active, c);
+    na_connpool_destory(&env->connpool_active);
+    na_connpool_create(&env->connpool_active, c);
 }

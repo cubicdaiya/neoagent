@@ -31,29 +31,30 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef NEOAGENT_CONF_H
-#define NEOAGENT_CONF_H
+#ifndef NA_CONF_H
+#define NA_CONF_H
 
 #include "env.h"
 
-typedef enum neoagent_param_t {
-    NEOAGENT_PARAM_NAME,
-    NEOAGENT_PARAM_PORT,
-    NEOAGENT_PARAM_SOCKPATH,
-    NEOAGENT_PARAM_ACCESS_MASK,
-    NEOAGENT_PARAM_TARGET_SERVER,
-    NEOAGENT_PARAM_BACKUP_SERVER,
-    NEOAGENT_PARAM_STPORT,
-    NEOAGENT_PARAM_CONN_MAX,
-    NEOAGENT_PARAM_CONNPOOL_MAX,
-    NEOAGENT_PARAM_ERROR_COUNT_MAX,
-    NEOAGENT_PARAM_IS_CONNPOOL_ONLY,
-    NEOAGENT_PARAM_BUFSIZE,
-    NEOAGENT_PARAM_MAX // Always add new codes to the end before this one
-} neoagent_param_t;
+typedef enum na_param_t {
+    NA_PARAM_NAME,
+    NA_PARAM_PORT,
+    NA_PARAM_SOCKPATH,
+    NA_PARAM_ACCESS_MASK,
+    NA_PARAM_TARGET_SERVER,
+    NA_PARAM_BACKUP_SERVER,
+    NA_PARAM_STPORT,
+    NA_PARAM_CONN_MAX,
+    NA_PARAM_CONNPOOL_MAX,
+    NA_PARAM_LOOP_MAX,
+    NA_PARAM_ERROR_COUNT_MAX,
+    NA_PARAM_IS_CONNPOOL_ONLY,
+    NA_PARAM_BUFSIZE,
+    NA_PARAM_MAX // Always add new codes to the end before this one
+} na_param_t;
 
-struct json_object *neoagent_cnf_get_environments(const char *conf_file_json, int *env_cnt);
-void neoagent_conf_env_init(struct json_object *environments_obj, neoagent_env_t *neoagent_env, int idx);
+struct json_object *na_cnf_get_environments(const char *conf_file_json, int *env_cnt);
+void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, int idx);
 
-#endif // NEOAGENT_CONF_H
+#endif // NA_CONF_H
 
