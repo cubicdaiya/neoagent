@@ -71,12 +71,22 @@ na_memproto_cmd_t na_memproto_detect_command (char *buf)
     return NA_MEMPROTO_CMD_UNKNOWN;
 }
 
-int na_memproto_count_request (char *buf, int bufsize)
+int na_memproto_count_request_get (char *buf, int bufsize)
 {
     return na_bm_search(buf, "\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF], bufsize, 2);
 }
 
-int na_memproto_count_response(char *buf, int bufsize)
+int na_memproto_count_response_get(char *buf, int bufsize)
 {
     return na_bm_search(buf, "END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF], bufsize, 5);
+}
+
+int na_memproto_count_request_set (char *buf, int bufsize)
+{
+    return na_bm_search(buf, "\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF], bufsize, 2);
+}
+
+int na_memproto_count_response_set(char *buf, int bufsize)
+{
+    return na_bm_search(buf, "\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF], bufsize, 2) * 2;
 }
