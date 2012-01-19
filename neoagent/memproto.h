@@ -44,6 +44,7 @@ typedef enum na_memproto_cmd_t {
     NA_MEMPROTO_CMD_DELETE,
     NA_MEMPROTO_CMD_QUIT,
     NA_MEMPROTO_CMD_UNKNOWN,
+    NA_MEMPROTO_CMD_NOT_DETECTED,
     NA_MEMPROTO_CMD_MAX // Always add new codes to the end before this one
 } na_memproto_cmd_t;
 

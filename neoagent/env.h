@@ -58,7 +58,6 @@ typedef struct na_connpool_t {
     int *mark;
     int cur;
     int max;
-    bool is_full;
 } na_connpool_t;
 
 typedef enum na_event_state_t {
@@ -66,6 +65,7 @@ typedef enum na_event_state_t {
     NA_EVENT_STATE_CLIENT_WRITE,
     NA_EVENT_STATE_TARGET_READ,
     NA_EVENT_STATE_TARGET_WRITE,
+    NA_EVENT_STATE_COMPLETE,
     NA_EVENT_STATE_MAX // Always add new codes to the end before this one
 } na_event_state_t;
 
@@ -85,6 +85,7 @@ typedef struct na_env_t {
     bool is_refused_active;
     bool is_connpool_only;
     na_connpool_t connpool_active;
+    na_connpool_t connpool_backup;
     int error_count;
     int conn_max;
     int connpool_max;
@@ -111,6 +112,7 @@ typedef struct na_client_t {
     int req_cnt;
     int res_cnt;
     int loop_cnt;
+    int cur_pool;
     ev_io c_watcher;
     ev_io ts_watcher;
 } na_client_t;

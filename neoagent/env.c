@@ -63,7 +63,6 @@ static void na_connpool_destory (na_connpool_t *connpool)
     connpool->fd_pool = NULL;
     connpool->mark    = NULL;
     connpool->cur     = 0;
-    connpool->is_full = false;
 }
 
 
@@ -113,7 +112,6 @@ void na_connpool_create (na_connpool_t *connpool, int c)
     connpool->mark    = calloc(sizeof(int), c);
     connpool->cur     = 0;
     connpool->max     = c;
-    connpool->is_full = false;
 }
 
 void na_connpool_switch (na_env_t *env, int c)

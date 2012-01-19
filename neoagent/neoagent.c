@@ -177,6 +177,7 @@ int main (int argc, char *argv[])
         env[i]->is_refused_active = false;
         env[i]->error_count       = 0;
         na_connpool_create(&env[i]->connpool_active, env[i]->connpool_max);
+        na_connpool_create(&env[i]->connpool_backup, env[i]->connpool_max);
     }
 
     for (int i=0;i<env_cnt;++i) {

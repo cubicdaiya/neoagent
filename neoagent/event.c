@@ -61,6 +61,8 @@ extern inline bool na_memproto_is_request_divided (int req_cnt);
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
 inline static void na_error_count_up (na_env_t *env);
 
+static bool na_connpool_assign (na_env_t *env, int *cur, int *fd);
+static void na_connpool_init (na_env_t *env);
 static void na_client_close (na_client_t *client, na_env_t *env);
 static void na_health_check_callback (EV_P_ ev_timer *w, int revents);
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents);
@@ -83,10 +85,54 @@ inline static void na_error_count_up (na_env_t *env)
     }
 }
 
+static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
+{
+    for (int i=0;i<env->connpool_max;++i) {
+        if (env->connpool_active.mark[i] == 0) {
+            *fd = env->connpool_active.fd_pool[i];
+            env->connpool_active.mark[i] = 1;
+            *cur = 1;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+static void na_connpool_init (na_env_t *env)
+{
+    for (int i=0;i<env->connpool_max;++i) {
+        env->connpool_active.fd_pool[i] = na_target_server_tcpsock_init();
+        env->connpool_backup.fd_pool[i] = na_target_server_tcpsock_init();
+        na_target_server_tcpsock_setup(env->connpool_active.fd_pool[i], true);
+        na_target_server_tcpsock_setup(env->connpool_backup.fd_pool[i], true);
+        if (env->connpool_active.fd_pool[i] <= 0 ||
+            env->connpool_backup.fd_pool[i] <= 0)
+        {
+            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+        }
+        
+        if (!na_server_connect(env->connpool_active.fd_pool[i], &env->target_server.addr) ||
+            !na_server_connect(env->connpool_active.fd_pool[i], &env->target_server.addr))
+        {
+            if (errno != EINPROGRESS && errno != EALREADY) {
+                na_error_count_up(env);
+                NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
+            }
+        }
+    }
+}
+
 static void na_client_close (na_client_t *client, na_env_t *env)
 {
     close(client->cfd);
     client->cfd = -1;
+    if (client->is_use_connpool) {
+        env->connpool_active.mark[client->cur_pool] = 0;
+    } else {
+        close(client->tsfd);
+    }
 
     NA_FREE(client->crbuf);
     NA_FREE(client->cwbuf);
@@ -146,16 +192,19 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         if (client->cmd == NA_MEMPROTO_CMD_GET) {
             client->res_cnt = na_memproto_count_response_get(client->srbuf, client->srbufsize);
             if (client->res_cnt >= client->req_cnt) {
+                client->event_state = NA_EVENT_STATE_CLIENT_WRITE;
                 na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
                 return;
             }
         } else if (client->cmd == NA_MEMPROTO_CMD_SET) {
             client->res_cnt = na_memproto_count_response_set(client->srbuf, client->srbufsize);
             if (client->res_cnt >= client->req_cnt) {
+                client->event_state = NA_EVENT_STATE_CLIENT_WRITE;
                 na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
                 return;
             }
         } else {
+            client->event_state = NA_EVENT_STATE_CLIENT_WRITE;
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
         }
 
@@ -180,6 +229,7 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         if (client->swbufsize < client->crbufsize) {
             na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_WRITE);
         } else {
+            client->event_state = NA_EVENT_STATE_TARGET_READ;
             na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
         }
         return;
@@ -192,6 +242,7 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
     int cfd, tsfd, size;
     na_client_t *client;
     na_env_t *env;
+    na_memproto_cmd_t prev_cmd;
 
     cfd    = w->fd;
     client = (na_client_t *)w->data;
@@ -226,21 +277,24 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
         client->crbufsize                += size;
         client->crbuf[client->crbufsize]  = '\0';
 
+        prev_cmd    = client->cmd;
         client->cmd = na_memproto_detect_command(client->crbuf);
 
-        if (client->cmd == NA_MEMPROTO_CMD_QUIT    ||
-            client->cmd == NA_MEMPROTO_CMD_UNKNOWN)
-        {
+        if (client->cmd == NA_MEMPROTO_CMD_QUIT) {
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
-            if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
-                NA_STDERR_MESSAGE(NA_ERROR_INVALID_CMD);
-            }
-            return; // request exit
+            return; // request success
         } else if (client->cmd == NA_MEMPROTO_CMD_GET) {
             client->req_cnt = na_memproto_count_request_get(client->crbuf, client->crbufsize);
         } else if (client->cmd == NA_MEMPROTO_CMD_SET) {
             client->req_cnt = na_memproto_count_request_set(client->crbuf, client->crbufsize);
+        } else if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
+            if (prev_cmd == NA_MEMPROTO_CMD_NOT_DETECTED) {
+                ev_io_stop(EV_A_ w);
+                na_client_close(client, env);
+                return; // request fail
+            }
+            client->cmd = prev_cmd;
         }
 
         switch (client->event_state) {
@@ -275,6 +329,7 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
         client->cwbufsize += size;
         if (client->cwbufsize < client->srbufsize) {
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
+            return;
         } else {
             client->crbufsize   = 0;
             client->cwbufsize   = 0;
@@ -284,6 +339,7 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
             client->req_cnt     = 0;
             client->res_cnt     = 0;
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_READ);
+            return;
         }
         
     }
@@ -291,15 +347,18 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
 void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 {
-    int fsfd, cfd;
+    int fsfd, cfd, tsfd, cur_pool;
     int th_ret;
     na_env_t *env;
     na_client_t *client;
     na_connpool_t *connpool;
 
-    th_ret = 0;
-    fsfd   = w->fd;
-    env    = (na_env_t *)w->data;
+    th_ret   = 0;
+    fsfd     = w->fd;
+    env      = (na_env_t *)w->data;
+    cfd      = -1;
+    tsfd     = -1;
+    cur_pool = -1;
 
     if (SigExit == 1 && env->current_conn == 0) {
         pthread_exit(&th_ret);
@@ -313,14 +372,60 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     
     connpool = &env->connpool_active;
 
-    if (env->current_conn >= connpool->max && env->is_connpool_only) {
-        return;
-    }
-
     if (env->current_conn >= env->conn_max) {
         return;
     }
 
+    if (env->is_connpool_only) {
+        if (env->current_conn >= connpool->max) {
+            return;
+        }
+        if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
+            NA_STDERR("failed assign connection from connpool.");
+            return;
+        }
+    } else {
+#if 0
+        if (env->current_conn >= connpool->max) {
+            tsfd = na_target_server_tcpsock_init();
+            if (tsfd < 0) {
+                na_error_count_up(env);
+                NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
+                return;
+            }
+            na_target_server_tcpsock_setup(tsfd, true);
+            if (!na_server_connect(tsfd, &env->target_server.addr))
+            {
+                if (errno != EINPROGRESS && errno != EALREADY) {
+                    na_error_count_up(env);
+                    NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
+                    return;
+                }
+            }
+        } else {
+            if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
+                NA_STDERR("failed assign connection from connpool.");
+                return;
+            }
+        }
+#else
+        tsfd = na_target_server_tcpsock_init();
+        if (tsfd < 0) {
+            na_error_count_up(env);
+            NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
+            return;
+        }
+        na_target_server_tcpsock_setup(tsfd, true);
+        if (!na_server_connect(tsfd, &env->target_server.addr))
+        {
+            if (errno != EINPROGRESS && errno != EALREADY) {
+                na_error_count_up(env);
+                NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
+            }
+        }
+#endif
+    }
+        
     if ((cfd = na_server_accept(fsfd)) < 0) {
         NA_STDERR("accept()");
         return;
@@ -351,10 +456,12 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
     client->cfd               = cfd;
+    client->tsfd              = tsfd;
     client->env               = env;
     client->c_watcher.data    = client;
     client->ts_watcher.data   = client;
     client->is_refused_active = env->is_refused_active;
+    client->is_use_connpool   = cur_pool != -1 ? true : false;
     client->crbufsize         = 0;
     client->cwbufsize         = 0;
     client->srbufsize         = 0;
@@ -363,25 +470,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->req_cnt           = 0;
     client->res_cnt           = 0;
     client->loop_cnt          = 0;
+    client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
 
     env->current_conn++;
-
-    client->tsfd = na_target_server_tcpsock_init();
-    if (client->tsfd <= 0) {
-        close(cfd);
-        na_error_count_up(env);
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
-        return;
-    }
-
-    na_target_server_tcpsock_setup(client->tsfd, true);
-    if (!na_server_connect(client->tsfd, &env->target_server.addr)) {
-        if (errno != EINPROGRESS && errno != EALREADY) {
-            na_error_count_up(env);
-            NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
-            return;
-        }
-    }
 
     ev_io_init(&client->c_watcher, na_client_callback, cfd, EV_READ);
     ev_io_start(EV_A_ &client->c_watcher);
@@ -428,6 +519,8 @@ void *na_event_loop (void *args)
     if (env->fsfd < 0) {
         NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
     }
+
+    na_connpool_init(env);
 
     env->stfd = na_stat_server_tcpsock_init(env->stport);
     pthread_create(&th_support, NULL, na_support_loop, env);
