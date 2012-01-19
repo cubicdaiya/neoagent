@@ -176,7 +176,7 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         if (size == 0) {
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
-            return; // request success
+            return; // request fail
         } else if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 return; // not ready yet
@@ -242,7 +242,6 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
     int cfd, tsfd, size;
     na_client_t *client;
     na_env_t *env;
-    na_memproto_cmd_t prev_cmd;
 
     cfd    = w->fd;
     client = (na_client_t *)w->data;
@@ -277,7 +276,6 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
         client->crbufsize                += size;
         client->crbuf[client->crbufsize]  = '\0';
 
-        prev_cmd    = client->cmd;
         client->cmd = na_memproto_detect_command(client->crbuf);
 
         if (client->cmd == NA_MEMPROTO_CMD_QUIT) {
@@ -288,27 +286,20 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
             client->req_cnt = na_memproto_count_request_get(client->crbuf, client->crbufsize);
         } else if (client->cmd == NA_MEMPROTO_CMD_SET) {
             client->req_cnt = na_memproto_count_request_set(client->crbuf, client->crbufsize);
-        } else if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
-            if (prev_cmd == NA_MEMPROTO_CMD_NOT_DETECTED) {
-                ev_io_stop(EV_A_ w);
-                na_client_close(client, env);
-                return; // request fail
-            }
-            client->cmd = prev_cmd;
         }
 
-        switch (client->event_state) {
-        case NA_EVENT_STATE_CLIENT_READ:
-            // start target server event
+        if (client->crbufsize < 2) {
+            ev_io_stop(EV_A_ w);
+            na_client_close(client, env);
+            return; // request fail
+        } else if (client->crbuf[client->crbufsize - 2] == '\r' &&
+                   client->crbuf[client->crbufsize - 1] == '\n')
+        {
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
             ev_io_stop(EV_A_ w);
             ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_WRITE);
             ev_io_start(EV_A_ &client->ts_watcher);
-            break;
-        default:
-            // not through
-            assert(false);
-            break;
+            return;
         }
 
     } else if (revents & EV_WRITE) {
