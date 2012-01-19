@@ -65,7 +65,7 @@ typedef enum na_error_t {
 #define NA_STDERR_MESSAGE(na_error) fprintf(stderr, "%s: %s %d\n", na_error_message(na_error), __FILE__, __LINE__)
 #define NA_DIE_WITH_ERROR(na_error)                                     \
     do {                                                                \
-        fprintf(stderr, "%s: %s %d\n", na_error_message(na_error), __FILE__, __LINE__); \
+        fprintf(stderr, "%s: %s, %s %d\n", na_error_message(na_error), __FILE__, __FUNCTION__, __LINE__); \
         exit(1);                                                        \
     } while (false)
 
