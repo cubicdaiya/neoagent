@@ -1,6 +1,6 @@
 This work was packaged for Debian by:
 
-    Tatsuhiko Kubo <cubicdaiya@gmail.com> on Sun, 21 Aug 2011 17:00:00 +0900
+    Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 Upstream Author(s):
 
@@ -16,4 +16,4 @@ Commiters:
 
 The Debian packaging is:
 
-    Copyright (C) 2011 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+    Copyright (C) 2011-2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>

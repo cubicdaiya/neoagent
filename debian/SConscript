@@ -8,7 +8,7 @@ import util.dpkg_util as dpkg_util
 arch = ARGUMENTS.get('arch', 'amd64')
 
 DEBNAME          = "neoagent"
-DEBVERSION       = "0.1.3"
+DEBVERSION       = "0.2.0"
 SUBVERSION       = "1"
 DEBMAINT         = "Tatsuhiko Kubo [cubicdaiya@gmail.com]"
 DEBARCH          = arch

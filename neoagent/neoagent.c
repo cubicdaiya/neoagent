@@ -1,7 +1,7 @@
 /**
    In short, neoagent is distributed under so called "BSD license",
    
-   Copyright (c) 2011 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+   Copyright (c) 2011-2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
    All rights reserved.
    
    Redistribution and use in source and binary forms, with or without modification, 
@@ -47,7 +47,7 @@
 #include "memproto.h"
 
 // version number
-#define NA_VERSION "0.1.3"
+#define NA_VERSION "0.2.0"
 
 // constants
 static const int NA_ENV_MAX = 10;
