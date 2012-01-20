@@ -91,7 +91,7 @@ static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
         if (env->connpool_active.mark[i] == 0) {
             *fd = env->connpool_active.fd_pool[i];
             env->connpool_active.mark[i] = 1;
-            *cur = 1;
+            *cur = i;
             return true;
         }
     }
@@ -376,7 +376,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             return;
         }
     } else {
-#if 0
         if (env->current_conn >= connpool->max) {
             tsfd = na_target_server_tcpsock_init();
             if (tsfd < 0) {
@@ -399,22 +398,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                 return;
             }
         }
-#else
-        tsfd = na_target_server_tcpsock_init();
-        if (tsfd < 0) {
-            na_error_count_up(env);
-            NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
-            return;
-        }
-        na_target_server_tcpsock_setup(tsfd, true);
-        if (!na_server_connect(tsfd, &env->target_server.addr))
-        {
-            if (errno != EINPROGRESS && errno != EALREADY) {
-                na_error_count_up(env);
-                NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
-            }
-        }
-#endif
     }
         
     if ((cfd = na_server_accept(fsfd)) < 0) {
@@ -453,6 +436,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->ts_watcher.data   = client;
     client->is_refused_active = env->is_refused_active;
     client->is_use_connpool   = cur_pool != -1 ? true : false;
+    client->cur_pool          = cur_pool;
     client->crbufsize         = 0;
     client->cwbufsize         = 0;
     client->srbufsize         = 0;
