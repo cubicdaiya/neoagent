@@ -41,6 +41,7 @@
 #include <sys/ioctl.h>
 #include <pthread.h>
 #include <assert.h>
+#include <time.h>
 
 #include <ev.h>
 
@@ -92,18 +93,30 @@ inline static void na_error_count_up (na_env_t *env)
 
 static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
 {
-    for (int i=0;i<env->connpool_max;++i) {
-        if (env->connpool_active.mark[i] == 0) {
-            *fd = env->connpool_active.fd_pool[i];
-            env->connpool_active.mark[i] = 1;
-            *cur = i;
-            return true;
+    switch (rand() % 2) {
+    case 0:
+        for (int i=env->connpool_max-1;i>=0;--i) {
+            if (env->connpool_active.mark[i] == 0) {
+                env->connpool_active.mark[i] = 1;
+                *fd  = env->connpool_active.fd_pool[i];
+                *cur = i;
+                return true;
+            }
         }
+        break;
+    default:
+        for (int i=0;i<env->connpool_max;++i) {
+            if (env->connpool_active.mark[i] == 0) {
+                env->connpool_active.mark[i] = 1;
+                *fd  = env->connpool_active.fd_pool[i];
+                *cur = i;
+                return true;
+            }
+        }
+        break;
     }
-
     return false;
 }
-
 
 static void na_connpool_init (na_env_t *env)
 {
@@ -504,6 +517,9 @@ void *na_event_loop (void *args)
 
     env->stfd = na_stat_server_tcpsock_init(env->stport);
     pthread_create(&th_support, NULL, na_support_loop, env);
+
+    // for assign connection from connpool directional-ramdomly
+    srand(time(NULL));
 
     loop = ev_loop_new(0);
     env->fs_watcher.data = env;
