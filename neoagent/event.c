@@ -51,6 +51,10 @@
 #include "memproto.h"
 #include "util.h"
 
+// constants
+static const int NA_STAT_BUF_MAX  = 8192;
+static const int NA_STAT_MBUF_MAX = 4096;
+
 // external globals
 volatile sig_atomic_t SigExit;
 
@@ -70,6 +74,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
 static void na_front_server_callback (EV_P_ struct ev_io *w, int revents);
 static void *na_support_loop (void *args);
+static void na_connpoolmap_get(char *buf, int bufsize, na_connpool_t *connpool);
 
 inline static void na_event_switch (EV_P_ struct ev_io *old, struct ev_io *new, int fd, int revent)
 {
@@ -551,7 +556,8 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     int cfd, stfd, th_ret;
     int size, available_conn;
     na_env_t *env;
-    char buf[BUFSIZ + 1];
+    char buf[NA_STAT_BUF_MAX + 1];
+    char mbuf[NA_STAT_MBUF_MAX + 1];
 
     stfd           = w->fd;
     env            = (na_env_t *)w->data;
@@ -578,8 +584,10 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
         }
     }
 
+    na_connpoolmap_get(mbuf, NA_STAT_MBUF_MAX, &env->connpool_active);
+
     snprintf(buf, 
-             BUFSIZ, 
+             NA_STAT_BUF_MAX,
              "environment stats\n\n"
              "name               :%s\n"
              "fsfd               :%d\n"
@@ -599,6 +607,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
              "bufsize            :%d\n"
              "current conn       :%d\n"
              "available conn     :%d\n"
+             "connpool_map       :%s\n"
              ,
              env->name, env->fsfd, env->fsport, env->fssockpath, 
              env->target_server.host.ipaddr, env->target_server.host.port,
@@ -607,7 +616,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
              env->is_refused_active ? env->backup_server.host.port   : env->target_server.host.port,
              env->error_count, env->error_count_max, env->conn_max, env->connpool_max, 
              env->is_connpool_only ? "true" : "false",
-             env->bufsize, env->current_conn, available_conn
+             env->bufsize, env->current_conn, available_conn, mbuf
              );
 
     // send stat to client
@@ -617,4 +626,11 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     }
 
     close(cfd);
+}
+
+static void na_connpoolmap_get(char *buf, int bufsize, na_connpool_t *connpool)
+{
+    for (int i=0;i<connpool->max;++i) {
+        snprintf(buf + i * 2, bufsize - i * 2, "%d ", connpool->mark[i]);
+    }
 }
