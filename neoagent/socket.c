@@ -139,7 +139,7 @@ void na_target_server_tcpsock_setup (int tsfd, bool is_keepalive)
     na_set_sockopt(tsfd, SO_LINGER);
 }
 
-void na_target_server_healthchecksock_setup (int tsfd)
+void na_target_server_hcsock_setup (int tsfd)
 {
     na_set_sockopt(tsfd, SO_REUSEADDR);
     na_set_sockopt(tsfd, SO_LINGER);

@@ -556,7 +556,7 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
         return;
     }
 
-    na_target_server_healthchecksock_setup(tsfd);
+    na_target_server_hcsock_setup(tsfd);
 
     // health check
 
