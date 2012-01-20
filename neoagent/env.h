@@ -48,18 +48,6 @@
 #define NA_NAME_MAX     64
 #define NA_SOCKPATH_MAX 256
 
-typedef struct na_server_t {
-    na_host_t host;
-    struct sockaddr_in addr;
-} na_server_t;
-
-typedef struct na_connpool_t {
-    int *fd_pool;
-    int *mark;
-    int cur;
-    int max;
-} na_connpool_t;
-
 typedef enum na_event_state_t {
     NA_EVENT_STATE_CLIENT_READ,
     NA_EVENT_STATE_CLIENT_WRITE,
@@ -68,6 +56,17 @@ typedef enum na_event_state_t {
     NA_EVENT_STATE_COMPLETE,
     NA_EVENT_STATE_MAX // Always add new codes to the end before this one
 } na_event_state_t;
+
+typedef struct na_server_t {
+    na_host_t host;
+    struct sockaddr_in addr;
+} na_server_t;
+
+typedef struct na_connpool_t {
+    int *fd_pool;
+    int *mark;
+    int max;
+} na_connpool_t;
 
 typedef struct na_env_t {
     char name[NA_NAME_MAX + 1];
@@ -109,6 +108,7 @@ typedef struct na_client_t {
     bool is_use_connpool;
     na_env_t *env;
     na_event_state_t event_state;
+    na_connpool_t *connpool;
     int req_cnt;
     int res_cnt;
     int loop_cnt;
@@ -123,6 +123,5 @@ na_env_t *na_env_add (mpool_t **env_pool);
 void na_env_setup_default(na_env_t *env, int idx);
 
 void na_connpool_create (na_connpool_t *connpool, int c);
-void na_connpool_switch (na_env_t *env, int c);
 
 #endif // NA_ENV_H

@@ -36,6 +36,7 @@
 
 #include "env.h"
 #include "mpool.h"
+#include "util.h"
 
 static const int  NA_PORT_DEFAULT             = 30001;
 static const int  NA_STPORT_DEFAULT           = 30011;
@@ -45,26 +46,6 @@ static const int  NA_ERROR_COUNT_MAX_DEFAULT  = 1000;
 static const int  NA_ACCESS_MASK_DEFAULT      = 0664;
 static const int  NA_BUFSIZE_DEFAULT          = 65536;
 static const bool NA_IS_CONNPOOL_ONLY_DEFAULT = false;
-
-// private functions
-static void na_connpool_destory (na_connpool_t *connpool);
-
-static void na_connpool_destory (na_connpool_t *connpool)
-{
-    for (int i=0;i<connpool->max;++i) {
-        if (connpool->fd_pool[i] > 0) {
-            close(connpool->fd_pool[i]);
-            connpool->fd_pool[i] = 0;
-            connpool->mark[i]    = 0;
-        }
-    }
-    free(connpool->fd_pool);
-    free(connpool->mark);
-    connpool->fd_pool = NULL;
-    connpool->mark    = NULL;
-    connpool->cur     = 0;
-}
-
 
 mpool_t *na_pool_create (int size)
 {
@@ -90,32 +71,25 @@ void na_env_setup_default(na_env_t *env, int idx)
     char *backup_server_s = "127.0.0.1:11212";
     na_host_t host;
     sprintf(env->name, "env%d", idx);
-    env->fsport           = NA_PORT_DEFAULT + idx;
-    env->access_mask      = NA_ACCESS_MASK_DEFAULT;
-    host                  = na_create_host(target_server_s);
+    env->fsport             = NA_PORT_DEFAULT + idx;
+    env->access_mask        = NA_ACCESS_MASK_DEFAULT;
+    host                    = na_create_host(target_server_s);
     memcpy(&env->target_server.host, &host, sizeof(host));
     na_set_sockaddr(&host, &env->target_server.addr);
-    host                  = na_create_host(backup_server_s);
+    host                    = na_create_host(backup_server_s);
     memcpy(&env->backup_server.host, &host, sizeof(host));
     na_set_sockaddr(&host, &env->backup_server.addr);
-    env->stport           = NA_STPORT_DEFAULT + idx;
-    env->conn_max         = NA_CONN_MAX_DEFAULT;
-    env->connpool_max     = NA_CONNPOOL_MAX_DEFAULT;
-    env->error_count_max  = NA_ERROR_COUNT_MAX_DEFAULT;
-    env->is_connpool_only = NA_IS_CONNPOOL_ONLY_DEFAULT;
-    env->bufsize          = NA_BUFSIZE_DEFAULT;
+    env->stport             = NA_STPORT_DEFAULT + idx;
+    env->conn_max           = NA_CONN_MAX_DEFAULT;
+    env->connpool_max       = NA_CONNPOOL_MAX_DEFAULT;
+    env->error_count_max    = NA_ERROR_COUNT_MAX_DEFAULT;
+    env->is_connpool_only   = NA_IS_CONNPOOL_ONLY_DEFAULT;
+    env->bufsize            = NA_BUFSIZE_DEFAULT;
 }
 
 void na_connpool_create (na_connpool_t *connpool, int c)
 {
     connpool->fd_pool = calloc(sizeof(int), c);
     connpool->mark    = calloc(sizeof(int), c);
-    connpool->cur     = 0;
     connpool->max     = c;
-}
-
-void na_connpool_switch (na_env_t *env, int c)
-{
-    na_connpool_destory(&env->connpool_active);
-    na_connpool_create(&env->connpool_active, c);
 }

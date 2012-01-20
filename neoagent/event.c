@@ -66,8 +66,10 @@ extern inline bool na_memproto_is_request_divided (int req_cnt);
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
 inline static void na_error_count_up (na_env_t *env);
 
+static void na_connpool_deactivate (na_connpool_t *connpool);
 static bool na_connpool_assign (na_env_t *env, int *cur, int *fd);
 static void na_connpool_init (na_env_t *env);
+static void na_connpool_switch (na_env_t *env);
 static void na_client_close (na_client_t *client, na_env_t *env);
 static void na_health_check_callback (EV_P_ ev_timer *w, int revents);
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents);
@@ -91,14 +93,29 @@ inline static void na_error_count_up (na_env_t *env)
     }
 }
 
+static void na_connpool_deactivate (na_connpool_t *connpool)
+{
+    for (int i=0;i<connpool->max;++i) {
+        if (connpool->fd_pool[i] > 0) {
+            close(connpool->fd_pool[i]);
+            connpool->fd_pool[i] = 0;
+            connpool->mark[i]    = 0;
+        }
+    }
+}
+
 static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
 {
+    na_connpool_t *connpool;
+
+    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+
     switch (rand() % 2) {
     case 0:
         for (int i=env->connpool_max-1;i>=0;--i) {
-            if (env->connpool_active.mark[i] == 0) {
-                env->connpool_active.mark[i] = 1;
-                *fd  = env->connpool_active.fd_pool[i];
+            if (connpool->mark[i] == 0) {
+                connpool->mark[i] = 1;
+                *fd  = connpool->fd_pool[i];
                 *cur = i;
                 return true;
             }
@@ -106,9 +123,9 @@ static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
         break;
     default:
         for (int i=0;i<env->connpool_max;++i) {
-            if (env->connpool_active.mark[i] == 0) {
-                env->connpool_active.mark[i] = 1;
-                *fd  = env->connpool_active.fd_pool[i];
+            if (connpool->mark[i] == 0) {
+                connpool->mark[i] = 1;
+                *fd  = connpool->fd_pool[i];
                 *cur = i;
                 return true;
             }
@@ -122,18 +139,42 @@ static void na_connpool_init (na_env_t *env)
 {
     for (int i=0;i<env->connpool_max;++i) {
         env->connpool_active.fd_pool[i] = na_target_server_tcpsock_init();
-        env->connpool_backup.fd_pool[i] = na_target_server_tcpsock_init();
         na_target_server_tcpsock_setup(env->connpool_active.fd_pool[i], true);
-        na_target_server_tcpsock_setup(env->connpool_backup.fd_pool[i], true);
-        if (env->connpool_active.fd_pool[i] <= 0 ||
-            env->connpool_backup.fd_pool[i] <= 0)
-        {
+        if (env->connpool_active.fd_pool[i] <= 0) {
             NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
         }
         
-        if (!na_server_connect(env->connpool_active.fd_pool[i], &env->target_server.addr) ||
-            !na_server_connect(env->connpool_active.fd_pool[i], &env->target_server.addr))
-        {
+        if (!na_server_connect(env->connpool_active.fd_pool[i], &env->target_server.addr)) {
+            if (errno != EINPROGRESS && errno != EALREADY) {
+                na_error_count_up(env);
+                NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
+            }
+        }
+    }
+}
+
+static void na_connpool_switch (na_env_t *env)
+{
+    na_connpool_t *connpool;
+    na_server_t   *server;
+    if (env->is_refused_active) {
+        na_connpool_deactivate(&env->connpool_active);
+        connpool = &env->connpool_backup;
+        server   = &env->backup_server;
+    } else {
+        na_connpool_deactivate(&env->connpool_backup);
+        connpool = &env->connpool_active;
+        server   = &env->target_server;
+    }
+
+    for (int i=0;i<env->connpool_max;++i) {
+        connpool->fd_pool[i] = na_target_server_tcpsock_init();
+        na_target_server_tcpsock_setup(connpool->fd_pool[i], true);
+        if (connpool->fd_pool[i] <= 0) {
+            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+        }
+        
+        if (!na_server_connect(connpool->fd_pool[i], &server->addr)) {
             if (errno != EINPROGRESS && errno != EALREADY) {
                 na_error_count_up(env);
                 NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
@@ -147,7 +188,7 @@ static void na_client_close (na_client_t *client, na_env_t *env)
     close(client->cfd);
     client->cfd = -1;
     if (client->is_use_connpool) {
-        env->connpool_active.mark[client->cur_pool] = 0;
+        client->connpool->mark[client->cur_pool] = 0;
     } else {
         close(client->tsfd);
     }
@@ -161,7 +202,7 @@ static void na_client_close (na_client_t *client, na_env_t *env)
     --env->current_conn;
 }
 
-void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
+static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 {
     int cfd, tsfd, size;
     na_client_t *client;
@@ -171,6 +212,12 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
     client = (na_client_t *)w->data;
     env    = client->env;
     cfd    = client->cfd;
+
+    if (client->is_refused_active != env->is_refused_active) {
+        ev_io_stop(EV_A_ w);
+        na_client_close(client, env);
+        return; // request fail
+    }
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
         ev_io_stop(EV_A_ w);
@@ -255,7 +302,7 @@ void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
 }
 
-void na_client_callback(EV_P_ struct ev_io *w, int revents)
+static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 {
     int cfd, tsfd, size;
     na_client_t *client;
@@ -265,6 +312,12 @@ void na_client_callback(EV_P_ struct ev_io *w, int revents)
     client = (na_client_t *)w->data;
     env    = client->env;
     tsfd   = client->tsfd;
+
+    if (client->is_refused_active != env->is_refused_active) {
+        ev_io_stop(EV_A_ w);
+        na_client_close(client, env);
+        return; // request fail
+    }
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
         ev_io_stop(EV_A_ w);
@@ -379,11 +432,11 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
     
-    connpool = &env->connpool_active;
-
     if (env->current_conn >= env->conn_max) {
         return;
     }
+
+    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
 
     if (env->is_connpool_only) {
         if (env->current_conn >= connpool->max) {
@@ -395,6 +448,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         }
     } else {
         if (env->current_conn >= connpool->max) {
+            na_server_t *server;
             tsfd = na_target_server_tcpsock_init();
             if (tsfd < 0) {
                 na_error_count_up(env);
@@ -402,9 +456,12 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                 return;
             }
             na_target_server_tcpsock_setup(tsfd, true);
-            if (!na_server_connect(tsfd, &env->target_server.addr))
-            {
+
+            server = env->is_refused_active ? &env->backup_server : &env->target_server;
+
+            if (!na_server_connect(tsfd, &server->addr)) {
                 if (errno != EINPROGRESS && errno != EALREADY) {
+                    close(tsfd);
                     na_error_count_up(env);
                     NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
                     return;
@@ -464,6 +521,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->res_cnt           = 0;
     client->loop_cnt          = 0;
     client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
+    client->connpool          = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
 
     env->current_conn++;
 
@@ -559,6 +617,19 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
     na_target_server_hcsock_setup(tsfd);
 
     // health check
+    if (!na_server_connect(tsfd, &env->target_server.addr)) {
+        if (!env->is_refused_active) {
+            if (errno != EINPROGRESS && errno != EALREADY) {
+                env->is_refused_active = true;
+                na_connpool_switch(env);
+            }
+        }
+    } else {
+        if (env->is_refused_active) {
+            env->is_refused_active = false;
+            na_connpool_switch(env);
+        }
+    }
 
     close(tsfd);
 
@@ -574,6 +645,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     na_env_t *env;
     char buf[NA_STAT_BUF_MAX + 1];
     char mbuf[NA_STAT_MBUF_MAX + 1];
+    na_connpool_t *connpool;
 
     stfd           = w->fd;
     env            = (na_env_t *)w->data;
@@ -594,13 +666,15 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
+    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+
     for (int i=0;i<env->connpool_max;++i) {
-        if (env->connpool_active.mark[i] == 0) {
+        if (connpool->mark[i] == 0) {
             ++available_conn;
         }
     }
 
-    na_connpoolmap_get(mbuf, NA_STAT_MBUF_MAX, &env->connpool_active);
+    na_connpoolmap_get(mbuf, NA_STAT_MBUF_MAX, connpool);
 
     snprintf(buf, 
              NA_STAT_BUF_MAX,
@@ -620,6 +694,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
              "conn max           :%d\n"
              "connpool max       :%d\n"
              "is_connpool_only   :%s\n"
+             "is_refused_active  :%s\n"
              "bufsize            :%d\n"
              "current conn       :%d\n"
              "available conn     :%d\n"
@@ -631,7 +706,8 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
              env->is_refused_active ? env->backup_server.host.ipaddr : env->target_server.host.ipaddr,
              env->is_refused_active ? env->backup_server.host.port   : env->target_server.host.port,
              env->error_count, env->error_count_max, env->conn_max, env->connpool_max, 
-             env->is_connpool_only ? "true" : "false",
+             env->is_connpool_only  ? "true" : "false",
+             env->is_refused_active ? "true" : "false",
              env->bufsize, env->current_conn, available_conn, mbuf
              );
 
@@ -649,4 +725,7 @@ static void na_connpoolmap_get(char *buf, int bufsize, na_connpool_t *connpool)
     for (int i=0;i<connpool->max;++i) {
         snprintf(buf + i * 2, bufsize - i * 2, "%d ", connpool->mark[i]);
     }
+    buf[connpool->max * 2] = '\0';
 }
+
+
