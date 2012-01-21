@@ -48,7 +48,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
 
     json_object_object_add(stat_obj, "name",                json_object_new_string(NA_NAME));
     json_object_object_add(stat_obj, "version",             json_object_new_string(NA_VERSION));
-    json_object_object_add(stat_obj, "environment name",    json_object_new_string(env->name));
+    json_object_object_add(stat_obj, "environment_name",    json_object_new_string(env->name));
     json_object_object_add(stat_obj, "fsfd",                json_object_new_int(env->fsfd));
     json_object_object_add(stat_obj, "fsport",              json_object_new_int(env->fsport));
     json_object_object_add(stat_obj, "fssockpath",          json_object_new_string(env->fssockpath));
@@ -104,24 +104,24 @@ void na_env_set_buf(char *buf, int bufsize, na_env_t *env)
              "environment stats\n\n"
              "name               :%s\n"
              "version            :%s\n"
-             "environment name   :%s\n"
+             "environment_name   :%s\n"
              "fsfd               :%d\n"
              "fsport             :%d\n"
              "fssockpath         :%s\n"
-             "target host        :%s\n"
-             "target port        :%d\n"
-             "backup host        :%s\n"
-             "backup port        :%d\n"
-             "current target host:%s\n"
-             "current target port:%d\n"
-             "error count        :%d\n"
-             "error count max    :%d\n"
-             "conn max           :%d\n"
-             "connpool max       :%d\n"
+             "target_host        :%s\n"
+             "target_port        :%d\n"
+             "backup_host        :%s\n"
+             "backup_port        :%d\n"
+             "current_target_host:%s\n"
+             "current_target_port:%d\n"
+             "error_count        :%d\n"
+             "error_count max    :%d\n"
+             "conn_max           :%d\n"
+             "connpool_max       :%d\n"
              "is_connpool_only   :%s\n"
              "is_refused_active  :%s\n"
              "bufsize            :%d\n"
-             "current conn       :%d\n"
+             "current_conn       :%d\n"
              "available conn     :%d\n"
              "connpool_map       :%s\n"
              ,
