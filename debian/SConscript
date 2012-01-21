@@ -20,7 +20,8 @@ DEBCHANGELOGFILE = os.path.join(DEBNAME, "DEBIAN/changelog")
 
 DEBFILES = [
     # TODO: generate following tupples
-    ("usr/bin/neoagent", "neoagent/neoagent"),
+    ("usr/bin/neoagent",                 "neoagent/neoagent"),
+    ("usr/bin/neostat",                  "misc/neostat/neostat"),
     ("usr/share/doc/neoagent/copyright", "debian/copyright"),
     ("usr/share/doc/neoagent/changelog", "debian/changelog"),
     ("usr/share/man/man1/neoagent.1",    "doc/build/man/neoagent.1"),
