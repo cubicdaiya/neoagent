@@ -1,3 +1,27 @@
+2012-01-22 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix invalid read access on Boyer-Moore Search
+
+	* divide event loop into main loop and support loop
+
+	* rename function prefix 'neoagent_' 'na_'
+
+	* rewrite event.c from scratch
+
+	* improve stability
+
+	* fix bug(long request sometimes drop out)
+
+	* assign connection from connpool directional-randomly
+
+	* add neoagent command completion with zsh
+
+	* fix memory leak(forgot to release json objects for configuration)
+
+	* fix bug(output command request to stdout when switching server)
+
+	* 0.2.0 released
+
 2011-09-06 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* add event switch count and max
