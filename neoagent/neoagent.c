@@ -62,8 +62,11 @@ static void na_setup_signals (void);
 
 static void na_version(void)
 {
-    const char *s = "neoagent " NA_VERSION "\n";
-    printf("%s", s);
+    const char *v = "neoagent " NA_VERSION;
+    const char *c = "Copyright 2011-2012 Tatsuhiko Kubo.";
+    printf("%s\n"
+           "%s\n", 
+           v, c);
 }
 
 static void na_usage(void)
