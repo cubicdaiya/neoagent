@@ -94,7 +94,7 @@ struct json_object *na_cnf_get_environments(const char *conf_file_json, int *env
     *env_cnt         = json_object_array_length(environments_obj);
     
     close(json_fd);
-    free(overall_obj);
+    json_object_put(overall_obj);
 
     return environments_obj;
     
