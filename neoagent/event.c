@@ -447,7 +447,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             return;
         }
     } else {
-        if (env->current_conn >= connpool->max) {
+        if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
             na_server_t *server;
             tsfd = na_target_server_tcpsock_init();
             if (tsfd < 0) {
@@ -466,11 +466,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                     NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
                     return;
                 }
-            }
-        } else {
-            if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
-                NA_STDERR("failed assign connection from connpool.");
-                return;
             }
         }
     }
