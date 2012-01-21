@@ -8,6 +8,7 @@ GSYMS
 .sconf_temp/
 .sconsign.dblite
 config.log
+debian/control
 debian/neoagent
 neoagent_*.deb
 doc/build/doctrees
