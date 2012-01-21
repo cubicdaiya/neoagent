@@ -116,6 +116,7 @@ int main (int argc, char *argv[])
     int                 c;
     int                 env_cnt          = 0;
     bool                is_daemon        = false;
+    struct json_object *conf_obj         = NULL;
     struct json_object *environments_obj = NULL;
 
     while (-1 != (c = getopt(argc, argv,
@@ -131,10 +132,12 @@ int main (int argc, char *argv[])
             is_daemon = true;
             break;
         case 'f':
-            environments_obj = na_cnf_get_environments(optarg, &env_cnt);
+            conf_obj         = na_get_conf(optarg);
+            environments_obj = na_get_environments(conf_obj, &env_cnt);
             break;
         case 't':
-            environments_obj = na_cnf_get_environments(optarg, &env_cnt);
+            conf_obj         = na_get_conf(optarg);
+            environments_obj = na_get_environments(conf_obj, &env_cnt);
             printf("JSON configuration is OK\n");
             return 0;
             break;
@@ -174,6 +177,8 @@ int main (int argc, char *argv[])
             na_conf_env_init(environments_obj, env[i], i);
         }
     }
+
+    json_object_put(conf_obj);
 
     for (int i=0;i<env_cnt;++i) {
         env[i]->current_conn      = 0;

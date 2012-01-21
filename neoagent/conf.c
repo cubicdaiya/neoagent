@@ -70,10 +70,10 @@ static const char *na_param_name (na_param_t param)
     return na_params[param];
 }
 
-struct json_object *na_cnf_get_environments(const char *conf_file_json, int *env_cnt)
+struct json_object *na_get_conf(const char *conf_file_json)
 {
-    struct json_object *overall_obj;
-    struct json_object *environments_obj;
+    struct json_object *conf_obj;
+
     char json_buf[NA_JSON_BUF_MAX + 1];
     int json_fd, size;
 
@@ -86,20 +86,25 @@ struct json_object *na_cnf_get_environments(const char *conf_file_json, int *env
         NA_DIE_WITH_ERROR(NA_ERROR_INVALID_CONFPATH);
     }
 
-    overall_obj      = json_tokener_parse(json_buf);
-    if (is_error(overall_obj)) {
+    conf_obj = json_tokener_parse(json_buf);
+    if (is_error(conf_obj)) {
         NA_DIE_WITH_ERROR(NA_ERROR_PARSE_JSON_CONFIG);
     }
-    environments_obj = json_object_object_get(overall_obj, "environments");
-    *env_cnt         = json_object_array_length(environments_obj);
-    
-    close(json_fd);
-    json_object_put(overall_obj);
 
-    return environments_obj;
-    
+    close(json_fd);
+
+    return conf_obj;
 }
 
+struct json_object *na_get_environments(struct json_object *conf_obj, int *env_cnt)
+{
+    struct json_object *environments_obj;
+
+    environments_obj = json_object_object_get(conf_obj, "environments");
+    *env_cnt         = json_object_array_length(environments_obj);
+    
+    return environments_obj;
+}
 
 void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, int idx)
 {

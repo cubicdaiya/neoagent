@@ -53,7 +53,8 @@ typedef enum na_param_t {
     NA_PARAM_MAX // Always add new codes to the end before this one
 } na_param_t;
 
-struct json_object *na_cnf_get_environments(const char *conf_file_json, int *env_cnt);
+struct json_object *na_get_conf(const char *conf_file_json);
+struct json_object *na_get_environments(struct json_object *conf_obj, int *env_cnt);
 void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, int idx);
 
 #endif // NA_CONF_H
