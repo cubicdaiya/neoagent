@@ -1,0 +1,14 @@
+#compdef neoagent
+#
+# neoagent completion
+# Tatsuhiko Kubo <cubicdaiya@gmail.com>
+#
+_neoagent () {
+    _arguments -s \
+	'-d[go to background]' \
+	'-f[configuration file with JSON]:file:_files -g "*.json"' \
+	'-t[check configuration file with JSON]:file:_files -g "*.json"' \
+	'-v[show version and information]' \
+}
+
+_neoagent "$@"
