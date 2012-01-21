@@ -473,11 +473,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         }
     }
 
-    if (tsfd <= 0) {
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
-        return;
-    }
-        
     if ((cfd = na_server_accept(fsfd)) < 0) {
         NA_STDERR("accept()");
         return;
@@ -504,6 +499,11 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         NA_FREE(client->swbuf);
         NA_FREE(client);
         close(cfd);
+        if (cur_pool == -1) {
+            close(client->tsfd);
+        } else {
+            client->connpool->mark[client->cur_pool] = 0;
+        }
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
         return;
     }
