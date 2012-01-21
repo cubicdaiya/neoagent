@@ -3,9 +3,9 @@
 cflags = [
     '-std=c99',
     '-Wall',
-    '-g',
-    '-O2',
-    '-fno-strict-aliasing',
+    '-g0',
+    '-O3',
+#    '-fno-strict-aliasing',
     '-D_GNU_SOURCE',
     ]
 
