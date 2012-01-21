@@ -617,12 +617,14 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
             if (errno != EINPROGRESS && errno != EALREADY) {
                 env->is_refused_active = true;
                 na_connpool_switch(env);
+                NA_STDERR("switch backup server");
             }
         }
     } else {
         if (env->is_refused_active) {
             env->is_refused_active = false;
             na_connpool_switch(env);
+            NA_STDERR("switch target server");
         }
     }
 
