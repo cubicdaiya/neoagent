@@ -671,8 +671,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     int cfd, stfd, th_ret;
     int size;
     na_env_t *env;
-    char buf[NA_STAT_BUF_MAX + 1];
-    //char jbuf[NA_STAT_JBUF_MAX + 1];
+    char jbuf[NA_STAT_JBUF_MAX + 1];
 
     stfd = w->fd;
     env  = (na_env_t *)w->data;
@@ -692,12 +691,10 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    na_env_set_buf(buf, NA_STAT_BUF_MAX, env);
-    //na_env_set_jbuf(jbuf, NA_STAT_JBUF_MAX, env);
+    na_env_set_jbuf(jbuf, NA_STAT_JBUF_MAX, env);
 
     // send statictics of environment to client
-    if ((size = write(cfd, buf, strlen(buf))) < 0) {
-    //if ((size = write(cfd, jbuf, strlen(jbuf))) < 0) {
+    if ((size = write(cfd, jbuf, strlen(jbuf))) < 0) {
         close(cfd);
         return;
     }

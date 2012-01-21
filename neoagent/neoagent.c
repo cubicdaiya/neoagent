@@ -45,9 +45,7 @@
 #include "conf.h"
 #include "error.h"
 #include "memproto.h"
-
-// version number
-#define NA_VERSION "0.2.0"
+#include "version.h"
 
 // constants
 static const int NA_ENV_MAX = 10;
@@ -62,7 +60,7 @@ static void na_setup_signals (void);
 
 static void na_version(void)
 {
-    const char *v = "neoagent " NA_VERSION;
+    const char *v = NA_NAME " " NA_VERSION;
     const char *c = "Copyright 2011-2012 Tatsuhiko Kubo.";
     printf("%s\n"
            "%s\n", 

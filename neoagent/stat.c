@@ -32,6 +32,7 @@
 */
 
 #include "stat.h"
+#include "version.h"
 
 static const int NA_STAT_MBUF_MAX = 4096;
 
@@ -45,7 +46,9 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     stat_obj        = json_object_new_object();
     connpoolmap_obj = na_connpoolmap_array_json(connpool);
 
-    json_object_object_add(stat_obj, "name",                json_object_new_string(env->name));
+    json_object_object_add(stat_obj, "name",                json_object_new_string(NA_NAME));
+    json_object_object_add(stat_obj, "version",             json_object_new_string(NA_VERSION));
+    json_object_object_add(stat_obj, "environment name",    json_object_new_string(env->name));
     json_object_object_add(stat_obj, "fsfd",                json_object_new_int(env->fsfd));
     json_object_object_add(stat_obj, "fsport",              json_object_new_int(env->fsport));
     json_object_object_add(stat_obj, "fssockpath",          json_object_new_string(env->fssockpath));
@@ -100,6 +103,8 @@ void na_env_set_buf(char *buf, int bufsize, na_env_t *env)
              bufsize,
              "environment stats\n\n"
              "name               :%s\n"
+             "version            :%s\n"
+             "environment name   :%s\n"
              "fsfd               :%d\n"
              "fsport             :%d\n"
              "fssockpath         :%s\n"
@@ -120,6 +125,7 @@ void na_env_set_buf(char *buf, int bufsize, na_env_t *env)
              "available conn     :%d\n"
              "connpool_map       :%s\n"
              ,
+             NA_NAME, NA_VERSION,
              env->name, env->fsfd, env->fsport, env->fssockpath, 
              env->target_server.host.ipaddr, env->target_server.host.port,
              env->backup_server.host.ipaddr, env->backup_server.host.port,
