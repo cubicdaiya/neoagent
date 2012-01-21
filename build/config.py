@@ -34,6 +34,7 @@ headers = [
     'signal.h',
     'errno.h',
     'pthread.h',
+    'ev.h',
     ]
 
 funcs = [
