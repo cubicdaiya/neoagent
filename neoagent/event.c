@@ -50,11 +50,12 @@
 #include "socket.h"
 #include "error.h"
 #include "memproto.h"
+#include "stat.h"
 #include "util.h"
 
 // constants
 static const int NA_STAT_BUF_MAX  = 8192;
-static const int NA_STAT_MBUF_MAX = 4096;
+static const int NA_STAT_JBUF_MAX = 8192;
 
 // external globals
 volatile sig_atomic_t SigExit;
@@ -77,7 +78,6 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
 static void na_front_server_callback (EV_P_ struct ev_io *w, int revents);
 static void *na_support_loop (void *args);
-static void na_connpoolmap_get(char *buf, int bufsize, na_connpool_t *connpool);
 
 inline static void na_event_switch (EV_P_ struct ev_io *old, struct ev_io *new, int fd, int revent)
 {
@@ -638,15 +638,13 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
 {
     int cfd, stfd, th_ret;
-    int size, available_conn;
+    int size;
     na_env_t *env;
     char buf[NA_STAT_BUF_MAX + 1];
-    char mbuf[NA_STAT_MBUF_MAX + 1];
-    na_connpool_t *connpool;
+    //char jbuf[NA_STAT_JBUF_MAX + 1];
 
-    stfd           = w->fd;
-    env            = (na_env_t *)w->data;
-    available_conn = 0;
+    stfd = w->fd;
+    env  = (na_env_t *)w->data;
 
     if (SigExit == 1 && env->current_conn == 0) {
         pthread_exit(&th_ret);
@@ -663,66 +661,15 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+    na_env_set_buf(buf, NA_STAT_BUF_MAX, env);
+    //na_env_set_jbuf(jbuf, NA_STAT_JBUF_MAX, env);
 
-    for (int i=0;i<env->connpool_max;++i) {
-        if (connpool->mark[i] == 0) {
-            ++available_conn;
-        }
-    }
-
-    na_connpoolmap_get(mbuf, NA_STAT_MBUF_MAX, connpool);
-
-    snprintf(buf, 
-             NA_STAT_BUF_MAX,
-             "environment stats\n\n"
-             "name               :%s\n"
-             "fsfd               :%d\n"
-             "fsport             :%d\n"
-             "fssockpath         :%s\n"
-             "target host        :%s\n"
-             "target port        :%d\n"
-             "backup host        :%s\n"
-             "backup port        :%d\n"
-             "current target host:%s\n"
-             "current target port:%d\n"
-             "error count        :%d\n"
-             "error count max    :%d\n"
-             "conn max           :%d\n"
-             "connpool max       :%d\n"
-             "is_connpool_only   :%s\n"
-             "is_refused_active  :%s\n"
-             "bufsize            :%d\n"
-             "current conn       :%d\n"
-             "available conn     :%d\n"
-             "connpool_map       :%s\n"
-             ,
-             env->name, env->fsfd, env->fsport, env->fssockpath, 
-             env->target_server.host.ipaddr, env->target_server.host.port,
-             env->backup_server.host.ipaddr, env->backup_server.host.port,
-             env->is_refused_active ? env->backup_server.host.ipaddr : env->target_server.host.ipaddr,
-             env->is_refused_active ? env->backup_server.host.port   : env->target_server.host.port,
-             env->error_count, env->error_count_max, env->conn_max, env->connpool_max, 
-             env->is_connpool_only  ? "true" : "false",
-             env->is_refused_active ? "true" : "false",
-             env->bufsize, env->current_conn, available_conn, mbuf
-             );
-
-    // send stat to client
+    // send statictics of environment to client
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
+    //if ((size = write(cfd, jbuf, strlen(jbuf))) < 0) {
         close(cfd);
         return;
     }
 
     close(cfd);
 }
-
-static void na_connpoolmap_get(char *buf, int bufsize, na_connpool_t *connpool)
-{
-    for (int i=0;i<connpool->max;++i) {
-        snprintf(buf + i * 2, bufsize - i * 2, "%d ", connpool->mark[i]);
-    }
-    buf[connpool->max * 2] = '\0';
-}
-
-
