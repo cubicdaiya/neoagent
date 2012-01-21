@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+import curses
+import time
+import json
+import socket
+
+host = ""
+port = 0
+
+def usage():
+    s = "Usage: neostat $host $port"
+    print s
+
+def recv_stat_json(host, port, size):
+    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    c.connect((host,port))
+    rcvmsg = c.recv(size)
+    c.close()
+    return rcvmsg
+
+def connpool_map_string(connpool_map):
+    s = ''
+    for i in connpool_map:
+        s = s + ('%d ' % i)
+    return s
+
+def stats_draw(pad, stats):
+    pad.addstr(0, 0,  'name               : '  + stats['name'],                              curses.A_NORMAL)
+    pad.addstr(1, 0,  'version            : '  + stats['version'],                           curses.A_NORMAL)
+    pad.addstr(2, 0,  'environment_name   : '  + stats['environment_name'],                  curses.A_NORMAL)
+    pad.addstr(3, 0,  'fsfd               : '  + str(stats['fsfd']),                         curses.A_NORMAL)
+    pad.addstr(4, 0,  'fsport             : '  + str(stats['fsport']),                       curses.A_NORMAL)
+    pad.addstr(5, 0,  'fssockpath         : '  + stats['fssockpath'],                        curses.A_NORMAL)
+    pad.addstr(6, 0,  'target_host        : '  + stats['target_host'],                       curses.A_NORMAL)
+    pad.addstr(7, 0,  'target_port        : '  + str(stats['target_port']),                  curses.A_NORMAL)
+    pad.addstr(8, 0,  'backup_host        : '  + stats['backup_host'],                       curses.A_NORMAL)
+    pad.addstr(9, 0,  'backup_port        : '  + str(stats['backup_port']),                  curses.A_NORMAL)
+    pad.addstr(10, 0, 'current_target_host: '  + stats['current_target_host'],               curses.A_NORMAL)
+    pad.addstr(11, 0, 'current_target_port: '  + str(stats['current_target_port']),          curses.A_NORMAL)
+    pad.addstr(12, 0, 'error_count        : '  + str(stats['error_count']),                  curses.A_NORMAL)
+    pad.addstr(13, 0, 'error_count_max    : '  + str(stats['error_count_max']),              curses.A_NORMAL)
+    pad.addstr(14, 0, 'conn_max           : '  + str(stats['conn_max']),                     curses.A_NORMAL)
+    pad.addstr(15, 0, 'connpool_max       : '  + str(stats['connpool_max']),                 curses.A_NORMAL)
+    pad.addstr(16, 0, 'is_connpool_only   : '  + str(stats['is_connpool_only']),             curses.A_NORMAL)
+    pad.addstr(17, 0, 'is_refused_active  : '  + stats['is_refused_active'],                 curses.A_NORMAL)
+    pad.addstr(18, 0, 'bufsize            : '  + str(stats['bufsize']),                      curses.A_NORMAL)
+    pad.addstr(19, 0, 'current_conn       : '  + str(stats['current_conn']),                 curses.A_NORMAL)
+    pad.addstr(20, 0, 'available_conn     : '  + str(stats['available_conn']),               curses.A_NORMAL)
+    pad.addstr(21, 0, 'connpool_map       : '  + connpool_map_string(stats['connpool_map']), curses.A_NORMAL)
+
+def main(scr):
+    global host, port
+    curses.cbreak()
+    curses.noecho()
+    curses.curs_set(0);
+    curses.use_default_colors()
+    scr.refresh()
+    pad = curses.newpad(30, 100)
+    while True:
+        stats = json.loads(recv_stat_json(host, port, 4096))
+        stats_draw(pad, stats)
+        pad.refresh(0, 0, 0, 0, 30, 200)
+        time.sleep(1)
+    scr.keypad(0);
+
+if __name__ == '__main__':
+    argc = len(sys.argv)
+    if argc < 3:
+        usage()
+        sys.exit(None)
+    elif sys.argv[2].isdigit() == False:
+        usage()
+        sys.exit(None)
+
+    host = sys.argv[1]
+    port = int(sys.argv[2])
+
+    curses.wrapper(main)
