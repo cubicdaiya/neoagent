@@ -11,6 +11,5 @@ config.log
 debian/control
 debian/neoagent
 neoagent_*.deb
-doc/build/doctrees
-doc/build/html
+doc/build/
 neoagent/neoagent
