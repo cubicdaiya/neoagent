@@ -85,6 +85,7 @@ typedef struct na_env_t {
     bool is_connpool_only;
     na_connpool_t connpool_active;
     na_connpool_t connpool_backup;
+    pthread_mutex_t lock_connpool;
     int error_count;
     int conn_max;
     int connpool_max;

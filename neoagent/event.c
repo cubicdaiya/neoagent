@@ -110,6 +110,8 @@ static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
 
     connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
 
+    pthread_mutex_lock(&env->lock_connpool);
+
     switch (rand() % 2) {
     case 0:
         for (int i=env->connpool_max-1;i>=0;--i) {
@@ -117,6 +119,7 @@ static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
                 connpool->mark[i] = 1;
                 *fd  = connpool->fd_pool[i];
                 *cur = i;
+                pthread_mutex_unlock(&env->lock_connpool);
                 return true;
             }
         }
@@ -127,11 +130,13 @@ static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
                 connpool->mark[i] = 1;
                 *fd  = connpool->fd_pool[i];
                 *cur = i;
+                pthread_mutex_unlock(&env->lock_connpool);
                 return true;
             }
         }
         break;
     }
+    pthread_mutex_unlock(&env->lock_connpool);
     return false;
 }
 
@@ -199,7 +204,9 @@ static void na_client_close (na_client_t *client, na_env_t *env)
     NA_FREE(client->swbuf);
     NA_FREE(client);
 
-    --env->current_conn;
+    if (env->current_conn > 0) {
+        --env->current_conn;
+    }
 }
 
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
@@ -474,13 +481,23 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
 
     if ((cfd = na_server_accept(fsfd)) < 0) {
-        NA_STDERR("accept()");
+        if (cur_pool == -1) {
+            close(tsfd);
+        } else {
+            client->connpool->mark[cur_pool] = 0;
+        }
+        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
         return;
     }
 
     client = (na_client_t *)malloc(sizeof(na_client_t));
     if (client == NULL) {
         close(cfd);
+        if (cur_pool == -1) {
+            close(tsfd);
+        } else {
+            client->connpool->mark[cur_pool] = 0;
+        }
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
         return;
     }
@@ -500,9 +517,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         NA_FREE(client);
         close(cfd);
         if (cur_pool == -1) {
-            close(client->tsfd);
+            close(tsfd);
         } else {
-            client->connpool->mark[client->cur_pool] = 0;
+            client->connpool->mark[cur_pool] = 0;
         }
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
         return;
@@ -526,7 +543,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
     client->connpool          = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
 
-    env->current_conn++;
+    ++env->current_conn;
 
     ev_io_init(&client->c_watcher, na_client_callback, cfd, EV_READ);
     ev_io_start(EV_A_ &client->c_watcher);
@@ -544,7 +561,7 @@ static void *na_support_loop (void *args)
 
     // health check event
     hc_watcher.data = env;
-    ev_timer_init(&hc_watcher, na_health_check_callback, 5., 0.);
+    ev_timer_init(&hc_watcher, na_health_check_callback, 3., 0.);
     ev_timer_start(loop, &hc_watcher);
 
     // stat event
@@ -624,14 +641,20 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
         if (!env->is_refused_active) {
             if (errno != EINPROGRESS && errno != EALREADY) {
                 env->is_refused_active = true;
+                pthread_mutex_lock(&env->lock_connpool);
                 na_connpool_switch(env);
+                pthread_mutex_unlock(&env->lock_connpool);
+                env->current_conn = 0;
                 NA_STDERR("switch backup server");
             }
         }
     } else {
         if (env->is_refused_active) {
             env->is_refused_active = false;
+            pthread_mutex_lock(&env->lock_connpool);
             na_connpool_switch(env);
+            pthread_mutex_unlock(&env->lock_connpool);
+            env->current_conn = 0;
             NA_STDERR("switch target server");
         }
     }
