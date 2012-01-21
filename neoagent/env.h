@@ -123,5 +123,6 @@ na_env_t *na_env_add (mpool_t **env_pool);
 void na_env_setup_default(na_env_t *env, int idx);
 
 void na_connpool_create (na_connpool_t *connpool, int c);
+void na_connpool_destroy (na_connpool_t *connpool);
 
 #endif // NA_ENV_H

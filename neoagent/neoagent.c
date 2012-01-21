@@ -202,6 +202,11 @@ int main (int argc, char *argv[])
         sleep(1);
     }
 
+    for (int i=0;i<env_cnt;++i) {
+        na_connpool_destroy(&env[i]->connpool_active);
+        na_connpool_destroy(&env[i]->connpool_backup);
+        pthread_detach(th[i]);
+    }
     mpool_destroy(env_pool);
 
     return 0;

@@ -93,3 +93,9 @@ void na_connpool_create (na_connpool_t *connpool, int c)
     connpool->mark    = calloc(sizeof(int), c);
     connpool->max     = c;
 }
+
+void na_connpool_destroy (na_connpool_t *connpool)
+{
+    NA_FREE(connpool->fd_pool);
+    NA_FREE(connpool->mark);
+}
