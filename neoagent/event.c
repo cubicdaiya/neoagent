@@ -472,6 +472,11 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             }
         }
     }
+
+    if (tsfd <= 0) {
+        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
+        return;
+    }
         
     if ((cfd = na_server_accept(fsfd)) < 0) {
         NA_STDERR("accept()");
