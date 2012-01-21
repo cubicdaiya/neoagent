@@ -111,7 +111,7 @@ static void na_setup_signals (void)
 int main (int argc, char *argv[])
 {
     pthread_t           th[NA_ENV_MAX];
-    na_env_t     *env[NA_ENV_MAX];
+    na_env_t           *env[NA_ENV_MAX];
     mpool_t            *env_pool;
     int                 c;
     int                 env_cnt          = 0;
