@@ -3,7 +3,7 @@
 import os
 import shutil
 import sys
-import util.dpkg_util as dpkg_util
+import build.dpkg
 
 arch = ARGUMENTS.get('arch', 'amd64')
 
@@ -26,15 +26,15 @@ DEBFILES = [
     ("usr/share/man/man1/neoagent.1",    "doc/build/man/neoagent.1"),
 ]
 
-dpkg_util.dpkg_scons(Environment(),
-                     DEBNAME,
-                     DEBVERSION,
-                     SUBVERSION,
-                     DEBMAINT,
-                     DEBARCH,
-                     DEBDEPENDS,
-                     DEBDESC,
-                     DEBCONTROLFILE,
-                     DEBCOPYRIGHTFILE,
-                     DEBCHANGELOGFILE,
-                     DEBFILES)
+build.dpkg.make_package(Environment(),
+                        DEBNAME,
+                        DEBVERSION,
+                        SUBVERSION,
+                        DEBMAINT,
+                        DEBARCH,
+                        DEBDEPENDS,
+                        DEBDESC,
+                        DEBCONTROLFILE,
+                        DEBCOPYRIGHTFILE,
+                        DEBCHANGELOGFILE,
+                        DEBFILES)

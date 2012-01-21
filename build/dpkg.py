@@ -11,7 +11,7 @@ def write_file(fpath, content):
 def copy_file(target=None, source=None, env=None):
     shutil.copy2(str(source[0]), str(target[0]))
 
-def dpkg_scons(env, DEBNAME, DEBVERSION, SUBVERSION, DEBMAINT, DEBARCH, DEBDEPENDS, DEBDESC, DEBCONTROLFILE, DEBCOPYRIGHTFILE, DEBCHANGELOGFILE, DEBFILES):
+def make_package(env, DEBNAME, DEBVERSION, SUBVERSION, DEBMAINT, DEBARCH, DEBDEPENDS, DEBDESC, DEBCONTROLFILE, DEBCOPYRIGHTFILE, DEBCHANGELOGFILE, DEBFILES):
     
     def make_control(target=None, source=None, env=None):
         CONTROL_TEMPLATE = """

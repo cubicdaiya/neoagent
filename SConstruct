@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import util.build_util as build_util
+import build.util
 
-build_util.info_print()
+build.util.info_print()
 
 SConscript("neoagent/SConscript")
 

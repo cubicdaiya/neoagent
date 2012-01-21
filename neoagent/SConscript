@@ -1,28 +1,28 @@
 # -*- coding: utf-8 -*-
 
-import util.build_util as build_util
-import util.build_config as build_config
+import build.util
+import build.config
 
 env = Environment(
-    CFLAGS=build_config.cflags,
-    CPPPATH=build_config.includes,
+    CFLAGS=build.config.cflags,
+    CPPPATH=build.config.includes,
 )
 
 prog = env.Program(
     'neoagent',
     [ Glob('*.c'), Glob('ext/*.c') ],
-    LIBS=build_config.libs,
+    LIBS=build.config.libs,
 )
 
 if 'configure' in COMMAND_LINE_TARGETS:
-    if build_util.configure(Configure(env),
-                            build_config.libs,
-                            build_config.headers,
-                            build_config.funcs) is False:
+    if build.util.configure(Configure(env),
+                            build.config.libs,
+                            build.config.headers,
+                            build.config.funcs) is False:
         Exit(1)
     else:
         Exit(0)
 elif 'install' in COMMAND_LINE_TARGETS:
     prefix  = ARGUMENTS.get('prefix', '/usr/local/')
     doc_dir = '../doc'
-    build_util.install(env, prog, prefix, doc_dir)
+    build.util.install(env, prog, prefix, doc_dir)
