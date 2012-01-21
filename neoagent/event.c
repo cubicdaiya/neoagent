@@ -360,12 +360,15 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
         }
 
         if (client->crbufsize < 2) {
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env);
-            return; // request fail
+            return; // not ready yet
         } else if (client->crbuf[client->crbufsize - 2] == '\r' &&
                    client->crbuf[client->crbufsize - 1] == '\n')
         {
+            if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
+                ev_io_stop(EV_A_ w);
+                na_client_close(client, env);
+                return; // request fail
+            }
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
             ev_io_stop(EV_A_ w);
             ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_WRITE);
