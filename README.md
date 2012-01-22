@@ -22,10 +22,6 @@ A Yet Another Memcached Proxy Server written by C99.
 
 [SCons](http://www.scons.org/) is a powerful and flexible build tool.
 
-## Debian Packaging
-
-    scons debian
-
 ## Generating Documents
 
     scons doc
@@ -37,6 +33,10 @@ The documents of neoagent are generated with [Sphinx](http://sphinx.pocoo.org/),
 The generated html document is following.
 
   - [neoagent documentation](http://cubicdaiya.github.com/neoagent/)
+
+## Debian Packaging
+
+    scons debian
 
 ## Todo
 
