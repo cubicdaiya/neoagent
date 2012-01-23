@@ -690,7 +690,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    na_env_set_buf(buf, NA_STAT_BUF_MAX, env);
+    na_env_set_jbuf(buf, NA_STAT_BUF_MAX, env);
 
     // send statictics of environment to client
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
