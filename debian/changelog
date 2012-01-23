@@ -1,3 +1,17 @@
+neoagent (0.2.1-1) oneiric; urgency=low
+
+  * fix bug(bm_search rarely goes into infinite-loop)
+
+  * output statictics with JSON
+
+  * add neostat(stat command for neoagent)
+
+  * include name and version in statictics
+
+  * 0.2.1 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 24 Jan 2012 02:27:40 +0900
+
 neoagent (0.2.0-1) oneiric; urgency=low
 
   * fix invalid read access on Boyer-Moore Search
