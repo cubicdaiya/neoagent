@@ -79,7 +79,12 @@ int na_bm_search (char *haystack, char *pattern, int *skip, int hlen, int plen)
                         i += plen - j - 1;
                     }
                 } else {
-                    i += skip[(int)((unsigned char)haystack[i + j])] - (plen - 1 - j);
+                    int s = skip[(int)((unsigned char)haystack[i + j])] - (plen - 1 - j);
+                    if (s <= 0) {
+                        ++i;
+                    } else {
+                        i += s;
+                    }
                 }
                 goto loop;
             }
