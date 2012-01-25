@@ -80,13 +80,3 @@ int na_memproto_count_response_get(char *buf, int bufsize)
 {
     return na_bm_search(buf, "END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF], bufsize, 5);
 }
-
-int na_memproto_count_request_set (char *buf, int bufsize)
-{
-    return na_bm_search(buf, "\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF], bufsize, 2);
-}
-
-int na_memproto_count_response_set(char *buf, int bufsize)
-{
-    return na_bm_search(buf, "\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF], bufsize, 2) * 2;
-}

@@ -61,9 +61,6 @@ static const int NA_STAT_BUF_MAX = 8192;
 // external globals
 volatile sig_atomic_t SigExit;
 
-// external functions
-extern inline bool na_memproto_is_request_divided (int req_cnt);
-
 // private functions
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
 inline static void na_error_count_up (na_env_t *env);
@@ -357,8 +354,6 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             return; // request success
         } else if (client->cmd == NA_MEMPROTO_CMD_GET) {
             client->req_cnt = na_memproto_count_request_get(client->crbuf, client->crbufsize);
-        } else if (client->cmd == NA_MEMPROTO_CMD_SET) {
-            client->req_cnt = na_memproto_count_request_set(client->crbuf, client->crbufsize);
         }
 
         if (client->crbufsize < 2) {
