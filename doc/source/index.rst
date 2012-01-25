@@ -23,7 +23,6 @@ Index
 .. toctree::
    :maxdepth: 2
    
-   manpage
+   neoagent
    jsonconf
-
-
+   utility
