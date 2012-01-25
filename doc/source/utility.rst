@@ -128,7 +128,11 @@ The meaning of Each entry is following.
 
 **\available_conn**
 
+<<<<<<< HEAD
  count of available connection
+=======
+ count of available connection in connection-pool
+>>>>>>> add document for neostat
 
 **\connpool_map**
 
