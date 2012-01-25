@@ -25,6 +25,7 @@ DEBFILES = [
     ("usr/share/doc/neoagent/copyright", "debian/copyright"),
     ("usr/share/doc/neoagent/changelog", "debian/changelog"),
     ("usr/share/man/man1/neoagent.1",    "doc/build/man/neoagent.1"),
+    ("usr/share/man/man1/neostat.1",     "doc/build/man/neostat.1"),
 ]
 
 build.dpkg.make_package(Environment(),
