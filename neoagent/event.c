@@ -150,7 +150,6 @@ static void na_connpool_init (na_env_t *env)
         
         if (!na_server_connect(env->connpool_active.fd_pool[i], &env->target_server.addr)) {
             if (errno != EINPROGRESS && errno != EALREADY) {
-                na_error_count_up(env);
                 NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
             }
         }
@@ -180,7 +179,6 @@ static void na_connpool_switch (na_env_t *env)
         
         if (!na_server_connect(connpool->fd_pool[i], &server->addr)) {
             if (errno != EINPROGRESS && errno != EALREADY) {
-                na_error_count_up(env);
                 NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
             }
         }
@@ -690,6 +688,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
 
     // send statictics of environment to client
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
+        NA_STDERR("failed to return stat response");
         close(cfd);
         return;
     }
