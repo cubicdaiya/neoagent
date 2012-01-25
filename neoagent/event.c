@@ -267,14 +267,10 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                 na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
                 return;
             }
-        } else if (client->cmd == NA_MEMPROTO_CMD_SET) {
-            client->res_cnt = na_memproto_count_response_set(client->srbuf, client->srbufsize);
-            if (client->res_cnt >= client->req_cnt) {
-                client->event_state = NA_EVENT_STATE_CLIENT_WRITE;
-                na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
-                return;
-            }
-        } else {
+        } else if (client->srbufsize > 2 &&
+                   client->srbuf[client->srbufsize - 2] == '\r' &&
+                   client->srbuf[client->srbufsize - 1] == '\n')
+        {
             client->event_state = NA_EVENT_STATE_CLIENT_WRITE;
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
         }

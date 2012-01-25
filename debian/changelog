@@ -1,3 +1,11 @@
+neoagent (0.2.2-1) lucid; urgency=low
+
+  * fix bug(set request sometimes gets lost)
+
+  * 0.2.2 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 25 Jan 2012 16:29:57 +0900
+
 neoagent (0.2.1-1) oneiric; urgency=low
 
   * fix bug(bm_search rarely goes into infinite-loop)
