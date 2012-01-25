@@ -233,6 +233,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         if (client->srbufsize >= env->bufsize) {
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
+            na_error_count_up(env);
             NA_STDERR_MESSAGE(NA_ERROR_OUTOF_BUFFER);
             return; // request fail
         }
@@ -443,6 +444,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             return;
         }
         if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
+            na_error_count_up(env);
             NA_STDERR("failed assign connection from connpool.");
             return;
         }
@@ -488,6 +490,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         } else {
             client->connpool->mark[cur_pool] = 0;
         }
+        na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
         return;
     }
@@ -511,6 +514,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         } else {
             client->connpool->mark[cur_pool] = 0;
         }
+        na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
         return;
     }
