@@ -53,6 +53,8 @@
 #include "stat.h"
 #include "util.h"
 
+#define NA_CONNPOOL_SELECT(env) (env->is_refused_active ? &env->connpool_backup : &env->connpool_active)
+
 // constants
 static const int NA_STAT_BUF_MAX = 8192;
 
@@ -107,7 +109,7 @@ static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
 {
     na_connpool_t *connpool;
 
-    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+    connpool = NA_CONNPOOL_SELECT(env);
 
     pthread_mutex_lock(&env->lock_connpool);
 
@@ -439,7 +441,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+    connpool = NA_CONNPOOL_SELECT(env);
 
     if (env->is_connpool_only) {
         if (env->current_conn >= connpool->max) {
@@ -534,7 +536,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->res_cnt           = 0;
     client->loop_cnt          = 0;
     client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
-    client->connpool          = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+    client->connpool          = NA_CONNPOOL_SELECT(env);
 
     ++env->current_conn;
 
