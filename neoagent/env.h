@@ -97,9 +97,7 @@ typedef struct na_client_t {
     int cfd;
     int tsfd;
     char *crbuf;
-    char *cwbuf;
     char *srbuf;
-    char *swbuf;
     int crbufsize;
     int cwbufsize;
     int srbufsize;
