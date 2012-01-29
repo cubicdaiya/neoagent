@@ -1,3 +1,9 @@
+neoagent (0.2.3-1ubuntu1) oneiric; urgency=low
+
+  * remove unused member and malloc code
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 30 Jan 2012 00:47:58 +0900
+
 neoagent (0.2.2-1) lucid; urgency=low
 
   * fix bug(set request sometimes gets lost)
