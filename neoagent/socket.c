@@ -211,6 +211,9 @@ void na_set_sockaddr (na_host_t *host, struct sockaddr_in *addr)
             if (sock < 0) {
                 continue;
             }
+
+            na_set_sockopt(sock, SO_REUSEADDR);
+            na_set_sockopt(sock, SO_LINGER);
  
             if (connect(sock, ai->ai_addr, ai->ai_addrlen) != 0) {
                 close(sock);
