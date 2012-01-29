@@ -195,9 +195,7 @@ static void na_client_close (na_client_t *client, na_env_t *env)
     }
 
     NA_FREE(client->crbuf);
-    NA_FREE(client->cwbuf);
     NA_FREE(client->srbuf);
-    NA_FREE(client->swbuf);
     NA_FREE(client);
 
     if (env->current_conn > 0) {
@@ -288,8 +286,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             return; // request fail
         }
 
-        client->swbufsize                += size;
-        client->swbuf[client->swbufsize]  = '\0';
+        client->swbufsize += size;
 
         if (client->swbufsize < client->crbufsize) {
             na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_WRITE);
@@ -496,17 +493,11 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
     memset(client, 0, sizeof(*client));
     client->crbuf = (char *)malloc(env->bufsize + 1);
-    client->cwbuf = (char *)malloc(env->bufsize + 1);
     client->srbuf = (char *)malloc(env->bufsize + 1);
-    client->swbuf = (char *)malloc(env->bufsize + 1);
     if (client->crbuf == NULL ||
-        client->cwbuf == NULL ||
-        client->srbuf == NULL ||
-        client->swbuf == NULL) {
+        client->srbuf == NULL) {
         NA_FREE(client->crbuf);
-        NA_FREE(client->cwbuf);
         NA_FREE(client->srbuf);
-        NA_FREE(client->swbuf);
         NA_FREE(client);
         close(cfd);
         if (cur_pool == -1) {
