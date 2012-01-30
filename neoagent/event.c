@@ -473,7 +473,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         if (cur_pool == -1) {
             close(tsfd);
         } else {
-            client->connpool->mark[cur_pool] = 0;
+            connpool->mark[cur_pool] = 0;
         }
         NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
         return;
@@ -485,7 +485,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         if (cur_pool == -1) {
             close(tsfd);
         } else {
-            client->connpool->mark[cur_pool] = 0;
+            connpool->mark[cur_pool] = 0;
         }
         na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
@@ -503,7 +503,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         if (cur_pool == -1) {
             close(tsfd);
         } else {
-            client->connpool->mark[cur_pool] = 0;
+            connpool->mark[cur_pool] = 0;
         }
         na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
