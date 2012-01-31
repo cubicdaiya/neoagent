@@ -490,13 +490,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
 
     if ((cfd = na_server_accept(fsfd)) < 0) {
-        if (cur_pool == -1) {
-            close(tsfd);
-        } else {
-            connpool->mark[cur_pool] = 0;
-        }
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
-        return;
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
     }
 
     client = (na_client_t *)malloc(sizeof(na_client_t));
