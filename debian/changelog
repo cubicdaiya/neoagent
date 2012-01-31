@@ -1,3 +1,11 @@
+neoagent (0.2.4-1ubuntu1) oneiric; urgency=low
+
+  * fix bug(refer to uninitialized pointer)
+
+  * fix problem of breaking socket in connection pool(re-create a socket whe it breaks) 
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 31 Jan 2012 16:19:08 +0900
+
 neoagent (0.2.3-1ubuntu1) oneiric; urgency=low
 
   * remove unused member and malloc code
