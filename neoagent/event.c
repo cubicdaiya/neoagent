@@ -217,12 +217,14 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
     if (client->is_refused_active != env->is_refused_active) {
         ev_io_stop(EV_A_ w);
         na_client_close(client, env);
+        na_error_count_up(env);
         return; // request fail
     }
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
         ev_io_stop(EV_A_ w);
         na_client_close(client, env);
+        na_error_count_up(env);
         return; // request fail
     }
 
@@ -243,6 +245,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         if (size == 0) {
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
+            na_error_count_up(env);
             return; // request fail
         } else if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -250,6 +253,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             }
             ev_io_stop(EV_A_ w);
             na_client_close(client, env); // request fail
+            na_error_count_up(env);
             return;
         }
 
@@ -303,6 +307,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             }
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
+            na_error_count_up(env);
             return; // request fail
         }
 
@@ -333,12 +338,14 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
     if (client->is_refused_active != env->is_refused_active) {
         ev_io_stop(EV_A_ w);
         na_client_close(client, env);
+        na_error_count_up(env);
         return; // request fail
     }
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
         ev_io_stop(EV_A_ w);
         na_client_close(client, env);
+        na_error_count_up(env);
         return; // request fail
     }
 
@@ -358,6 +365,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             }
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
+            na_error_count_up(env);
             return; // request fail
         }
 
@@ -382,6 +390,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
                 ev_io_stop(EV_A_ w);
                 na_client_close(client, env);
+                na_error_count_up(env);
                 return; // request fail
             }
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
@@ -403,6 +412,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             }
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
+            na_error_count_up(env);
             return; // request fail
         }
 
