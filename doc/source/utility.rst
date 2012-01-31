@@ -9,8 +9,8 @@ neostat is a status monitor for neoagent.
 
 .. code-block:: sh
 
- $ neoagent -f config.json &
- $ neostat localhost 30011
+ neoagent -f config.json &
+ neostat localhost 30011
 
 30011 is the parameter of 'stport' in 'config.json'.
 
@@ -19,6 +19,8 @@ neostat is a status monitor for neoagent.
  datetime: 2012-01-25 23:42:07
  name: neoagent
  version: 0.2.2
+ host: localhost
+ port: 30011
  environment_name : env_name
  fsfd: 3
  fsport: 30001
@@ -38,6 +40,7 @@ neostat is a status monitor for neoagent.
  bufsize: 1048576
  current_conn: 4
  available_conn: 6
+ current_conn_max: 10
  connpool_map: 1 1 1 0 1 0 0 0 0 0
 
 The meaning of Each entry is following.
@@ -53,6 +56,14 @@ The meaning of Each entry is following.
 **\version**
 
  version of target software(neoagent)
+
+**\host**
+
+ name of target host
+
+**\port**
+
+ port target host uses
 
 **\environment_name**
 
@@ -129,6 +140,10 @@ The meaning of Each entry is following.
 **\available_conn**
 
  count of available connection in connection-pool
+
+**\current_conn_max**
+
+ recorded maximum count of connection after neoagent start 
 
 **\connpool_map**
 
