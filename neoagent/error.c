@@ -38,23 +38,25 @@
 #include "error.h"
 
 const char *na_error_messages[NA_ERROR_MAX] = {
-    [NA_ERROR_INVALID_ENV]           = "invalid environment",
-    [NA_ERROR_INVALID_CMD]           = "invalid memcached command",
     [NA_ERROR_INVALID_FD]            = "invalid file descriptor",
+    [NA_ERROR_INVALID_CMD]           = "invalid memcached command",
     [NA_ERROR_INVALID_HOSTNAME]      = "invalid hostname",
     [NA_ERROR_INVALID_PORT]          = "invalid port number",
     [NA_ERROR_INVALID_SOCKPATH]      = "invalid socket file path",
     [NA_ERROR_INVALID_CONFPATH]      = "invalid configuration file path",
     [NA_ERROR_INVALID_JSON_CONFIG]   = "invalid json configuration",
+    [NA_ERROR_INVALID_CONNPOOL]      = "invalid connection pool",
     [NA_ERROR_CONNECTION_FAILED]     = "connection failed",
     [NA_ERROR_OUTOF_MEMORY]          = "out of memory",
     [NA_ERROR_OUTOF_BUFFER]          = "out of buffer",
+    [NA_ERROR_OUTOF_LOOP]            = "out of loop",
     [NA_ERROR_PARSE_JSON_CONFIG]     = "json configuration parse error",
     [NA_ERROR_FAILED_SETUP_SIGNAL]   = "failed to set signal handler",
     [NA_ERROR_FAILED_IGNORE_SIGNAL]  = "failed to ignore signal",
     [NA_ERROR_FAILED_DAEMONIZE]      = "failed to daemonize",
+    [NA_ERROR_FAILED_READ]           = "failed to read",
     [NA_ERROR_FAILED_WRITE]          = "failed to write",
-    [NA_ERROR_REMAIN_DATA]           = "still data remains",
+    [NA_ERROR_BROKEN_PIPE]           = "broken pipe",
     [NA_ERROR_TOO_MANY_ENVIRONMENTS] = "too many environments",
     [NA_ERROR_UNKNOWN]               = "unknown error",
 };

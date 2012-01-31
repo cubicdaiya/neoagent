@@ -218,6 +218,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         ev_io_stop(EV_A_ w);
         na_client_close(client, env);
         na_error_count_up(env);
+        NA_STDERR_MESSAGE(NA_ERROR_INVALID_CONNPOOL);
         return; // request fail
     }
 
@@ -225,6 +226,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         ev_io_stop(EV_A_ w);
         na_client_close(client, env);
         na_error_count_up(env);
+        NA_STDERR_MESSAGE(NA_ERROR_OUTOF_LOOP);
         return; // request fail
     }
 
@@ -246,15 +248,17 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
             na_error_count_up(env);
+            NA_STDERR_MESSAGE(NA_ERROR_FAILED_READ);
             return; // request fail
         } else if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 return; // not ready yet
             }
             ev_io_stop(EV_A_ w);
-            na_client_close(client, env); // request fail
+            na_client_close(client, env);
             na_error_count_up(env);
-            return;
+            NA_STDERR_MESSAGE(NA_ERROR_FAILED_READ);
+            return; // request fail
         }
 
         client->srbufsize                += size;
@@ -285,7 +289,6 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 return; // not ready yet
             } else if (client->is_use_connpool) {
-                NA_STDERR_MESSAGE(NA_ERROR_UNKNOWN);
                 int i = client->cur_pool;
                 na_server_t *server;
                 if (client->connpool->fd_pool[i] > 0) {
@@ -300,7 +303,6 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                 
                 if (!na_server_connect(client->connpool->fd_pool[i], &server->addr)) {
                     if (errno != EINPROGRESS && errno != EALREADY) {
-                        na_error_count_up(env);
                         NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
                     }
                 }
@@ -308,6 +310,11 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
             na_error_count_up(env);
+            if (errno == EPIPE) {
+                NA_STDERR_MESSAGE(NA_ERROR_BROKEN_PIPE);
+            } else {
+                NA_STDERR_MESSAGE(NA_ERROR_FAILED_WRITE);
+            }
             return; // request fail
         }
 
@@ -339,6 +346,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
         ev_io_stop(EV_A_ w);
         na_client_close(client, env);
         na_error_count_up(env);
+        NA_STDERR_MESSAGE(NA_ERROR_INVALID_CONNPOOL);
         return; // request fail
     }
 
@@ -346,6 +354,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
         ev_io_stop(EV_A_ w);
         na_client_close(client, env);
         na_error_count_up(env);
+        NA_STDERR_MESSAGE(NA_ERROR_OUTOF_LOOP);
         return; // request fail
     }
 
@@ -366,6 +375,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
             na_error_count_up(env);
+            NA_STDERR_MESSAGE(NA_ERROR_FAILED_READ);
             return; // request fail
         }
 
@@ -391,6 +401,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
                 ev_io_stop(EV_A_ w);
                 na_client_close(client, env);
                 na_error_count_up(env);
+                NA_STDERR_MESSAGE(NA_ERROR_INVALID_CMD);
                 return; // request fail
             }
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
@@ -413,6 +424,11 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
             na_error_count_up(env);
+            if (errno == EPIPE) {
+                NA_STDERR_MESSAGE(NA_ERROR_BROKEN_PIPE);
+            } else {
+                NA_STDERR_MESSAGE(NA_ERROR_FAILED_WRITE);
+            }
             return; // request fail
         }
 
