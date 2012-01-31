@@ -280,6 +280,26 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 return; // not ready yet
+            } else if (client->is_use_connpool) {
+                NA_STDERR_MESSAGE(NA_ERROR_UNKNOWN);
+                int i = client->cur_pool;
+                na_server_t *server;
+                if (client->connpool->fd_pool[i] > 0) {
+                    close(client->connpool->fd_pool[i]);
+                }
+                client->connpool->fd_pool[i] = na_target_server_tcpsock_init();
+                server = env->is_refused_active ? &env->backup_server : &env->target_server;
+                na_target_server_tcpsock_setup(client->connpool->fd_pool[i], true);
+                if (client->connpool->fd_pool[i] <= 0) {
+                    NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+                }
+                
+                if (!na_server_connect(client->connpool->fd_pool[i], &server->addr)) {
+                    if (errno != EINPROGRESS && errno != EALREADY) {
+                        na_error_count_up(env);
+                        NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
+                    }
+                }
             }
             ev_io_stop(EV_A_ w);
             na_client_close(client, env);
