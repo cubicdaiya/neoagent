@@ -530,6 +530,10 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
     ++env->current_conn;
 
+    if (env->current_conn > env->current_conn_max) {
+        env->current_conn_max = env->current_conn;
+    }
+
     ev_io_init(&client->c_watcher, na_client_callback, cfd, EV_READ);
     ev_io_start(EV_A_ &client->c_watcher);
 }

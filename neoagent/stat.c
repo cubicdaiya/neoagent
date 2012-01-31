@@ -69,6 +69,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "bufsize",             json_object_new_int(env->bufsize));
     json_object_object_add(stat_obj, "current_conn",        json_object_new_int(env->current_conn));
     json_object_object_add(stat_obj, "available_conn",      json_object_new_int(na_available_conn(connpool)));
+    json_object_object_add(stat_obj, "current_conn_max",    json_object_new_int(env->current_conn_max));
     json_object_object_add(stat_obj, "connpool_map",        connpoolmap_obj);
 
     snprintf(buf, bufsize, "%s", json_object_to_json_string(stat_obj));
