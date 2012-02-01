@@ -5,7 +5,7 @@ Manual page
 DESCRIPTION
 ==================
 
-neoagent is a memcached proxy server daemon. 
+neoagent is a memcached protocol proxy server daemon. 
 
 ==================
 OPTIONS

@@ -218,6 +218,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('neoagent', 'neoagent', u'A Yet Another Memcached Proxy Server', [u'Tatsuhiko Kubo'], 1),
+    ('neoagent', 'neoagent', u'A Yet Another Memcached Protocol Proxy Server', [u'Tatsuhiko Kubo'], 1),
     ('neostat',  'neostat',  u'A Status Monitor For Neoagent',        [u'Tatsuhiko Kubo'], 1)
 ]

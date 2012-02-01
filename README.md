@@ -1,6 +1,6 @@
 neoagent
 ===========
-A Yet Another Memcached Proxy Server written by C99.
+A Yet Another Memcached Protocol Proxy Server written by C99.
 
 ## Features
 
