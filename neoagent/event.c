@@ -405,9 +405,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
                 return; // request fail
             }
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
-            ev_io_stop(EV_A_ w);
-            ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_WRITE);
-            ev_io_start(EV_A_ &client->ts_watcher);
+            na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_WRITE);
             return;
         }
 
@@ -574,7 +572,8 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         env->current_conn_max = env->current_conn;
     }
 
-    ev_io_init(&client->c_watcher, na_client_callback, cfd, EV_READ);
+    ev_io_init(&client->c_watcher,  na_client_callback,        cfd,  EV_READ);
+    ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_NONE);
     ev_io_start(EV_A_ &client->c_watcher);
 }
 
