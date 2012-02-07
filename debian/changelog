@@ -1,8 +1,20 @@
+neoagent (0.3.0-1) oneiric; urgency=low
+
+  * insert error count function when errro occured
+
+  * add stat entry 'current_conn_max', 'host', 'port'
+
+  * fix(fail to resolve name)
+
+  * 0.3.0 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 07 Feb 2012 16:54:29 +0900
+
 neoagent (0.2.4-1ubuntu1) oneiric; urgency=low
 
   * fix bug(refer to uninitialized pointer)
 
-  * fix problem of breaking socket in connection pool(re-create a socket whe it breaks) 
+  * fix problem of breaking socket in connection pool(re-create a socket whe it breaks)
 
  -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 31 Jan 2012 16:19:08 +0900
 

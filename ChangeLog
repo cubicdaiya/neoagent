@@ -1,7 +1,17 @@
+2012-02-07 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* insert error count function when errro occured
+
+	* add stat entry 'current_conn_max', 'host', 'port'
+
+	* fix(fail to resolve name)
+
+	* 0.3.0 released
+
 2012-01-31 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fix bug(refer to uninitialized pointer)
-	
+
 	* fix problem of breaking socket in connection pool(re-create a socket whe it breaks)
 
 	* 0.2.4 released
