@@ -5,7 +5,7 @@ neoagent
 Introduction
 ==================
 
-neoagent is a memcached proxy server daemon.
+neoagent is a memcached protocol proxy server daemon.
 
 ==================
 Features
@@ -23,7 +23,8 @@ Index
 .. toctree::
    :maxdepth: 2
    
-   manpage
+   install
+   run
+   neoagent
    jsonconf
-
-
+   utility

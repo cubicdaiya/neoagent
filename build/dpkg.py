@@ -47,9 +47,9 @@ Description: %s
         env.Depends(DEBCOPYRIGHTFILE, dest)
         env.Depends(DEBCHANGELOGFILE, dest)
         
-    env.Depends(debpkg,DEBCONTROLFILE)
-    env.Depends(debpkg,DEBCOPYRIGHTFILE)
-    env.Depends(debpkg,DEBCHANGELOGFILE)
+    env.Depends(debpkg, DEBCONTROLFILE)
+    env.Depends(debpkg, DEBCOPYRIGHTFILE)
+    env.Depends(debpkg, DEBCHANGELOGFILE)
     
     env.Command(DEBCONTROLFILE, None, make_control)
     env.Command(DEBCOPYRIGHTFILE, 'copyright', copy_file)

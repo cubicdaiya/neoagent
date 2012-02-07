@@ -2,6 +2,7 @@
 JSON configuration
 ====================
 
+.. _sample-conf:
 
 Sample configuration
 ====================

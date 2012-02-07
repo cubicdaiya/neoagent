@@ -69,6 +69,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "bufsize",             json_object_new_int(env->bufsize));
     json_object_object_add(stat_obj, "current_conn",        json_object_new_int(env->current_conn));
     json_object_object_add(stat_obj, "available_conn",      json_object_new_int(na_available_conn(connpool)));
+    json_object_object_add(stat_obj, "current_conn_max",    json_object_new_int(env->current_conn_max));
     json_object_object_add(stat_obj, "connpool_map",        connpoolmap_obj);
 
     snprintf(buf, bufsize, "%s", json_object_to_json_string(stat_obj));
@@ -91,53 +92,6 @@ int na_available_conn (na_connpool_t *connpool)
     return available_conn;
 }
 
-void na_env_set_buf(char *buf, int bufsize, na_env_t *env)
-{
-    na_connpool_t *connpool;
-    char mbuf[NA_STAT_MBUF_MAX + 1];
-
-    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
-
-    na_connpoolmap_set_buf(mbuf, NA_STAT_MBUF_MAX, connpool);
-    snprintf(buf, 
-             bufsize,
-             "environment stats\n\n"
-             "name               :%s\n"
-             "version            :%s\n"
-             "environment_name   :%s\n"
-             "fsfd               :%d\n"
-             "fsport             :%d\n"
-             "fssockpath         :%s\n"
-             "target_host        :%s\n"
-             "target_port        :%d\n"
-             "backup_host        :%s\n"
-             "backup_port        :%d\n"
-             "current_target_host:%s\n"
-             "current_target_port:%d\n"
-             "error_count        :%d\n"
-             "error_count max    :%d\n"
-             "conn_max           :%d\n"
-             "connpool_max       :%d\n"
-             "is_connpool_only   :%s\n"
-             "is_refused_active  :%s\n"
-             "bufsize            :%d\n"
-             "current_conn       :%d\n"
-             "available conn     :%d\n"
-             "connpool_map       :%s\n"
-             ,
-             NA_NAME, NA_VERSION,
-             env->name, env->fsfd, env->fsport, env->fssockpath, 
-             env->target_server.host.ipaddr, env->target_server.host.port,
-             env->backup_server.host.ipaddr, env->backup_server.host.port,
-             env->is_refused_active ? env->backup_server.host.ipaddr : env->target_server.host.ipaddr,
-             env->is_refused_active ? env->backup_server.host.port   : env->target_server.host.port,
-             env->error_count, env->error_count_max, env->conn_max, env->connpool_max, 
-             env->is_connpool_only  ? "true" : "false",
-             env->is_refused_active ? "true" : "false",
-             env->bufsize, env->current_conn, na_available_conn(connpool), mbuf
-             );
-}
-
 json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
 {
     struct json_object *connpoolmap_obj;
@@ -146,12 +100,4 @@ json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
         json_object_array_add(connpoolmap_obj, json_object_new_int(connpool->mark[i]));
     }
     return connpoolmap_obj;
-}
-
-void na_connpoolmap_set_buf(char *buf, int bufsize, na_connpool_t *connpool)
-{
-    for (int i=0;i<connpool->max;++i) {
-        snprintf(buf + i * 2, bufsize - i * 2, "%d ", connpool->mark[i]);
-    }
-    buf[connpool->max * 2] = '\0';
 }

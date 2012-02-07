@@ -53,16 +53,16 @@
 #include "stat.h"
 #include "util.h"
 
+#define NA_CONNPOOL_SELECT(env) (env->is_refused_active ? &env->connpool_backup : &env->connpool_active)
+
 // constants
 static const int NA_STAT_BUF_MAX = 8192;
 
 // external globals
 volatile sig_atomic_t SigExit;
 
-// external functions
-extern inline bool na_memproto_is_request_divided (int req_cnt);
-
 // private functions
+inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env);
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
 inline static void na_error_count_up (na_env_t *env);
 
@@ -77,6 +77,12 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
 static void na_front_server_callback (EV_P_ struct ev_io *w, int revents);
 static void *na_support_loop (void *args);
+
+inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env)
+{
+    ev_io_stop(EV_A_ w);
+    na_client_close(client, env);
+}
 
 inline static void na_event_switch (EV_P_ struct ev_io *old, struct ev_io *new, int fd, int revent)
 {
@@ -107,7 +113,7 @@ static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
 {
     na_connpool_t *connpool;
 
-    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+    connpool = NA_CONNPOOL_SELECT(env);
 
     pthread_mutex_lock(&env->lock_connpool);
 
@@ -150,7 +156,6 @@ static void na_connpool_init (na_env_t *env)
         
         if (!na_server_connect(env->connpool_active.fd_pool[i], &env->target_server.addr)) {
             if (errno != EINPROGRESS && errno != EALREADY) {
-                na_error_count_up(env);
                 NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
             }
         }
@@ -180,7 +185,6 @@ static void na_connpool_switch (na_env_t *env)
         
         if (!na_server_connect(connpool->fd_pool[i], &server->addr)) {
             if (errno != EINPROGRESS && errno != EALREADY) {
-                na_error_count_up(env);
                 NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
             }
         }
@@ -218,22 +222,24 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
     cfd    = client->cfd;
 
     if (client->is_refused_active != env->is_refused_active) {
-        ev_io_stop(EV_A_ w);
-        na_client_close(client, env);
+        na_event_stop(EV_A_ w, client, env);
+        na_error_count_up(env);
+        NA_STDERR_MESSAGE(NA_ERROR_INVALID_CONNPOOL);
         return; // request fail
     }
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
-        ev_io_stop(EV_A_ w);
-        na_client_close(client, env);
+        na_event_stop(EV_A_ w, client, env);
+        na_error_count_up(env);
+        NA_STDERR_MESSAGE(NA_ERROR_OUTOF_LOOP);
         return; // request fail
     }
 
     if (revents & EV_READ) {
 
         if (client->srbufsize >= env->bufsize) {
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env);
+            na_event_stop(EV_A_ w, client, env);
+            na_error_count_up(env);
             NA_STDERR_MESSAGE(NA_ERROR_OUTOF_BUFFER);
             return; // request fail
         }
@@ -243,16 +249,18 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                     env->bufsize - client->srbufsize);
 
         if (size == 0) {
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env);
+            na_event_stop(EV_A_ w, client, env);
+            na_error_count_up(env);
+            NA_STDERR_MESSAGE(NA_ERROR_FAILED_READ);
             return; // request fail
         } else if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 return; // not ready yet
             }
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env); // request fail
-            return;
+            na_event_stop(EV_A_ w, client, env);
+            na_error_count_up(env);
+            NA_STDERR_MESSAGE(NA_ERROR_FAILED_READ);
+            return; // request fail
         }
 
         client->srbufsize                += size;
@@ -282,8 +290,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 return; // not ready yet
-            } else {
-                NA_STDERR_MESSAGE(NA_ERROR_UNKNOWN);
+            } else if (client->is_use_connpool) {
                 int i = client->cur_pool;
                 na_server_t *server;
                 if (client->connpool->fd_pool[i] > 0) {
@@ -303,8 +310,13 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                     }
                 }
             }
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env);
+            na_event_stop(EV_A_ w, client, env);
+            na_error_count_up(env);
+            if (errno == EPIPE) {
+                NA_STDERR_MESSAGE(NA_ERROR_BROKEN_PIPE);
+            } else {
+                NA_STDERR_MESSAGE(NA_ERROR_FAILED_WRITE);
+            }
             return; // request fail
         }
 
@@ -333,14 +345,16 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
     tsfd   = client->tsfd;
 
     if (client->is_refused_active != env->is_refused_active) {
-        ev_io_stop(EV_A_ w);
-        na_client_close(client, env);
+        na_event_stop(EV_A_ w, client, env);
+        na_error_count_up(env);
+        NA_STDERR_MESSAGE(NA_ERROR_INVALID_CONNPOOL);
         return; // request fail
     }
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
-        ev_io_stop(EV_A_ w);
-        na_client_close(client, env);
+        na_event_stop(EV_A_ w, client, env);
+        na_error_count_up(env);
+        NA_STDERR_MESSAGE(NA_ERROR_OUTOF_LOOP);
         return; // request fail
     }
 
@@ -351,15 +365,15 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
                     env->bufsize - client->crbufsize);
 
         if (size == 0) {
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env);
+            na_event_stop(EV_A_ w, client, env);
             return; // request success
         } else if (size < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 return; // not ready yet
             }
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env);
+            na_event_stop(EV_A_ w, client, env);
+            na_error_count_up(env);
+            NA_STDERR_MESSAGE(NA_ERROR_FAILED_READ);
             return; // request fail
         }
 
@@ -369,13 +383,10 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
         client->cmd = na_memproto_detect_command(client->crbuf);
 
         if (client->cmd == NA_MEMPROTO_CMD_QUIT) {
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env);
+            na_event_stop(EV_A_ w, client, env);
             return; // request success
         } else if (client->cmd == NA_MEMPROTO_CMD_GET) {
             client->req_cnt = na_memproto_count_request_get(client->crbuf, client->crbufsize);
-        } else if (client->cmd == NA_MEMPROTO_CMD_SET) {
-            client->req_cnt = na_memproto_count_request_set(client->crbuf, client->crbufsize);
         }
 
         if (client->crbufsize < 2) {
@@ -384,14 +395,13 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
                    client->crbuf[client->crbufsize - 1] == '\n')
         {
             if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
-                ev_io_stop(EV_A_ w);
-                na_client_close(client, env);
+                na_event_stop(EV_A_ w, client, env);
+                na_error_count_up(env);
+                NA_STDERR_MESSAGE(NA_ERROR_INVALID_CMD);
                 return; // request fail
             }
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
-            ev_io_stop(EV_A_ w);
-            ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_WRITE);
-            ev_io_start(EV_A_ &client->ts_watcher);
+            na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_WRITE);
             return;
         }
 
@@ -405,8 +415,13 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 return; // not ready yet
             }
-            ev_io_stop(EV_A_ w);
-            na_client_close(client, env);
+            na_event_stop(EV_A_ w, client, env);
+            na_error_count_up(env);
+            if (errno == EPIPE) {
+                NA_STDERR_MESSAGE(NA_ERROR_BROKEN_PIPE);
+            } else {
+                NA_STDERR_MESSAGE(NA_ERROR_FAILED_WRITE);
+            }
             return; // request fail
         }
 
@@ -458,13 +473,14 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    connpool = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+    connpool = NA_CONNPOOL_SELECT(env);
 
     if (env->is_connpool_only) {
         if (env->current_conn >= connpool->max) {
             return;
         }
         if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
+            na_error_count_up(env);
             NA_STDERR("failed assign connection from connpool.");
             return;
         }
@@ -510,6 +526,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         } else {
             connpool->mark[cur_pool] = 0;
         }
+        na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
         return;
     }
@@ -527,6 +544,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         } else {
             connpool->mark[cur_pool] = 0;
         }
+        na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
         return;
     }
@@ -547,11 +565,16 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->res_cnt           = 0;
     client->loop_cnt          = 0;
     client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
-    client->connpool          = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
+    client->connpool          = NA_CONNPOOL_SELECT(env);
 
     ++env->current_conn;
 
-    ev_io_init(&client->c_watcher, na_client_callback, cfd, EV_READ);
+    if (env->current_conn > env->current_conn_max) {
+        env->current_conn_max = env->current_conn;
+    }
+
+    ev_io_init(&client->c_watcher,  na_client_callback,        cfd,  EV_READ);
+    ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_NONE);
     ev_io_start(EV_A_ &client->c_watcher);
 }
 
@@ -701,6 +724,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
 
     // send statictics of environment to client
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
+        NA_STDERR("failed to return stat response");
         close(cfd);
         return;
     }
