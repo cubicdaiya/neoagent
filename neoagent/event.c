@@ -396,8 +396,6 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
         {
             if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
                 na_event_stop(EV_A_ w, client, env);
-                na_error_count_up(env);
-                NA_STDERR_MESSAGE(NA_ERROR_INVALID_CMD);
                 return; // request fail
             }
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
@@ -465,7 +463,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
     
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
-        pthread_exit(&th_ret);
+        env->error_count = 0;
         return;
     }
     
@@ -651,7 +649,7 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
     }
     
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
-        pthread_exit(&th_ret);
+        env->error_count = 0;
         return;
     }
 
@@ -711,7 +709,7 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     }
     
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
-        pthread_exit(&th_ret);
+        env->error_count = 0;
         return;
     }
 
