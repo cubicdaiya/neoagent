@@ -67,7 +67,7 @@ Sample configuration
 
 **error_count_max**
 
- If error count over this number, neoagent exits.
+ If error count over this number, 'error_count' is initialized
 
 **is_connpool_only**
 
