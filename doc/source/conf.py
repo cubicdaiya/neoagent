@@ -94,6 +94,11 @@ pygments_style = 'sphinx'
 #html_theme = 'default'
 #html_theme = 'sphinxdoc'
 html_theme = 'traditional'
+#html_theme = 'scrolls'
+#html_theme = 'agogo'
+#html_theme = 'nature'
+#html_theme = 'haiku'
+#html_theme = 'epub'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -213,6 +218,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('manpage', 'neoagent', u'A Yet Another Memcached Proxy Server',
-     [u'Tatsuhiko Kubo'], 1)
+    ('neoagent', 'neoagent', u'A Yet Another Memcached Protocol Proxy Server', [u'Tatsuhiko Kubo'], 1),
+    ('neostat',  'neostat',  u'A Status Monitor For Neoagent',        [u'Tatsuhiko Kubo'], 1)
 ]

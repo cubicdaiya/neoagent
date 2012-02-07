@@ -182,6 +182,7 @@ int main (int argc, char *argv[])
         env[i]->current_conn      = 0;
         env[i]->is_refused_active = false;
         env[i]->error_count       = 0;
+        env[i]->current_conn_max  = 0;
         pthread_mutex_init(&env[i]->lock_connpool, NULL);
         na_connpool_create(&env[i]->connpool_active, env[i]->connpool_max);
         na_connpool_create(&env[i]->connpool_backup, env[i]->connpool_max);
