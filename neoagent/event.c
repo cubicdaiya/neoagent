@@ -60,6 +60,7 @@ static const int NA_STAT_BUF_MAX = 8192;
 
 // external globals
 volatile sig_atomic_t SigExit;
+volatile sig_atomic_t SigClear;
 
 // private functions
 inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env);
@@ -460,6 +461,11 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     if (SigExit == 1 && env->current_conn == 0) {
         pthread_exit(&th_ret);
         return;
+    }
+
+    if (SigClear == 1) {
+        na_env_clear(env);
+        SigClear = 0;
     }
     
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {

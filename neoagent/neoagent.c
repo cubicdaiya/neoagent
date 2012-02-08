@@ -52,10 +52,12 @@ static const int NA_ENV_MAX = 10;
 
 // external globals
 extern volatile sig_atomic_t SigExit;
+extern volatile sig_atomic_t SigClear;
 
 static void na_version(void);
 static void na_usage(void);
-static void na_signal_handler (int sig);
+static void na_signal_exit_handler (int sig);
+static void na_signal_clear_handler (int sig);
 static void na_setup_signals (void);
 
 static void na_version(void)
@@ -77,23 +79,33 @@ static void na_usage(void)
     printf("%s\n", s);
 }
 
-static void na_signal_handler (int sig)
+static void na_signal_exit_handler (int sig)
 {
     SigExit = 1;
 }
 
+static void na_signal_clear_handler (int sig)
+{
+    SigClear = 1;
+}
+
 static void na_setup_signals (void)
 {
-    struct sigaction sig_handler;
+    struct sigaction sig_exit_handler;
+    struct sigaction sig_clear_handler;
 
-    sigemptyset(&sig_handler.sa_mask);
-    sig_handler.sa_handler = na_signal_handler;
-    sig_handler.sa_flags   = 0;
+    sigemptyset(&sig_exit_handler.sa_mask);
+    sigemptyset(&sig_clear_handler.sa_mask);
+    sig_exit_handler.sa_handler  = na_signal_exit_handler;
+    sig_clear_handler.sa_handler = na_signal_clear_handler;
+    sig_exit_handler.sa_flags    = 0;
+    sig_clear_handler.sa_flags   = 0;
 
-    if (sigaction(SIGTERM, &sig_handler, NULL) == -1 ||
-        sigaction(SIGINT,  &sig_handler, NULL) == -1 ||
-        sigaction(SIGALRM, &sig_handler, NULL) == -1 ||
-        sigaction(SIGHUP,  &sig_handler, NULL) == -1)
+    if (sigaction(SIGTERM, &sig_exit_handler,  NULL) == -1 ||
+        sigaction(SIGINT,  &sig_exit_handler,  NULL) == -1 ||
+        sigaction(SIGALRM, &sig_exit_handler,  NULL) == -1 ||
+        sigaction(SIGHUP,  &sig_exit_handler,  NULL) == -1 ||
+        sigaction(SIGUSR1, &sig_clear_handler, NULL) == -1)
     {
         NA_DIE_WITH_ERROR(NA_ERROR_FAILED_SETUP_SIGNAL);
     }
@@ -102,7 +114,8 @@ static void na_setup_signals (void)
         NA_DIE_WITH_ERROR(NA_ERROR_FAILED_IGNORE_SIGNAL);
     }
 
-    SigExit = 0;
+    SigExit  = 0;
+    SigClear = 0;
 
 }
 
