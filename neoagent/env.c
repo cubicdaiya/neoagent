@@ -87,6 +87,12 @@ void na_env_setup_default(na_env_t *env, int idx)
     env->bufsize            = NA_BUFSIZE_DEFAULT;
 }
 
+void na_env_clear (na_env_t *env)
+{
+    env->error_count      = 0;
+    env->current_conn_max = 0;
+}
+
 void na_connpool_create (na_connpool_t *connpool, int c)
 {
     connpool->fd_pool = calloc(sizeof(int), c);
