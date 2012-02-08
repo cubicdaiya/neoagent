@@ -75,7 +75,14 @@ def main(scr):
             break
         if sig_exit_flg == True:
             break
-        stats = json.loads(recv_stat_json(host, port, 4096))
+        try:
+            stats_json = recv_stat_json(host, port, 8192)
+        except socket.error:
+            raise Exception("Connection Refused " + host + ":" + str(port))
+        try:
+            stats = json.loads(stats_json)
+        except ValueError:
+            raise Exception("Received Invalid JSON String:" + stats_json)
         stats['host'] = host
         stats['port'] = port
         stats_draw(pad, stats)
@@ -100,4 +107,7 @@ if __name__ == '__main__':
     host = sys.argv[1]
     port = int(sys.argv[2])
 
-    curses.wrapper(main)
+    try:
+        curses.wrapper(main)
+    except Exception, msg:
+        print msg
