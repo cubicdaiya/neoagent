@@ -1,3 +1,11 @@
+2012-02-08 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* add signal handler for clearing environment variables
+
+	* if error_count over error_count_max, init error_count
+
+	* 0.3.1 released
+
 2012-02-07 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* insert error count function when errro occured
