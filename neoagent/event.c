@@ -113,10 +113,21 @@ static void na_connpool_deactivate (na_connpool_t *connpool)
 static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
 {
     na_connpool_t *connpool;
+    int ri;
 
     connpool = NA_CONNPOOL_SELECT(env);
 
     pthread_mutex_lock(&env->lock_connpool);
+
+    ri = rand() % env->connpool_max;
+    if (connpool->mark[ri] == 0) {
+        connpool->mark[ri] = 1;
+        *fd  = connpool->fd_pool[ri];
+        *cur = ri;
+        pthread_mutex_unlock(&env->lock_connpool);
+        return true;
+    }
+
 
     switch (rand() % 2) {
     case 0:
