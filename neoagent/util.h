@@ -34,7 +34,7 @@
 #ifndef NA_UTIL_H
 #define NA_UTIL_H
 
-#define NA_FREE(p)                                \
+#define NA_FREE(p)                                      \
     do {                                                \
         if (p != NULL) {                                \
             free(p);                                    \
