@@ -33,37 +33,15 @@
 
 #include <time.h>
 
+#include "time.h"
 #include "stat.h"
 #include "version.h"
 
 // constants
 static const int NA_STAT_MBUF_MAX    = 8192;
-static const int NA_DATETIME_BUF_MAX = 32;
 
 // external globals
 time_t StartTimestamp;
-
-// private functions
-static void na_ts2dt(time_t *time, char *format, char *buf, size_t bufsize);
-static void na_elapsed_time(time_t time, char *buf, size_t bufsize);
-
-static void na_ts2dt(time_t *time, char *format, char *buf, size_t bufsize)
-{
-    size_t len;
-    len = strftime(buf, bufsize, format, localtime(time));
-    if (len == 0) {
-        buf[0] = '\0';
-    }
-}
-
-static void na_elapsed_time(time_t time, char *buf, size_t bufsize)
-{
-    int hour, min, sec;
-    hour = time / 3600;
-    min  = (time - hour * 3600) / 60;
-    sec  = (time - (hour * 3600) - (min * 60));
-    snprintf(buf, bufsize, "%02d:%02d:%02d", hour, min, sec);
-}
 
 void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
 {
