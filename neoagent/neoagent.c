@@ -53,6 +53,7 @@ static const int NA_ENV_MAX = 10;
 // external globals
 extern volatile sig_atomic_t SigExit;
 extern volatile sig_atomic_t SigClear;
+extern time_t StartTimestamp;
 
 static void na_version(void);
 static void na_usage(void);
@@ -173,6 +174,7 @@ int main (int argc, char *argv[])
         NA_DIE_WITH_ERROR(NA_ERROR_TOO_MANY_ENVIRONMENTS);
     }
 
+    StartTimestamp = time(NULL);
     na_setup_signals();
     na_memproto_bm_skip_init();
 

@@ -31,24 +31,62 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <time.h>
+
 #include "stat.h"
 #include "version.h"
 
-static const int NA_STAT_MBUF_MAX = 4096;
+// constants
+static const int NA_STAT_MBUF_MAX    = 8192;
+static const int NA_DATETIME_BUF_MAX = 32;
+
+// external globals
+time_t StartTimestamp;
+
+// private functions
+static void na_ts2dt(time_t *time, char *format, char *buf, size_t bufsize);
+static void na_elapsed_time(time_t time, char *buf, size_t bufsize);
+
+static void na_ts2dt(time_t *time, char *format, char *buf, size_t bufsize)
+{
+    size_t len;
+    len = strftime(buf, bufsize, format, localtime(time));
+    if (len == 0) {
+        buf[0] = '\0';
+    }
+}
+
+static void na_elapsed_time(time_t time, char *buf, size_t bufsize)
+{
+    int hour, min, sec;
+    hour = time / 3600;
+    min  = (time - hour * 3600) / 60;
+    sec  = (time - (hour * 3600) - (min * 60));
+    snprintf(buf, bufsize, "%02d:%02d:%02d", hour, min, sec);
+}
 
 void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
 {
     na_connpool_t *connpool;
     struct json_object *stat_obj;
     struct json_object *connpoolmap_obj;
+    time_t up_diff;
+    char start_dt[NA_DATETIME_BUF_MAX];
+    char up_time[NA_DATETIME_BUF_MAX];
 
     connpool        = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
     stat_obj        = json_object_new_object();
     connpoolmap_obj = na_connpoolmap_array_json(connpool);
+    up_diff         = time(NULL) - StartTimestamp;
+
+    na_ts2dt(&StartTimestamp, "%Y-%m-%d %H:%M:%S", start_dt, NA_DATETIME_BUF_MAX);
+    na_elapsed_time(up_diff, up_time, NA_DATETIME_BUF_MAX);
 
     json_object_object_add(stat_obj, "name",                json_object_new_string(NA_NAME));
     json_object_object_add(stat_obj, "version",             json_object_new_string(NA_VERSION));
     json_object_object_add(stat_obj, "environment_name",    json_object_new_string(env->name));
+    json_object_object_add(stat_obj, "start_time",          json_object_new_string(start_dt));
+    json_object_object_add(stat_obj, "up_time",             json_object_new_string(up_time));
     json_object_object_add(stat_obj, "fsfd",                json_object_new_int(env->fsfd));
     json_object_object_add(stat_obj, "fsport",              json_object_new_int(env->fsport));
     json_object_object_add(stat_obj, "fssockpath",          json_object_new_string(env->fssockpath));

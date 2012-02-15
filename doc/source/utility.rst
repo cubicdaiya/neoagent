@@ -16,12 +16,14 @@ neostat is a status monitor for neoagent.
 
 .. code-block:: sh
 
- datetime: 2012-01-25 23:42:07
+ datetime: 2012-02-16 04:11:47
  name: neoagent
- version: 0.2.2
+ version: 0.3.1
  host: localhost
  port: 30011
- environment_name : env_name
+ environment_name: env_name
+ start_time: 2012-02-16 04:11:36
+ up_time: 00:00:11
  fsfd: 3
  fsport: 30001
  fssockpath: /tmp/neoagent.sock
@@ -68,6 +70,14 @@ The meaning of Each entry is following.
 **\environment_name**
 
  name of operating environment of neoagent process
+
+**\start_time**
+
+ start datetime of neoagent process
+
+**\up_time**
+
+ elapsed time from starting of neoagent process
 
 **\fsfd**
 
