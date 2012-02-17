@@ -469,8 +469,8 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     tsfd     = -1;
     cur_pool = -1;
 
-    if (SigExit == 1 && env->current_conn == 0) {
-        pthread_exit(&th_ret);
+    if (SigExit == 1) {
+        ev_unloop(EV_A_ EVUNLOOP_ALL);
         return;
     }
 
@@ -606,13 +606,13 @@ static void *na_support_loop (void *args)
     // health check event
     hc_watcher.data = env;
     ev_timer_init(&hc_watcher, na_health_check_callback, 3., 0.);
-    ev_timer_start(loop, &hc_watcher);
+    ev_timer_start(EV_A_ &hc_watcher);
 
     // stat event
     st_watcher.data = env;
     ev_io_init(&st_watcher, na_stat_callback, env->stfd, EV_READ);
-    ev_io_start(loop, &st_watcher);
-    ev_loop(loop, 0);
+    ev_io_start(EV_A_ &st_watcher);
+    ev_loop(EV_A_ 0);
 
     return NULL;
 }
@@ -646,8 +646,8 @@ void *na_event_loop (void *args)
     loop = ev_loop_new(0);
     env->fs_watcher.data = env;
     ev_io_init(&env->fs_watcher, na_front_server_callback, env->fsfd, EV_READ);
-    ev_io_start(loop, &env->fs_watcher);
-    ev_loop(loop, 0);
+    ev_io_start(EV_A_ &env->fs_watcher);
+    ev_loop(EV_A_ 0);
 
     return NULL;
 }
@@ -660,8 +660,8 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
 
     env = (na_env_t *)w->data;
 
-    if (SigExit == 1 && env->current_conn == 0) {
-        pthread_exit(&th_ret);
+    if (SigExit == 1) {
+        ev_unloop(EV_A_ EVUNLOOP_ALL);
         return;
     }
     
@@ -705,9 +705,9 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
 
     close(tsfd);
 
-    ev_timer_stop(loop, w);
+    ev_timer_stop(EV_A_ w);
     ev_timer_set(w, 5., 0.);
-    ev_timer_start(loop, w);
+    ev_timer_start(EV_A_ w);
 }
 
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
@@ -720,8 +720,8 @@ static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     stfd = w->fd;
     env  = (na_env_t *)w->data;
 
-    if (SigExit == 1 && env->current_conn == 0) {
-        pthread_exit(&th_ret);
+    if (SigExit == 1) {
+        ev_unloop(EV_A_ EVUNLOOP_ALL);
         return;
     }
     

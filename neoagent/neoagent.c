@@ -48,7 +48,7 @@
 #include "version.h"
 
 // constants
-static const int NA_ENV_MAX = 10;
+static const int NA_ENV_MAX = 1;
 
 // external globals
 extern volatile sig_atomic_t SigExit;
@@ -203,26 +203,14 @@ int main (int argc, char *argv[])
         na_connpool_create(&env[i]->connpool_backup, env[i]->connpool_max);
     }
 
-    for (int i=0;i<env_cnt;++i) {
-        pthread_create(&th[i], NULL, na_event_loop, env[i]);
-    }
-
-    // monitoring signal
-    while (true) {
-
-        if (SigExit == 1) {
-            break;
-        }
-
-        sleep(1);
-    }
+    na_event_loop(env[0]);
 
     for (int i=0;i<env_cnt;++i) {
         na_connpool_destroy(&env[i]->connpool_active);
         na_connpool_destroy(&env[i]->connpool_backup);
         pthread_mutex_destroy(&env[i]->lock_connpool);
-        pthread_detach(th[i]);
     }
+
     mpool_destroy(env_pool);
 
     return 0;
