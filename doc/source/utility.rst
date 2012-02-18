@@ -18,7 +18,7 @@ neostat is a status monitor for neoagent.
 
  datetime: 2012-02-16 04:11:47
  name: neoagent
- version: 0.3.1
+ version: 0.3.2
  host: localhost
  port: 30011
  environment_name: env_name
