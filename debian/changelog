@@ -1,3 +1,15 @@
+neoagent (0.3.2-1) oneiric; urgency=low
+
+  * select connection from connpool randomly at first
+
+  * error output includes current datetime
+
+  * add `start_time` and `up_time` in neostat
+
+  * reduce number of threads(3 -> 2)
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Sun, 19 Feb 2012 03:59:48 +0900
+
 neoagent (0.3.1-1) oneiric; urgency=low
 
   * add signal handler for clearing environment variables

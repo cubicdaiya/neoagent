@@ -1,3 +1,15 @@
+2012-02-19 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* select connection from connpool randomly at first
+
+	* error output includes current datetime
+
+	* add `start_time` and `up_time` in neostat
+
+	* reduce number of threads(3 -> 2)
+
+	* 0.3.2 released
+
 2012-02-08 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* add signal handler for clearing environment variables
