@@ -39,7 +39,10 @@ neostat is a status monitor for neoagent.
  connpool_max: 10
  is_connpool_only: false
  is_refused_active: false
- bufsize: 1048576
+ request_bufsize: 524288
+ request_bufsize_max: 1048576
+ response_bufsize: 524288
+ response_bufsize_max: 1048576
  current_conn: 4
  available_conn: 6
  current_conn_max: 10
@@ -139,9 +142,21 @@ The meaning of Each entry is following.
 
  if this parameter is true, neoagent switches over connection-pool.
 
-**\bufsize**
+**\request_bufsize**
 
- max buffer size for reading and writing.
+ starting buffer size of each client's request
+
+**\request_bufsize_max**
+
+ maximum buffer size of each client's request
+
+**\reponse_bufsize**
+
+ starting buffer size of response from server
+
+**\response_bufsize_max**
+
+ maximum buffer size of response from server
 
 **\current_conn**
 

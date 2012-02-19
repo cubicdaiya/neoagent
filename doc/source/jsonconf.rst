@@ -24,7 +24,10 @@ Sample configuration
              "connpool_max": 30,
              "error_count_max": 1000,
              "is_connpool_only": false,
-             "bufsize":65536,
+             "request_bufsize":65536,
+             "request_bufsize_max":131072,
+             "response_bufsize":65536,
+             "response_bufsize_max":131072
          }
      ]
  }
@@ -73,6 +76,18 @@ Sample configuration
 
  If this paramenter is true, neoagent don't create connection more than 'connpool_max'.
 
-**bufsize**
+**request_bufsize**
 
- buffer size of each client uses
+ starting buffer size of each client's request
+
+**request_bufsize_max**
+
+ maximum buffer size of each client's request
+
+**reponse_bufsize**
+
+ starting buffer size of response from server
+
+**response_bufsize_max**
+
+ maximum buffer size of response from server
