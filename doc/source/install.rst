@@ -5,12 +5,13 @@ Install
 Dependencies For Building Neoagent
 ====================================
 
-neoagent requires `libev <http://software.schmorp.de/pkg/libev.html>`_ and `json-c <http://oss.metaparadigm.com/json-c/>`_.
-If OS is Debian Squeeze, you may install with following command.
+neoagent requires `libev <http://software.schmorp.de/pkg/libev.html>`_ and 
+`json-c <http://oss.metaparadigm.com/json-c/>`_ and `SCons <http://www.scons.org/>`_.
+If OS is Debian Squeeze, you may install them with following command.
 
 .. code-block:: sh
 
- sudo aptitude install libev-dev libjson0-dev
+ sudo aptitude install libev-dev libjson0-dev scons
 
 ====================================
 Building Neoagent
