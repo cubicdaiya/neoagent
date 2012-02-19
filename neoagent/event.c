@@ -46,14 +46,13 @@
 #include <ev.h>
 
 #include "event.h"
+#include "connpool.h"
 #include "env.h"
 #include "socket.h"
 #include "error.h"
 #include "memproto.h"
 #include "stat.h"
 #include "util.h"
-
-#define NA_CONNPOOL_SELECT(env) (env->is_refused_active ? &env->connpool_backup : &env->connpool_active)
 
 #define NA_EVENT_FAIL(na_error, loop, w, client, env) do {  \
         na_event_stop(loop, w, client, env);                \
@@ -73,10 +72,6 @@ inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
 inline static void na_error_count_up (na_env_t *env);
 
-static void na_connpool_deactivate (na_connpool_t *connpool);
-static bool na_connpool_assign (na_env_t *env, int *cur, int *fd);
-static void na_connpool_init (na_env_t *env);
-static void na_connpool_switch (na_env_t *env);
 static void na_client_close (na_client_t *client, na_env_t *env);
 static void na_health_check_callback (EV_P_ ev_timer *w, int revents);
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents);
@@ -102,110 +97,6 @@ inline static void na_error_count_up (na_env_t *env)
 {
     if (env->error_count_max > 0) {
         env->error_count++;
-    }
-}
-
-static void na_connpool_deactivate (na_connpool_t *connpool)
-{
-    for (int i=0;i<connpool->max;++i) {
-        if (connpool->fd_pool[i] > 0) {
-            close(connpool->fd_pool[i]);
-            connpool->fd_pool[i] = 0;
-            connpool->mark[i]    = 0;
-        }
-    }
-}
-
-static bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
-{
-    na_connpool_t *connpool;
-    int ri;
-
-    connpool = NA_CONNPOOL_SELECT(env);
-
-    pthread_mutex_lock(&env->lock_connpool);
-
-    ri = rand() % env->connpool_max;
-    if (connpool->mark[ri] == 0) {
-        connpool->mark[ri] = 1;
-        *fd  = connpool->fd_pool[ri];
-        *cur = ri;
-        pthread_mutex_unlock(&env->lock_connpool);
-        return true;
-    }
-
-
-    switch (rand() % 2) {
-    case 0:
-        for (int i=env->connpool_max-1;i>=0;--i) {
-            if (connpool->mark[i] == 0) {
-                connpool->mark[i] = 1;
-                *fd  = connpool->fd_pool[i];
-                *cur = i;
-                pthread_mutex_unlock(&env->lock_connpool);
-                return true;
-            }
-        }
-        break;
-    default:
-        for (int i=0;i<env->connpool_max;++i) {
-            if (connpool->mark[i] == 0) {
-                connpool->mark[i] = 1;
-                *fd  = connpool->fd_pool[i];
-                *cur = i;
-                pthread_mutex_unlock(&env->lock_connpool);
-                return true;
-            }
-        }
-        break;
-    }
-    pthread_mutex_unlock(&env->lock_connpool);
-    return false;
-}
-
-static void na_connpool_init (na_env_t *env)
-{
-    for (int i=0;i<env->connpool_max;++i) {
-        env->connpool_active.fd_pool[i] = na_target_server_tcpsock_init();
-        na_target_server_tcpsock_setup(env->connpool_active.fd_pool[i], true);
-        if (env->connpool_active.fd_pool[i] <= 0) {
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
-        }
-        
-        if (!na_server_connect(env->connpool_active.fd_pool[i], &env->target_server.addr)) {
-            if (errno != EINPROGRESS && errno != EALREADY) {
-                NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
-            }
-        }
-    }
-}
-
-static void na_connpool_switch (na_env_t *env)
-{
-    na_connpool_t *connpool;
-    na_server_t   *server;
-    if (env->is_refused_active) {
-        na_connpool_deactivate(&env->connpool_active);
-        connpool = &env->connpool_backup;
-        server   = &env->backup_server;
-    } else {
-        na_connpool_deactivate(&env->connpool_backup);
-        connpool = &env->connpool_active;
-        server   = &env->target_server;
-    }
-
-    for (int i=0;i<env->connpool_max;++i) {
-        connpool->fd_pool[i] = na_target_server_tcpsock_init();
-        na_target_server_tcpsock_setup(connpool->fd_pool[i], true);
-        if (connpool->fd_pool[i] <= 0) {
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
-        }
-        
-        if (!na_server_connect(connpool->fd_pool[i], &server->addr)) {
-            if (errno != EINPROGRESS && errno != EALREADY) {
-                NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
-            }
-        }
     }
 }
 

@@ -95,16 +95,3 @@ void na_env_clear (na_env_t *env)
     env->error_count      = 0;
     env->current_conn_max = 0;
 }
-
-void na_connpool_create (na_connpool_t *connpool, int c)
-{
-    connpool->fd_pool = calloc(sizeof(int), c);
-    connpool->mark    = calloc(sizeof(int), c);
-    connpool->max     = c;
-}
-
-void na_connpool_destroy (na_connpool_t *connpool)
-{
-    NA_FREE(connpool->fd_pool);
-    NA_FREE(connpool->mark);
-}
