@@ -230,6 +230,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
             break;
         }
     }
+
+    na_env->is_extensible_request_buf  = na_env->request_bufsize  < na_env->request_bufsize  ? true : false;
+    na_env->is_extensible_response_buf = na_env->response_bufsize < na_env->response_bufsize ? true : false;
+
 }
 
 

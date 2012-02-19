@@ -251,7 +251,12 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
     if (revents & EV_READ) {
 
-        if (client->response_bufsize > env->response_bufsize_max) {
+        if (!env->is_extensible_response_buf) {
+            if (client->srbufsize >= client->response_bufsize) {
+                NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
+                return; // request fail
+            }
+        } else if (client->response_bufsize > env->response_bufsize_max) {
             NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
             return; // request fail
         } else if (client->srbufsize >= client->response_bufsize) {
@@ -371,7 +376,12 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
     if (revents & EV_READ) {
 
-        if (client->request_bufsize >= env->request_bufsize_max) {
+        if (!env->is_extensible_request_buf) {
+            if (client->crbufsize >= client->request_bufsize) {
+                NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
+                return; // request fail
+            }
+        } else if (client->request_bufsize >= env->request_bufsize_max) {
             NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
             return; // request fail
         } else if (client->crbufsize >= client->request_bufsize) {

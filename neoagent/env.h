@@ -87,6 +87,8 @@ typedef struct na_env_t {
     ev_io fs_watcher;
     bool is_refused_active;
     bool is_connpool_only;
+    bool is_extensible_request_buf;
+    bool is_extensible_response_buf;
     na_connpool_t connpool_active;
     na_connpool_t connpool_backup;
     pthread_mutex_t lock_connpool;
