@@ -61,6 +61,8 @@ na_memproto_cmd_t na_memproto_detect_command (char *buf)
         return NA_MEMPROTO_CMD_SET;
     } else if (strncmp(buf, "incr", 4) == 0) {
         return NA_MEMPROTO_CMD_INCR;
+    } else if (strncmp(buf, "decr", 4) == 0) {
+        return NA_MEMPROTO_CMD_DECR;
     } else if (strncmp(buf, "add", 3) == 0) {
         return NA_MEMPROTO_CMD_ADD;
     } else if (strncmp(buf, "delete", 6) == 0) {
