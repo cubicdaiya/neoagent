@@ -60,34 +60,36 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     na_ts2dt(&StartTimestamp, "%Y-%m-%d %H:%M:%S", start_dt, NA_DATETIME_BUF_MAX);
     na_elapsed_time(up_diff, up_time, NA_DATETIME_BUF_MAX);
 
-    json_object_object_add(stat_obj, "name",                json_object_new_string(NA_NAME));
-    json_object_object_add(stat_obj, "version",             json_object_new_string(NA_VERSION));
-    json_object_object_add(stat_obj, "environment_name",    json_object_new_string(env->name));
-    json_object_object_add(stat_obj, "start_time",          json_object_new_string(start_dt));
-    json_object_object_add(stat_obj, "up_time",             json_object_new_string(up_time));
-    json_object_object_add(stat_obj, "fsfd",                json_object_new_int(env->fsfd));
-    json_object_object_add(stat_obj, "fsport",              json_object_new_int(env->fsport));
-    json_object_object_add(stat_obj, "fssockpath",          json_object_new_string(env->fssockpath));
-    json_object_object_add(stat_obj, "target_host",         json_object_new_string(env->target_server.host.ipaddr));
-    json_object_object_add(stat_obj, "target_port",         json_object_new_int(env->target_server.host.port));
-    json_object_object_add(stat_obj, "backup_host",         json_object_new_string(env->backup_server.host.ipaddr));
-    json_object_object_add(stat_obj, "backup_port",         json_object_new_int(env->backup_server.host.port));
-    json_object_object_add(stat_obj, "current_target_host", json_object_new_string(env->is_refused_active ? 
-                                                                                   env->backup_server.host.ipaddr : env->target_server.host.ipaddr));
-    json_object_object_add(stat_obj, "current_target_port", json_object_new_int(env->is_refused_active ?
-                                                                                env->backup_server.host.port : env->target_server.host.port));
-    json_object_object_add(stat_obj, "error_count",         json_object_new_int(env->error_count));
-    json_object_object_add(stat_obj, "error_count_max",     json_object_new_int(env->error_count_max));
-    json_object_object_add(stat_obj, "conn_max",            json_object_new_int(env->conn_max));
-    json_object_object_add(stat_obj, "connpool_max",        json_object_new_int(env->connpool_max));
-    json_object_object_add(stat_obj, "is_connpool_only",    json_object_new_string(env->is_connpool_only ?  "true" : "false"));
-    json_object_object_add(stat_obj, "is_refused_active",   json_object_new_string(env->is_refused_active ? "true" : "false"));
-    json_object_object_add(stat_obj, "request_bufsize",     json_object_new_int(env->request_bufsize));
-    json_object_object_add(stat_obj, "response_bufsize",    json_object_new_int(env->response_bufsize));
-    json_object_object_add(stat_obj, "current_conn",        json_object_new_int(env->current_conn));
-    json_object_object_add(stat_obj, "available_conn",      json_object_new_int(na_available_conn(connpool)));
-    json_object_object_add(stat_obj, "current_conn_max",    json_object_new_int(env->current_conn_max));
-    json_object_object_add(stat_obj, "connpool_map",        connpoolmap_obj);
+    json_object_object_add(stat_obj, "name",                 json_object_new_string(NA_NAME));
+    json_object_object_add(stat_obj, "version",              json_object_new_string(NA_VERSION));
+    json_object_object_add(stat_obj, "environment_name",     json_object_new_string(env->name));
+    json_object_object_add(stat_obj, "start_time",           json_object_new_string(start_dt));
+    json_object_object_add(stat_obj, "up_time",              json_object_new_string(up_time));
+    json_object_object_add(stat_obj, "fsfd",                 json_object_new_int(env->fsfd));
+    json_object_object_add(stat_obj, "fsport",               json_object_new_int(env->fsport));
+    json_object_object_add(stat_obj, "fssockpath",           json_object_new_string(env->fssockpath));
+    json_object_object_add(stat_obj, "target_host",          json_object_new_string(env->target_server.host.ipaddr));
+    json_object_object_add(stat_obj, "target_port",          json_object_new_int(env->target_server.host.port));
+    json_object_object_add(stat_obj, "backup_host",          json_object_new_string(env->backup_server.host.ipaddr));
+    json_object_object_add(stat_obj, "backup_port",          json_object_new_int(env->backup_server.host.port));
+    json_object_object_add(stat_obj, "current_target_host",  json_object_new_string(env->is_refused_active ? 
+                                                                                    env->backup_server.host.ipaddr : env->target_server.host.ipaddr));
+    json_object_object_add(stat_obj, "current_target_port",  json_object_new_int(env->is_refused_active ?
+                                                                                 env->backup_server.host.port : env->target_server.host.port));
+    json_object_object_add(stat_obj, "error_count",          json_object_new_int(env->error_count));
+    json_object_object_add(stat_obj, "error_count_max",      json_object_new_int(env->error_count_max));
+    json_object_object_add(stat_obj, "conn_max",             json_object_new_int(env->conn_max));
+    json_object_object_add(stat_obj, "connpool_max",         json_object_new_int(env->connpool_max));
+    json_object_object_add(stat_obj, "is_connpool_only",     json_object_new_string(env->is_connpool_only ?  "true" : "false"));
+    json_object_object_add(stat_obj, "is_refused_active",    json_object_new_string(env->is_refused_active ? "true" : "false"));
+    json_object_object_add(stat_obj, "request_bufsize",      json_object_new_int(env->request_bufsize));
+    json_object_object_add(stat_obj, "request_bufsize_max",  json_object_new_int(env->request_bufsize_max));
+    json_object_object_add(stat_obj, "response_bufsize",     json_object_new_int(env->response_bufsize));
+    json_object_object_add(stat_obj, "response_bufsize_max", json_object_new_int(env->response_bufsize_max));
+    json_object_object_add(stat_obj, "current_conn",         json_object_new_int(env->current_conn));
+    json_object_object_add(stat_obj, "available_conn",       json_object_new_int(na_available_conn(connpool)));
+    json_object_object_add(stat_obj, "current_conn_max",     json_object_new_int(env->current_conn_max));
+    json_object_object_add(stat_obj, "connpool_map",         connpoolmap_obj);
 
     snprintf(buf, bufsize, "%s", json_object_to_json_string(stat_obj));
 

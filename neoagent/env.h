@@ -81,7 +81,9 @@ typedef struct na_env_t {
     int current_conn;
     int current_conn_max;
     int request_bufsize;
+    int request_bufsize_max;
     int response_bufsize;
+    int response_bufsize_max;
     ev_io fs_watcher;
     bool is_refused_active;
     bool is_connpool_only;
@@ -104,6 +106,8 @@ typedef struct na_client_t {
     int cwbufsize;
     int srbufsize;
     int swbufsize;
+    int request_bufsize;
+    int response_bufsize;
     na_memproto_cmd_t cmd;
     bool is_refused_active;
     bool is_use_connpool;

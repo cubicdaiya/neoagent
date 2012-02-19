@@ -251,14 +251,22 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
     if (revents & EV_READ) {
 
-        if (client->srbufsize >= env->response_bufsize) {
+        if (client->response_bufsize > env->response_bufsize_max) {
             NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
             return; // request fail
+        } else if (client->srbufsize >= client->response_bufsize) {
+            size_t es;
+            es = (client->response_bufsize - 1) * 2;
+            if (es >= env->response_bufsize_max) {
+                es = env->response_bufsize_max;
+            }
+            client->srbuf = (char *)realloc(client->srbuf, es + 1);
+            client->response_bufsize = es;
         }
 
         size = read(tsfd, 
                     client->srbuf + client->srbufsize,
-                    env->response_bufsize - client->srbufsize);
+                    client->response_bufsize - client->srbufsize);
 
         if (size == 0) {
             NA_EVENT_FAIL(NA_ERROR_FAILED_READ, EV_A, w, client, env);
@@ -363,9 +371,22 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
     if (revents & EV_READ) {
 
+        if (client->request_bufsize >= env->request_bufsize_max) {
+            NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
+            return; // request fail
+        } else if (client->crbufsize >= client->request_bufsize) {
+            size_t es;
+            es = (client->request_bufsize - 1) * 2;
+            if (es >= env->request_bufsize_max) {
+                es = env->request_bufsize_max;
+            }
+            client->crbuf = (char *)realloc(client->crbuf, es + 1);
+            client->request_bufsize = es;
+        }
+
         size = read(cfd, 
                     client->crbuf + client->crbufsize,
-                    env->request_bufsize - client->crbufsize);
+                    client->request_bufsize - client->crbufsize);
 
         if (size == 0) {
             na_event_stop(EV_A_ w, client, env);
@@ -427,13 +448,15 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
             return;
         } else {
-            client->crbufsize   = 0;
-            client->cwbufsize   = 0;
-            client->srbufsize   = 0;
-            client->swbufsize   = 0;
-            client->event_state = NA_EVENT_STATE_CLIENT_READ;
-            client->req_cnt     = 0;
-            client->res_cnt     = 0;
+            client->crbufsize        = 0;
+            client->cwbufsize        = 0;
+            client->srbufsize        = 0;
+            client->swbufsize        = 0;
+            client->request_bufsize  = env->request_bufsize;
+            client->response_bufsize = env->response_bufsize;
+            client->event_state      = NA_EVENT_STATE_CLIENT_READ;
+            client->req_cnt          = 0;
+            client->res_cnt          = 0;
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_READ);
             return;
         }
@@ -560,6 +583,8 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->cwbufsize         = 0;
     client->srbufsize         = 0;
     client->swbufsize         = 0;
+    client->request_bufsize   = env->request_bufsize;
+    client->response_bufsize  = env->response_bufsize;
     client->event_state       = NA_EVENT_STATE_CLIENT_READ;
     client->req_cnt           = 0;
     client->res_cnt           = 0;
