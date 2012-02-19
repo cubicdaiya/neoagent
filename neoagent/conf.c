@@ -48,19 +48,20 @@
 static const int NA_JSON_BUF_MAX = 65536;
 
 const char *na_params[NA_PARAM_MAX] = {
-    [NA_PARAM_NAME]              = "name",
-    [NA_PARAM_PORT]              = "port",
-    [NA_PARAM_SOCKPATH]          = "sockpath",
-    [NA_PARAM_ACCESS_MASK]       = "access_mask",
-    [NA_PARAM_TARGET_SERVER]     = "target_server",
-    [NA_PARAM_BACKUP_SERVER]     = "backup_server",
-    [NA_PARAM_STPORT]            = "stport",
-    [NA_PARAM_CONN_MAX]          = "conn_max",
-    [NA_PARAM_CONNPOOL_MAX]      = "connpool_max",
-    [NA_PARAM_LOOP_MAX]          = "loop_max",
-    [NA_PARAM_ERROR_COUNT_MAX]   = "error_count_max",
-    [NA_PARAM_IS_CONNPOOL_ONLY]  = "is_connpool_only",
-    [NA_PARAM_BUFSIZE]           = "bufsize",
+    [NA_PARAM_NAME]             = "name",
+    [NA_PARAM_PORT]             = "port",
+    [NA_PARAM_SOCKPATH]         = "sockpath",
+    [NA_PARAM_ACCESS_MASK]      = "access_mask",
+    [NA_PARAM_TARGET_SERVER]    = "target_server",
+    [NA_PARAM_BACKUP_SERVER]    = "backup_server",
+    [NA_PARAM_STPORT]           = "stport",
+    [NA_PARAM_CONN_MAX]         = "conn_max",
+    [NA_PARAM_CONNPOOL_MAX]     = "connpool_max",
+    [NA_PARAM_LOOP_MAX]         = "loop_max",
+    [NA_PARAM_ERROR_COUNT_MAX]  = "error_count_max",
+    [NA_PARAM_IS_CONNPOOL_ONLY] = "is_connpool_only",
+    [NA_PARAM_REQUEST_BUFSIZE]  = "request_bufsize",
+    [NA_PARAM_RESPONSE_BUFSIZE] = "response_bufsize",
 };
 
 static const char *na_param_name (na_param_t param);
@@ -173,11 +174,17 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
             }
             na_env->is_connpool_only = json_object_get_boolean(param_obj) == 1 ? true : false;
             break;
-        case NA_PARAM_BUFSIZE:
+        case NA_PARAM_REQUEST_BUFSIZE:
             if (!json_object_is_type(param_obj, json_type_int)) {
                 NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
-            na_env->bufsize = json_object_get_int(param_obj);
+            na_env->request_bufsize = json_object_get_int(param_obj);
+            break;
+        case NA_PARAM_RESPONSE_BUFSIZE:
+            if (!json_object_is_type(param_obj, json_type_int)) {
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+            }
+            na_env->response_bufsize = json_object_get_int(param_obj);
             break;
         case NA_PARAM_CONN_MAX:
             if (!json_object_is_type(param_obj, json_type_int)) {

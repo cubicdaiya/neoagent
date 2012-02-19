@@ -82,7 +82,8 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "connpool_max",        json_object_new_int(env->connpool_max));
     json_object_object_add(stat_obj, "is_connpool_only",    json_object_new_string(env->is_connpool_only ?  "true" : "false"));
     json_object_object_add(stat_obj, "is_refused_active",   json_object_new_string(env->is_refused_active ? "true" : "false"));
-    json_object_object_add(stat_obj, "bufsize",             json_object_new_int(env->bufsize));
+    json_object_object_add(stat_obj, "request_bufsize",     json_object_new_int(env->request_bufsize));
+    json_object_object_add(stat_obj, "response_bufsize",    json_object_new_int(env->response_bufsize));
     json_object_object_add(stat_obj, "current_conn",        json_object_new_int(env->current_conn));
     json_object_object_add(stat_obj, "available_conn",      json_object_new_int(na_available_conn(connpool)));
     json_object_object_add(stat_obj, "current_conn_max",    json_object_new_int(env->current_conn_max));

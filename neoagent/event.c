@@ -251,14 +251,14 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
     if (revents & EV_READ) {
 
-        if (client->srbufsize >= env->bufsize) {
+        if (client->srbufsize >= env->response_bufsize) {
             NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
             return; // request fail
         }
 
         size = read(tsfd, 
                     client->srbuf + client->srbufsize,
-                    env->bufsize - client->srbufsize);
+                    env->response_bufsize - client->srbufsize);
 
         if (size == 0) {
             NA_EVENT_FAIL(NA_ERROR_FAILED_READ, EV_A, w, client, env);
@@ -365,7 +365,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
         size = read(cfd, 
                     client->crbuf + client->crbufsize,
-                    env->bufsize - client->crbufsize);
+                    env->request_bufsize - client->crbufsize);
 
         if (size == 0) {
             na_event_stop(EV_A_ w, client, env);
@@ -531,8 +531,8 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
     memset(client, 0, sizeof(*client));
-    client->crbuf = (char *)malloc(env->bufsize + 1);
-    client->srbuf = (char *)malloc(env->bufsize + 1);
+    client->crbuf = (char *)malloc(env->request_bufsize + 1);
+    client->srbuf = (char *)malloc(env->response_bufsize + 1);
     if (client->crbuf == NULL ||
         client->srbuf == NULL) {
         NA_FREE(client->crbuf);

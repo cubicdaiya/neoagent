@@ -71,20 +71,21 @@ void na_env_setup_default(na_env_t *env, int idx)
     char *backup_server_s = "127.0.0.1:11212";
     na_host_t host;
     sprintf(env->name, "env%d", idx);
-    env->fsport             = NA_PORT_DEFAULT + idx;
-    env->access_mask        = NA_ACCESS_MASK_DEFAULT;
-    host                    = na_create_host(target_server_s);
+    env->fsport           = NA_PORT_DEFAULT + idx;
+    env->access_mask      = NA_ACCESS_MASK_DEFAULT;
+    host                  = na_create_host(target_server_s);
     memcpy(&env->target_server.host, &host, sizeof(host));
     na_set_sockaddr(&host, &env->target_server.addr);
-    host                    = na_create_host(backup_server_s);
+    host                  = na_create_host(backup_server_s);
     memcpy(&env->backup_server.host, &host, sizeof(host));
     na_set_sockaddr(&host, &env->backup_server.addr);
-    env->stport             = NA_STPORT_DEFAULT + idx;
-    env->conn_max           = NA_CONN_MAX_DEFAULT;
-    env->connpool_max       = NA_CONNPOOL_MAX_DEFAULT;
-    env->error_count_max    = NA_ERROR_COUNT_MAX_DEFAULT;
-    env->is_connpool_only   = NA_IS_CONNPOOL_ONLY_DEFAULT;
-    env->bufsize            = NA_BUFSIZE_DEFAULT;
+    env->stport           = NA_STPORT_DEFAULT + idx;
+    env->conn_max         = NA_CONN_MAX_DEFAULT;
+    env->connpool_max     = NA_CONNPOOL_MAX_DEFAULT;
+    env->error_count_max  = NA_ERROR_COUNT_MAX_DEFAULT;
+    env->is_connpool_only = NA_IS_CONNPOOL_ONLY_DEFAULT;
+    env->request_bufsize  = NA_BUFSIZE_DEFAULT;
+    env->response_bufsize = NA_BUFSIZE_DEFAULT;
 }
 
 void na_env_clear (na_env_t *env)

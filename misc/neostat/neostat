@@ -62,7 +62,8 @@ def stats_draw(pad, stats):
     nx = pad_addstr(pad, nx, 0, 'connpool_max       : '  + str(stats['connpool_max']),        curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'is_connpool_only   : '  + str(stats['is_connpool_only']),    curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'is_refused_active  : '  + stats['is_refused_active'],        curses.A_NORMAL)
-    nx = pad_addstr(pad, nx, 0, 'bufsize            : '  + str(stats['bufsize']),             curses.A_NORMAL)
+    nx = pad_addstr(pad, nx, 0, 'request_bufsize    : '  + str(stats['request_bufsize']),     curses.A_NORMAL)
+    nx = pad_addstr(pad, nx, 0, 'response_bufsize   : '  + str(stats['response_bufsize']),    curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'current_conn       : '  + str(stats['current_conn']),        curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'available_conn     : '  + str(stats['available_conn']),      curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'current_conn_max   : '  + str(stats['current_conn_max']),    curses.A_NORMAL)
@@ -75,7 +76,7 @@ def main(scr):
     curses.curs_set(0);
     curses.use_default_colors()
     scr.refresh()
-    pad = curses.newpad(30, 100)
+    pad = curses.newpad(50, 100)
     pad.nodelay(1)
     while True:
         if pad.getch() == ord('q'):

@@ -80,7 +80,8 @@ typedef struct na_env_t {
     na_server_t backup_server;
     int current_conn;
     int current_conn_max;
-    int bufsize;
+    int request_bufsize;
+    int response_bufsize;
     ev_io fs_watcher;
     bool is_refused_active;
     bool is_connpool_only;

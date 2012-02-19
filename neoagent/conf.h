@@ -49,7 +49,8 @@ typedef enum na_param_t {
     NA_PARAM_LOOP_MAX,
     NA_PARAM_ERROR_COUNT_MAX,
     NA_PARAM_IS_CONNPOOL_ONLY,
-    NA_PARAM_BUFSIZE,
+    NA_PARAM_REQUEST_BUFSIZE,
+    NA_PARAM_RESPONSE_BUFSIZE,
     NA_PARAM_MAX // Always add new codes to the end before this one
 } na_param_t;
 
