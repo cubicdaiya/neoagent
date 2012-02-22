@@ -1,3 +1,15 @@
+neoagent (0.4.0-1) lucid; urgency=low
+
+  * make buffer extensible
+ 
+  * divide buffer size from `bufsize` to `request_bufsize` and `response_bufsize`
+ 
+  * support decr command
+
+  * v0.4.0 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 22 Feb 2012 19:30:44 +0900
+
 neoagent (0.3.2-1) oneiric; urgency=low
 
   * select connection from connpool randomly at first
@@ -7,6 +19,8 @@ neoagent (0.3.2-1) oneiric; urgency=low
   * add `start_time` and `up_time` in neostat
 
   * reduce number of threads(3 -> 2)
+
+  * v0.3.2 released
 
  -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Sun, 19 Feb 2012 03:59:48 +0900
 

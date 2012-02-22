@@ -1,3 +1,13 @@
+2012-02-22 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* make buffer extensible
+
+	* divide buffer size from `bufsize` to `request_bufsize` and `response_bufsize`
+
+	* support decr command
+
+	* 0.4.0 released
+
 2012-02-19 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* select connection from connpool randomly at first
