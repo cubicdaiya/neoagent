@@ -63,6 +63,9 @@
 // constants
 static const int NA_STAT_BUF_MAX = 8192;
 
+// globals
+static na_client_t *ClientPool;
+
 // external globals
 volatile sig_atomic_t SigExit;
 volatile sig_atomic_t SigClear;
@@ -106,13 +109,12 @@ static void na_client_close (na_client_t *client, na_env_t *env)
     client->cfd = -1;
     if (client->is_use_connpool) {
         client->connpool->mark[client->cur_pool] = 0;
+        NA_FREE(client->crbuf);
+        NA_FREE(client->srbuf);
+        NA_FREE(client);
     } else {
         close(client->tsfd);
     }
-
-    NA_FREE(client->crbuf);
-    NA_FREE(client->srbuf);
-    NA_FREE(client);
 
     if (env->current_conn > 0) {
         --env->current_conn;
@@ -442,36 +444,41 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
-    client = (na_client_t *)malloc(sizeof(na_client_t));
-    if (client == NULL) {
-        close(cfd);
-        if (cur_pool == -1) {
-            close(tsfd);
-        } else {
-            connpool->mark[cur_pool] = 0;
+    if (cur_pool != -1) {
+        client = &ClientPool[cur_pool];
+    } else {
+        client = (na_client_t *)malloc(sizeof(na_client_t));
+        if (client == NULL) {
+            close(cfd);
+            if (cur_pool == -1) {
+                close(tsfd);
+            } else {
+                connpool->mark[cur_pool] = 0;
+            }
+            na_error_count_up(env);
+            NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
+            return;
         }
-        na_error_count_up(env);
-        NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
-        return;
-    }
-    memset(client, 0, sizeof(*client));
-    client->crbuf = (char *)malloc(env->request_bufsize + 1);
-    client->srbuf = (char *)malloc(env->response_bufsize + 1);
-    if (client->crbuf == NULL ||
-        client->srbuf == NULL) {
-        NA_FREE(client->crbuf);
-        NA_FREE(client->srbuf);
-        NA_FREE(client);
-        close(cfd);
-        if (cur_pool == -1) {
-            close(tsfd);
-        } else {
-            connpool->mark[cur_pool] = 0;
+        memset(client, 0, sizeof(*client));
+        client->crbuf = (char *)malloc(env->request_bufsize + 1);
+        client->srbuf = (char *)malloc(env->response_bufsize + 1);
+        if (client->crbuf == NULL ||
+            client->srbuf == NULL) {
+            NA_FREE(client->crbuf);
+            NA_FREE(client->srbuf);
+            NA_FREE(client);
+            close(cfd);
+            if (cur_pool == -1) {
+                close(tsfd);
+            } else {
+                connpool->mark[cur_pool] = 0;
+            }
+            na_error_count_up(env);
+            NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
+            return;
         }
-        na_error_count_up(env);
-        NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
-        return;
     }
+
     client->cfd               = cfd;
     client->tsfd              = tsfd;
     client->env               = env;
@@ -548,6 +555,13 @@ void *na_event_loop (void *args)
 
     na_connpool_init(env);
 
+    ClientPool = calloc(sizeof(na_client_t), env->connpool_max);
+    memset(ClientPool, 0, sizeof(na_client_t) * env->connpool_max);
+    for (int i=0;i<env->connpool_max;++i) {
+        ClientPool[i].crbuf = (char *)malloc(env->request_bufsize + 1);
+        ClientPool[i].srbuf = (char *)malloc(env->response_bufsize + 1);
+    }
+
     env->stfd = na_stat_server_tcpsock_init(env->stport);
     pthread_create(&th_support, NULL, na_support_loop, env);
 
@@ -559,6 +573,12 @@ void *na_event_loop (void *args)
     ev_io_init(&env->fs_watcher, na_front_server_callback, env->fsfd, EV_READ);
     ev_io_start(EV_A_ &env->fs_watcher);
     ev_loop(EV_A_ 0);
+
+    for (int i=0;i<env->connpool_max;++i) {
+        NA_FREE(ClientPool[i].crbuf);
+        NA_FREE(ClientPool[i].srbuf);
+    }
+    NA_FREE(ClientPool);
 
     return NULL;
 }
