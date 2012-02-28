@@ -211,7 +211,11 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                     close(client->connpool->fd_pool[i]);
                 }
                 client->connpool->fd_pool[i] = na_target_server_tcpsock_init();
-                server = env->is_refused_active ? &env->backup_server : &env->target_server;
+                if (env->is_use_backup) {
+                    server = env->is_refused_active ? &env->backup_server : &env->target_server;
+                } else {
+                    server = &env->target_server;
+                }
                 na_target_server_tcpsock_setup(client->connpool->fd_pool[i], true);
                 if (client->connpool->fd_pool[i] <= 0) {
                     NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
@@ -421,7 +425,11 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             }
             na_target_server_tcpsock_setup(tsfd, true);
 
-            server = env->is_refused_active ? &env->backup_server : &env->target_server;
+            if (env->is_use_backup) {
+                server = env->is_refused_active ? &env->backup_server : &env->target_server;
+            } else {
+                server = &env->target_server;
+            }
 
             if (!na_server_connect(tsfd, &server->addr)) {
                 if (errno != EINPROGRESS && errno != EALREADY) {
@@ -522,9 +530,11 @@ static void *na_support_loop (void *args)
     loop = ev_loop_new(0);
 
     // health check event
-    hc_watcher.data = env;
-    ev_timer_init(&hc_watcher, na_health_check_callback, 3., 0.);
-    ev_timer_start(EV_A_ &hc_watcher);
+    if (env->is_use_backup) {
+        hc_watcher.data = env;
+        ev_timer_init(&hc_watcher, na_health_check_callback, 3., 0.);
+        ev_timer_start(EV_A_ &hc_watcher);
+    }
 
     // stat event
     st_watcher.data = env;

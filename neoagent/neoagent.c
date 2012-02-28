@@ -199,14 +199,18 @@ int main (int argc, char *argv[])
         env[i]->current_conn_max  = 0;
         pthread_mutex_init(&env[i]->lock_connpool, NULL);
         na_connpool_create(&env[i]->connpool_active, env[i]->connpool_max);
-        na_connpool_create(&env[i]->connpool_backup, env[i]->connpool_max);
+        if (env[i]->is_use_backup) {
+            na_connpool_create(&env[i]->connpool_backup, env[i]->connpool_max);
+        }
     }
 
     na_event_loop(env[0]);
 
     for (int i=0;i<env_cnt;++i) {
         na_connpool_destroy(&env[i]->connpool_active);
-        na_connpool_destroy(&env[i]->connpool_backup);
+        if (env[i]->is_use_backup) {
+            na_connpool_destroy(&env[i]->connpool_backup);
+        }
         pthread_mutex_destroy(&env[i]->lock_connpool);
     }
 

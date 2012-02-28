@@ -85,6 +85,7 @@ typedef struct na_env_t {
     int response_bufsize;
     int response_bufsize_max;
     ev_io fs_watcher;
+    bool is_use_backup;
     bool is_refused_active;
     bool is_connpool_only;
     bool is_extensible_request_buf;

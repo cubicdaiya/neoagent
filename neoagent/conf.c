@@ -114,8 +114,11 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
     char *e;
     char host_buf[NA_HOSTNAME_MAX + 1];
     na_host_t host;
-    struct json_object *environment_obj = json_object_array_get_idx(environments_obj, idx);
+    struct json_object *environment_obj;
     struct json_object *param_obj;
+
+    environment_obj = json_object_array_get_idx(environments_obj, idx);
+
     for (int i=0;i<NA_PARAM_MAX;++i) {
 
         param_obj = json_object_object_get(environment_obj, na_param_name(i));
@@ -151,6 +154,7 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
             host = na_create_host(host_buf);
             memcpy(&na_env->backup_server.host, &host, sizeof(host));
             na_set_sockaddr(&host, &na_env->backup_server.addr);
+            na_env->is_use_backup = true;
             break;
         case NA_PARAM_PORT:
             if (!json_object_is_type(param_obj, json_type_int)) {
