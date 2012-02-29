@@ -110,10 +110,10 @@ static void na_client_close (na_client_t *client, na_env_t *env)
     if (client->is_use_connpool) {
         client->connpool->mark[client->cur_pool] = 0;
     } else {
+        close(client->tsfd);
         NA_FREE(client->crbuf);
         NA_FREE(client->srbuf);
         NA_FREE(client);
-        close(client->tsfd);
     }
 
     if (env->current_conn > 0) {
