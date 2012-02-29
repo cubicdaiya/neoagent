@@ -101,7 +101,7 @@ static void na_set_sockopt(int fd, int optname)
 
 bool na_server_connect (int tsfd, struct sockaddr_in *tsaddr)
 {
-    if (connect(tsfd, (struct sockaddr *)tsaddr, sizeof(*tsaddr)) == -1) {
+    if (connect(tsfd, (struct sockaddr *)tsaddr, sizeof(*tsaddr)) != 0) {
         return false;
     }
     return true;
