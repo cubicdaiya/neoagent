@@ -57,6 +57,7 @@ const int NA_IPADDR_MAX  = 15;
 
 inline static bool na_is_ipaddr (const char *ipaddr);
 static void na_set_nonblock (int fd);
+static void na_set_sockopt(int fd, int optname);
 
 inline static bool na_is_ipaddr (const char *ipaddr)
 {
