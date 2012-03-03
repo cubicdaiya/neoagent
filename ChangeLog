@@ -1,3 +1,11 @@
+2012-03-03 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* when backup_server is not defined neoagent use only target_server
+
+	* improve performance of memory allocation
+
+	* 0.4.1 released
+
 2012-02-22 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* make buffer extensible

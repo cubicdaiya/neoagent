@@ -1,9 +1,19 @@
+neoagent (0.4.1-1) oneiric; urgency=low
+
+  * when backup_server is not defined neoagent use only target_server
+
+  * improve performance of memory allocation
+
+  * 0.4.1 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Sat, 03 Mar 2012 17:24:50 +0900
+
 neoagent (0.4.0-1) lucid; urgency=low
 
   * make buffer extensible
- 
+
   * divide buffer size from `bufsize` to `request_bufsize` and `response_bufsize`
- 
+
   * support decr command
 
   * v0.4.0 released
