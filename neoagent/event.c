@@ -530,7 +530,7 @@ static void *na_support_loop (void *args)
     // health check event
     if (env->is_use_backup) {
         hc_watcher.data = env;
-        ev_timer_init(&hc_watcher, na_health_check_callback, 3., 0.);
+        ev_timer_init(&hc_watcher, na_hc_callback, 3., 0.);
         ev_timer_start(EV_A_ &hc_watcher);
     }
 

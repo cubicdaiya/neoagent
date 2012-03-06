@@ -45,7 +45,14 @@
 // external globals
 volatile sig_atomic_t SigExit;
 
-void na_health_check_callback (EV_P_ ev_timer *w, int revents)
+static void na_hc_event_set(EV_P_ ev_timer * w, int revents)
+{
+    ev_timer_stop(EV_A_ w);
+    ev_timer_set(w, 5., 0.);
+    ev_timer_start(EV_A_ w);
+}
+
+void na_hc_callback (EV_P_ ev_timer *w, int revents)
 {
     int tsfd;
     int th_ret;
@@ -60,6 +67,7 @@ void na_health_check_callback (EV_P_ ev_timer *w, int revents)
     }
     
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
+        na_hc_event_set(EV_A_ w, revents);
         env->error_count = 0;
         return;
     }
@@ -67,6 +75,7 @@ void na_health_check_callback (EV_P_ ev_timer *w, int revents)
     tsfd = na_target_server_tcpsock_init();
 
     if (tsfd <= 0) {
+        na_hc_event_set(EV_A_ w, revents);
         na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
         return;
@@ -103,7 +112,5 @@ void na_health_check_callback (EV_P_ ev_timer *w, int revents)
 
     close(tsfd);
 
-    ev_timer_stop(EV_A_ w);
-    ev_timer_set(w, 5., 0.);
-    ev_timer_start(EV_A_ w);
+    na_hc_event_set(EV_A_ w, revents);
 }

@@ -33,4 +33,4 @@
 
 #include <ev.h>
 
-void na_health_check_callback (EV_P_ ev_timer *w, int revents);
+void na_hc_callback (EV_P_ ev_timer *w, int revents);
