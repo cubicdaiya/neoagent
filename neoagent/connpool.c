@@ -56,9 +56,11 @@ void na_connpool_deactivate (na_connpool_t *connpool)
 {
     for (int i=0;i<connpool->max;++i) {
         if (connpool->fd_pool[i] > 0) {
-            close(connpool->fd_pool[i]);
-            connpool->fd_pool[i] = 0;
-            connpool->mark[i]    = 0;
+            if (connpool->mark[i] == 0) {
+                close(connpool->fd_pool[i]);
+                connpool->fd_pool[i] = 0;
+            }
+            connpool->mark[i] = 0;
         }
     }
 }

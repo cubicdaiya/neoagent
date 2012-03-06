@@ -100,9 +100,14 @@ static void na_client_close (na_client_t *client, na_env_t *env)
     close(client->cfd);
     client->cfd = -1;
     if (client->is_use_connpool) {
+        if (client->connpool->mark[client->cur_pool] == 0) {
+            close(client->connpool->fd_pool[client->cur_pool]);
+        }
+        client->tsfd = -1;
         client->connpool->mark[client->cur_pool] = 0;
     } else {
         close(client->tsfd);
+        client->tsfd = -1;
         NA_FREE(client->crbuf);
         NA_FREE(client->srbuf);
         NA_FREE(client);
@@ -212,7 +217,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                 if (client->connpool->fd_pool[i] <= 0) {
                     NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
                 }
-        
+
                 if (!na_server_connect(client->connpool->fd_pool[i], &server->addr)) {
                     if (errno != EINPROGRESS && errno != EALREADY) {
                         na_error_count_up(env);
@@ -452,6 +457,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
     if (cur_pool != -1) {
         client = &ClientPool[cur_pool];
+        if (client->tsfd > 0) {
+            close(client->tsfd);
+        }
     } else {
         client = (na_client_t *)malloc(sizeof(na_client_t));
         if (client == NULL) {
