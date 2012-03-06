@@ -196,6 +196,7 @@ int main (int argc, char *argv[])
     for (int i=0;i<env_cnt;++i) {
         env[i]->current_conn      = 0;
         env[i]->is_refused_active = false;
+        env[i]->is_refused_accept = false;
         env[i]->error_count       = 0;
         env[i]->current_conn_max  = 0;
         pthread_mutex_init(&env[i]->lock_connpool, NULL);

@@ -88,6 +88,7 @@ typedef struct na_env_t {
     ev_io fs_watcher;
     bool is_use_backup;
     bool is_refused_active;
+    bool is_refused_accept;
     bool is_connpool_only;
     bool is_extensible_request_buf;
     bool is_extensible_response_buf;

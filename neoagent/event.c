@@ -124,7 +124,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
     env    = client->env;
     cfd    = client->cfd;
 
-    if (client->is_refused_active != env->is_refused_active) {
+    if ((client->is_refused_active != env->is_refused_active) || env->is_refused_accept) {
         NA_EVENT_FAIL(NA_ERROR_INVALID_CONNPOOL, EV_A, w, client, env);
         return; // request fail
     }
@@ -253,7 +253,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
     env    = client->env;
     tsfd   = client->tsfd;
 
-    if (client->is_refused_active != env->is_refused_active) {
+    if ((client->is_refused_active != env->is_refused_active) || env->is_refused_accept) {
         NA_EVENT_FAIL(NA_ERROR_INVALID_CONNPOOL, EV_A, w, client, env);
         return; // request fail
     }
@@ -386,6 +386,10 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     if (SigClear == 1) {
         na_env_clear(env);
         SigClear = 0;
+    }
+
+    if (env->is_refused_accept) {
+        return;
     }
     
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
