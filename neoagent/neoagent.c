@@ -122,6 +122,7 @@ static void na_setup_signals (void)
 
 int main (int argc, char *argv[])
 {
+    pthread_t           th[NA_ENV_MAX];
     na_env_t           *env[NA_ENV_MAX];
     mpool_t            *env_pool;
     int                 c;
@@ -204,7 +205,19 @@ int main (int argc, char *argv[])
         }
     }
 
-    na_event_loop(env[0]);
+    for (int i=0;i<env_cnt;++i) {
+        pthread_create(&th[i], NULL, na_event_loop, env[i]);
+    }
+
+    // monitoring signal
+    while (true) {
+
+        if (SigExit == 1) {
+            break;
+        }
+
+        sleep(1);
+    }
 
     for (int i=0;i<env_cnt;++i) {
         na_connpool_destroy(&env[i]->connpool_active);
@@ -212,6 +225,7 @@ int main (int argc, char *argv[])
             na_connpool_destroy(&env[i]->connpool_backup);
         }
         pthread_mutex_destroy(&env[i]->lock_connpool);
+        pthread_detach(th[i]);
     }
 
     mpool_destroy(env_pool);

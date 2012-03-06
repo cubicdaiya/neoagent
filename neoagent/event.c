@@ -374,10 +374,12 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 {
     int fsfd, cfd, tsfd, cur_pool;
+    int th_ret;
     na_env_t *env;
     na_client_t *client;
     na_connpool_t *connpool;
 
+    th_ret   = 0;
     fsfd     = w->fd;
     env      = (na_env_t *)w->data;
     cfd      = -1;
@@ -385,7 +387,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     cur_pool = -1;
 
     if (SigExit == 1) {
-        ev_unloop(EV_A_ EVUNLOOP_ALL);
+        pthread_exit(&th_ret);
         return;
     }
 
@@ -596,12 +598,14 @@ void *na_event_loop (void *args)
 static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
 {
     int tsfd;
+    int th_ret;
     na_env_t *env;
 
-    env = (na_env_t *)w->data;
+    th_ret = 0;
+    env    = (na_env_t *)w->data;
 
     if (SigExit == 1) {
-        ev_unloop(EV_A_ EVUNLOOP_ALL);
+        pthread_exit(&th_ret);
         return;
     }
     
@@ -652,16 +656,17 @@ static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
 
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
 {
-    int cfd, stfd;
+    int cfd, stfd, th_ret;
     int size;
     na_env_t *env;
     char buf[NA_STAT_BUF_MAX + 1];
-
-    stfd = w->fd;
-    env  = (na_env_t *)w->data;
+    
+    th_ret = 0;
+    stfd   = w->fd;
+    env    = (na_env_t *)w->data;
 
     if (SigExit == 1) {
-        ev_unloop(EV_A_ EVUNLOOP_ALL);
+        pthread_exit(&th_ret);
         return;
     }
     
