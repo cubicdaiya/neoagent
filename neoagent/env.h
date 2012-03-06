@@ -1,3 +1,4 @@
+
 /**
    In short, neoagent is distributed under so called "BSD license",
    
@@ -133,5 +134,8 @@ void na_env_clear (na_env_t *env);
 
 void na_connpool_create (na_connpool_t *connpool, int c);
 void na_connpool_destroy (na_connpool_t *connpool);
+
+void na_error_count_up (na_env_t *env);
+
 
 #endif // NA_ENV_H

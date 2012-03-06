@@ -52,6 +52,7 @@
 #include "error.h"
 #include "memproto.h"
 #include "stat.h"
+#include "hc.h"
 #include "util.h"
 
 #define NA_EVENT_FAIL(na_error, loop, w, client, env) do {  \
@@ -73,10 +74,8 @@ volatile sig_atomic_t SigClear;
 // private functions
 inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env);
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
-inline static void na_error_count_up (na_env_t *env);
 
 static void na_client_close (na_client_t *client, na_env_t *env);
-static void na_health_check_callback (EV_P_ ev_timer *w, int revents);
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents);
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
@@ -94,13 +93,6 @@ inline static void na_event_switch (EV_P_ struct ev_io *old, struct ev_io *new, 
     ev_io_stop(EV_A_ old);
     ev_io_set(new, fd, revent);
     ev_io_start(EV_A_ new);
-}
-
-inline static void na_error_count_up (na_env_t *env)
-{
-    if (env->error_count_max > 0) {
-        env->error_count++;
-    }
 }
 
 static void na_client_close (na_client_t *client, na_env_t *env)
@@ -593,65 +585,6 @@ void *na_event_loop (void *args)
     NA_FREE(ClientPool);
 
     return NULL;
-}
-
-static void na_health_check_callback (EV_P_ ev_timer *w, int revents)
-{
-    int tsfd;
-    int th_ret;
-    na_env_t *env;
-
-    th_ret = 0;
-    env    = (na_env_t *)w->data;
-
-    if (SigExit == 1) {
-        pthread_exit(&th_ret);
-        return;
-    }
-    
-    if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
-        env->error_count = 0;
-        return;
-    }
-
-    tsfd = na_target_server_tcpsock_init();
-
-    if (tsfd <= 0) {
-        na_error_count_up(env);
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
-        return;
-    }
-
-    na_target_server_hcsock_setup(tsfd);
-
-    // health check
-    if (!na_server_connect(tsfd, &env->target_server.addr)) {
-        if (!env->is_refused_active) {
-            if (errno != EINPROGRESS && errno != EALREADY) {
-                env->is_refused_active = true;
-                pthread_mutex_lock(&env->lock_connpool);
-                na_connpool_switch(env);
-                pthread_mutex_unlock(&env->lock_connpool);
-                env->current_conn = 0;
-                NA_STDERR("switch backup server");
-            }
-        }
-    } else {
-        if (env->is_refused_active) {
-            env->is_refused_active = false;
-            pthread_mutex_lock(&env->lock_connpool);
-            na_connpool_switch(env);
-            pthread_mutex_unlock(&env->lock_connpool);
-            env->current_conn = 0;
-            NA_STDERR("switch target server");
-        }
-    }
-
-    close(tsfd);
-
-    ev_timer_stop(EV_A_ w);
-    ev_timer_set(w, 5., 0.);
-    ev_timer_start(EV_A_ w);
 }
 
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents)

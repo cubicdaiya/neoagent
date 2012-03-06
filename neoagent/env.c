@@ -92,3 +92,10 @@ void na_env_clear (na_env_t *env)
     env->error_count      = 0;
     env->current_conn_max = 0;
 }
+
+void na_error_count_up (na_env_t *env)
+{
+    if (env->error_count_max > 0) {
+        env->error_count++;
+    }
+}
