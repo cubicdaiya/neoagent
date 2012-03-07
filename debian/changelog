@@ -1,3 +1,13 @@
+neoagent (0.4.2-1) oneiric; urgency=low
+
+  * refuse accept when switing server
+
+  * support unix domain socket for statictics server
+
+  * 0.4.2 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 07 Mar 2012 15:33:46 +0900
+
 neoagent (0.4.1-1) oneiric; urgency=low
 
   * when backup_server is not defined neoagent use only target_server

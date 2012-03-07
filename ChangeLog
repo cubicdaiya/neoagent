@@ -1,3 +1,11 @@
+2012-03-07 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* refuse accept when switing server
+
+	* support unix domain socket for statictics server
+
+	* 0.4.2 released
+
 2012-03-03 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* when backup_server is not defined neoagent use only target_server
