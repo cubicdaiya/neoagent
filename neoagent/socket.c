@@ -331,6 +331,58 @@ int na_front_server_unixsock_init (char *sockpath, mode_t mask)
     return fsfd;
 }
 
+int na_stat_server_unixsock_init (char *sockpath, mode_t mask)
+{
+    int stfd;
+    mode_t old_umask;
+    struct stat tstat;
+    struct sockaddr_un uaddr;
+
+    if ((stfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+        NA_STDERR("socket()");
+        return -1;
+    }
+
+    if (sockpath != NULL &&
+        lstat(sockpath, &tstat) == 0 &&
+        S_ISSOCK(tstat.st_mode))
+    {
+        unlink(sockpath);
+    }
+
+    na_set_sockopt(stfd, SO_KEEPALIVE);
+    na_set_sockopt(stfd, SO_REUSEADDR);
+    na_set_sockopt(stfd, SO_LINGER);
+
+    if (sockpath != NULL) {
+        memset(&uaddr, 0, sizeof(uaddr));
+        uaddr.sun_family = AF_UNIX;
+        strncpy(uaddr.sun_path, sockpath, sizeof(uaddr.sun_path) - 1);
+    }  else {
+        close(stfd);
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_SOCKPATH);
+    }
+
+    old_umask = umask(~(mask & 0777));
+
+    if (bind(stfd, (struct sockaddr *)&uaddr, sizeof(uaddr)) < 0) {
+        close(stfd);
+        umask(old_umask);
+        NA_STDERR("bind()");
+        return -1;
+    }
+
+    umask(old_umask);
+
+    if (listen(stfd, NA_BACKLOG_MAX) == -1) {
+        close(stfd);
+        NA_STDERR("listen()");
+        return -1;
+    }
+
+    return stfd;
+}
+
 int na_stat_server_tcpsock_init (uint16_t port)
 {
     int stfd;
@@ -368,5 +420,3 @@ int na_stat_server_tcpsock_init (uint16_t port)
 
     return stfd;
 }
-
-

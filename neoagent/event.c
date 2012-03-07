@@ -578,7 +578,11 @@ void *na_event_loop (void *args)
         ClientPool[i].srbuf = (char *)malloc(env->response_bufsize + 1);
     }
 
-    env->stfd = na_stat_server_tcpsock_init(env->stport);
+    if (strlen(env->stsockpath) > 0) {
+        env->stfd = na_stat_server_unixsock_init(env->stsockpath, env->access_mask);
+    } else {
+        env->stfd = na_stat_server_tcpsock_init(env->stport);
+    }
     pthread_create(&th_support, NULL, na_support_loop, env);
 
     // for assign connection from connpool directional-ramdomly

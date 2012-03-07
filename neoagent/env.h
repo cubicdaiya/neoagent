@@ -76,6 +76,7 @@ typedef struct na_env_t {
     int stfd;
     uint16_t stport;
     char fssockpath[NA_SOCKPATH_MAX + 1];
+    char stsockpath[NA_SOCKPATH_MAX + 1];
     mode_t access_mask;
     na_server_t target_server;
     na_server_t backup_server;

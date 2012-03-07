@@ -8,6 +8,7 @@ import json
 import socket
 import signal
 import datetime
+import os
 
 def sig_handler(num, frame):
     global sig_exit_flg
@@ -15,12 +16,16 @@ def sig_handler(num, frame):
         sig_exit_flg = True
 
 def usage():
-    s = "Usage: neostat $host $port"
+    s = "Usage: neostat $host $port or $socket_path"
     print s
 
 def recv_stat_json(host, port, size):
-    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    c.connect((host,port))
+    if port.isdigit() == True:
+        c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        c.connect((host, int(port)))
+    else:
+        c = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        c.connect(port)
     rcvmsg = c.recv(size)
     c.close()
     return rcvmsg
@@ -43,7 +48,7 @@ def stats_draw(pad, stats):
     nx = pad_addstr(pad, nx, 0, 'name                : '  + stats['name'],                      curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'version             : '  + stats['version'],                   curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'host                : '  + stats['host'],                      curses.A_NORMAL)
-    nx = pad_addstr(pad, nx, 0, 'port                : '  + str(stats['port']),                 curses.A_NORMAL)
+    nx = pad_addstr(pad, nx, 0, 'port                : '  + stats['port'],                      curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'environment_name    : '  + stats['environment_name'],          curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'start_time          : '  + stats['start_time'],                curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'up_time             : '  + stats['up_time'],                   curses.A_NORMAL)
@@ -88,7 +93,7 @@ def main(scr):
         try:
             stats_json = recv_stat_json(host, port, 8192)
         except socket.error:
-            raise Exception("Connection Refused " + host + ":" + str(port))
+            raise Exception("Connection Refused " + host + ":" + port)
         try:
             stats = json.loads(stats_json)
         except ValueError:
@@ -107,15 +112,16 @@ if __name__ == '__main__':
     if argc < 3:
         usage()
         sys.exit(None)
-    elif sys.argv[2].isdigit() == False:
-        usage()
-        sys.exit(None)
 
     signal.signal(signal.SIGINT, sig_handler)
     sig_exit_flg = False
 
     host = sys.argv[1]
-    port = int(sys.argv[2])
+    port = sys.argv[2]
+
+    if port.isdigit() == False and os.path.exists(port) is False:
+        print "socket file(" + port + ") is not found."
+        sys.exit(None)
 
     try:
         curses.wrapper(main)

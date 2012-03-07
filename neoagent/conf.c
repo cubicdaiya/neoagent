@@ -55,6 +55,7 @@ const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_TARGET_SERVER]        = "target_server",
     [NA_PARAM_BACKUP_SERVER]        = "backup_server",
     [NA_PARAM_STPORT]               = "stport",
+    [NA_PARAM_STSOCKPATH]           = "stsockpath",
     [NA_PARAM_CONN_MAX]             = "conn_max",
     [NA_PARAM_CONNPOOL_MAX]         = "connpool_max",
     [NA_PARAM_LOOP_MAX]             = "loop_max",
@@ -167,6 +168,12 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
                 NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
             na_env->stport = json_object_get_int(param_obj);
+            break;
+        case NA_PARAM_STSOCKPATH:
+            if (!json_object_is_type(param_obj, json_type_string)) {
+                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+            }
+            strncpy(na_env->stsockpath, json_object_get_string(param_obj), NA_SOCKPATH_MAX);
             break;
         case NA_PARAM_ACCESS_MASK:
             if (!json_object_is_type(param_obj, json_type_string)) {
