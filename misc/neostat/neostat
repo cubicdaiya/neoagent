@@ -20,7 +20,7 @@ def usage():
     print s
 
 def recv_stat_json(host, port, size):
-    if port.isdigit() == True:
+    if port.isdigit() is True:
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         c.connect((host, int(port)))
     else:
@@ -88,7 +88,7 @@ def main(scr):
     while True:
         if pad.getch() == ord('q'):
             break
-        if sig_exit_flg == True:
+        if sig_exit_flg is True:
             break
         try:
             stats_json = recv_stat_json(host, port, 8192)
