@@ -109,19 +109,24 @@ def main(scr):
 
 if __name__ == '__main__':
     argc = len(sys.argv)
-    if argc < 3:
+    if argc < 2:
         usage()
         sys.exit(None)
+    elif argc == 2: # use Unix Domain Socket
+        host = socket.gethostname()
+        port = sys.argv[1]
+        if os.path.exists(port) is False:
+            print "socket file(" + port + ") is not found."
+            sys.exit(None)
+    else: # use TCP Socket
+        host = sys.argv[1]
+        port = sys.argv[2]
+        if port.isdigit() is False:
+            usage()
+            sys.exit(None)
 
     signal.signal(signal.SIGINT, sig_handler)
     sig_exit_flg = False
-
-    host = sys.argv[1]
-    port = sys.argv[2]
-
-    if port.isdigit() == False and os.path.exists(port) is False:
-        print "socket file(" + port + ") is not found."
-        sys.exit(None)
 
     try:
         curses.wrapper(main)
