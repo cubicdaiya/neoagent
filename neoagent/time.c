@@ -60,6 +60,6 @@ void na_elapsed_time(time_t time, char *buf, size_t bufsize)
     int hour, min, sec;
     hour = time / 3600;
     min  = (time - hour * 3600) / 60;
-    sec  = (time - (hour * 3600) - (min * 60));
+    sec  = time % 60;
     snprintf(buf, bufsize, "%02d:%02d:%02d", hour, min, sec);
 }
