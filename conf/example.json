@@ -10,6 +10,7 @@
             "backup_server"        : "127.0.0.1:11213",
             "stport"               : 30011,
             "stsockpath"           : "/tmp/neoagent_st.sock",
+            "event_model"          : "auto",
             "conn_max"             : 1000,
             "connpool_max"         : 20,
             "error_count_max"      : 1000,

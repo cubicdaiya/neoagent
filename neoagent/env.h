@@ -58,6 +58,15 @@ typedef enum na_event_state_t {
     NA_EVENT_STATE_MAX // Always add new codes to the end before this one
 } na_event_state_t;
 
+typedef enum na_event_model_t {
+    NA_EVENT_MODEL_SELECT,
+    NA_EVENT_MODEL_EPOLL,
+    NA_EVENT_MODEL_KQUEUE,
+    NA_EVENT_MODEL_AUTO,
+    NA_EVENT_MODEL_UNKNOWN,
+    NA_EVENT_MODEL_MAX // Always add new codes to the end before this one
+} na_event_model_t;
+
 typedef struct na_server_t {
     na_host_t host;
     struct sockaddr_in addr;
@@ -96,6 +105,7 @@ typedef struct na_env_t {
     na_connpool_t connpool_active;
     na_connpool_t connpool_backup;
     pthread_mutex_t lock_connpool;
+    na_event_model_t event_model;
     int error_count;
     int conn_max;
     int connpool_max;

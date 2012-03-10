@@ -45,6 +45,12 @@
 #include "socket.h"
 #include "error.h"
 
+#define NA_PARAM_TYPE_CHECK(param_obj, expected_type) do {            \
+        if (!json_object_is_type(param_obj, expected_type)) {         \
+            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);          \
+        }                                                             \
+    } while(false)
+
 static const int NA_JSON_BUF_MAX = 65536;
 
 const char *na_params[NA_PARAM_MAX] = {
@@ -59,6 +65,7 @@ const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_CONN_MAX]             = "conn_max",
     [NA_PARAM_CONNPOOL_MAX]         = "connpool_max",
     [NA_PARAM_LOOP_MAX]             = "loop_max",
+    [NA_PARAM_EVENT_MODEL]          = "event_model",
     [NA_PARAM_ERROR_COUNT_MAX]      = "error_count_max",
     [NA_PARAM_IS_CONNPOOL_ONLY]     = "is_connpool_only",
     [NA_PARAM_REQUEST_BUFSIZE]      = "request_bufsize",
@@ -67,14 +74,45 @@ const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_RESPONSE_BUFSIZE_MAX] = "response_bufsize_max",
 };
 
+extern const char *na_event_models[NA_EVENT_MODEL_MAX] = {
+    [NA_EVENT_MODEL_SELECT] = "select",
+    [NA_EVENT_MODEL_EPOLL]  = "epoll",
+    [NA_EVENT_MODEL_KQUEUE] = "kqueue",
+    [NA_EVENT_MODEL_AUTO]   = "auto",
+
+};
+
 static const char *na_param_name (na_param_t param);
+static na_event_model_t na_detect_event_model (const char *model_str);
 
 static const char *na_param_name (na_param_t param)
 {
     return na_params[param];
 }
 
-struct json_object *na_get_conf(const char *conf_file_json)
+static na_event_model_t na_detect_event_model (const char *model_str)
+{
+    na_event_model_t model;
+    if (strcmp(model_str, na_event_models[NA_EVENT_MODEL_SELECT]) == 0) {
+        model = NA_EVENT_MODEL_SELECT;
+    } else if (strcmp(model_str, na_event_models[NA_EVENT_MODEL_EPOLL]) == 0) {
+        model = NA_EVENT_MODEL_EPOLL;
+    } else if (strcmp(model_str, na_event_models[NA_EVENT_MODEL_KQUEUE]) == 0) {
+        model = NA_EVENT_MODEL_KQUEUE;
+    } else if (strcmp(model_str, na_event_models[NA_EVENT_MODEL_AUTO]) == 0) {
+        model = NA_EVENT_MODEL_AUTO;
+    } else {
+        model = NA_EVENT_MODEL_UNKNOWN;
+    }
+    return model;
+}
+
+const char *na_event_model_name (na_event_model_t model)
+{
+    return na_event_models[model];
+}
+
+struct json_object *na_get_conf (const char *conf_file_json)
 {
     struct json_object *conf_obj;
 
@@ -130,27 +168,22 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
 
         switch (i) {
         case NA_PARAM_NAME:
-            if (!json_object_is_type(param_obj, json_type_string)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             strncpy(na_env->name, json_object_get_string(param_obj), NA_NAME_MAX);
             break;
         case NA_PARAM_SOCKPATH:
-            if (!json_object_is_type(param_obj, json_type_string)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             strncpy(na_env->fssockpath, json_object_get_string(param_obj), NA_SOCKPATH_MAX);
             break;
         case NA_PARAM_TARGET_SERVER:
-            if (!json_object_is_type(param_obj, json_type_string)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             strncpy(host_buf, json_object_get_string(param_obj), NA_HOSTNAME_MAX);
             host = na_create_host(host_buf);
             memcpy(&na_env->target_server.host, &host, sizeof(host));
             na_set_sockaddr(&host, &na_env->target_server.addr);
             break;
         case NA_PARAM_BACKUP_SERVER:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             strncpy(host_buf, json_object_get_string(param_obj), NA_HOSTNAME_MAX);
             host = na_create_host(host_buf);
             memcpy(&na_env->backup_server.host, &host, sizeof(host));
@@ -158,81 +191,62 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
             na_env->is_use_backup = true;
             break;
         case NA_PARAM_PORT:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->fsport = json_object_get_int(param_obj);
             break;
         case NA_PARAM_STPORT:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->stport = json_object_get_int(param_obj);
             break;
         case NA_PARAM_STSOCKPATH:
-            if (!json_object_is_type(param_obj, json_type_string)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             strncpy(na_env->stsockpath, json_object_get_string(param_obj), NA_SOCKPATH_MAX);
             break;
         case NA_PARAM_ACCESS_MASK:
-            if (!json_object_is_type(param_obj, json_type_string)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             na_env->access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
             break;
         case NA_PARAM_IS_CONNPOOL_ONLY:
-            if (!json_object_is_type(param_obj, json_type_boolean)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_boolean);
             na_env->is_connpool_only = json_object_get_boolean(param_obj) == 1 ? true : false;
             break;
         case NA_PARAM_REQUEST_BUFSIZE:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->request_bufsize = json_object_get_int(param_obj);
             break;
         case NA_PARAM_REQUEST_BUFSIZE_MAX:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->request_bufsize_max = json_object_get_int(param_obj);
             break;
         case NA_PARAM_RESPONSE_BUFSIZE:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->response_bufsize = json_object_get_int(param_obj);
             break;
         case NA_PARAM_RESPONSE_BUFSIZE_MAX:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->response_bufsize_max = json_object_get_int(param_obj);
             break;
         case NA_PARAM_CONN_MAX:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->conn_max = json_object_get_int(param_obj);
             break;
         case NA_PARAM_CONNPOOL_MAX:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->connpool_max = json_object_get_int(param_obj);
             break;
         case NA_PARAM_LOOP_MAX:
-            if (!json_object_is_type(param_obj, json_type_int)) {
-                NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-            }
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->loop_max = json_object_get_int(param_obj);
             break;
-        case NA_PARAM_ERROR_COUNT_MAX:
-            if (!json_object_is_type(param_obj, json_type_int)) {
+        case NA_PARAM_EVENT_MODEL:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            na_env->event_model = na_detect_event_model(json_object_get_string(param_obj));
+            if (na_env->event_model == NA_EVENT_MODEL_UNKNOWN) {
                 NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
             }
+            break;
+        case NA_PARAM_ERROR_COUNT_MAX:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->error_count_max = json_object_get_int(param_obj);
             break;
         default:

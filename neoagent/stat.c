@@ -34,6 +34,7 @@
 #include <time.h>
 
 #include "time.h"
+#include "conf.h"
 #include "stat.h"
 #include "version.h"
 
@@ -63,6 +64,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "name",                 json_object_new_string(NA_NAME));
     json_object_object_add(stat_obj, "version",              json_object_new_string(NA_VERSION));
     json_object_object_add(stat_obj, "environment_name",     json_object_new_string(env->name));
+    json_object_object_add(stat_obj, "event_model",          json_object_new_string(na_event_model_name(env->event_model)));
     json_object_object_add(stat_obj, "start_time",           json_object_new_string(start_dt));
     json_object_object_add(stat_obj, "up_time",              json_object_new_string(up_time));
     json_object_object_add(stat_obj, "fsfd",                 json_object_new_int(env->fsfd));

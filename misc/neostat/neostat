@@ -50,6 +50,7 @@ def stats_draw(pad, stats):
     nx = pad_addstr(pad, nx, 0, 'host                : '  + stats['host'],                      curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'port                : '  + stats['port'],                      curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'environment_name    : '  + stats['environment_name'],          curses.A_NORMAL)
+    nx = pad_addstr(pad, nx, 0, 'event_model         : '  + stats['event_model'],               curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'start_time          : '  + stats['start_time'],                curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'up_time             : '  + stats['up_time'],                   curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'fsfd                : '  + str(stats['fsfd']),                 curses.A_NORMAL)

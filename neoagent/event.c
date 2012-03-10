@@ -75,6 +75,7 @@ volatile sig_atomic_t SigClear;
 inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env);
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
 
+static struct ev_loop *na_event_loop_create (na_event_model_t model);
 static void na_client_close (na_client_t *client, na_env_t *env);
 static void na_stat_callback (EV_P_ struct ev_io *w, int revents);
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
@@ -93,6 +94,30 @@ inline static void na_event_switch (EV_P_ struct ev_io *old, struct ev_io *new, 
     ev_io_stop(EV_A_ old);
     ev_io_set(new, fd, revent);
     ev_io_start(EV_A_ new);
+}
+
+static struct ev_loop *na_event_loop_create(na_event_model_t model)
+{
+    struct ev_loop *loop;
+    switch (model) {
+    case NA_EVENT_MODEL_AUTO:
+        loop = ev_loop_new(EVFLAG_AUTO);
+        break;
+    case NA_EVENT_MODEL_SELECT:
+        loop = ev_loop_new(EVBACKEND_SELECT);
+        break;
+    case NA_EVENT_MODEL_EPOLL:
+        loop = ev_loop_new(EVBACKEND_EPOLL);
+        break;
+    case NA_EVENT_MODEL_KQUEUE:
+        loop = ev_loop_new(EVBACKEND_KQUEUE);
+        break;
+    default:
+        // no through
+        assert(false);
+        break;
+    }
+    return loop;
 }
 
 static void na_client_close (na_client_t *client, na_env_t *env)
@@ -588,7 +613,7 @@ void *na_event_loop (void *args)
     // for assign connection from connpool directional-ramdomly
     srand(time(NULL));
 
-    loop = ev_loop_new(EVFLAG_AUTO);
+    loop = na_event_loop_create(env->event_model);
     env->fs_watcher.data = env;
     ev_io_init(&env->fs_watcher, na_front_server_callback, env->fsfd, EV_READ);
     ev_io_start(EV_A_ &env->fs_watcher);

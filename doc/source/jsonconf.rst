@@ -14,6 +14,7 @@ Sample configuration
      [
          {
              "name": "envname",
+             "event_model": "auto",
              "port": 30001,
              "stport": 30011,
              "stsockpath": "/var/run/neoagent_st.sock",
@@ -36,6 +37,10 @@ Sample configuration
 **name**
 
  environment name
+
+**event_model**
+
+ event model name(auto, select, epoll, kqueue)
 
 **port**
 

@@ -48,6 +48,7 @@ typedef enum na_param_t {
     NA_PARAM_CONN_MAX,
     NA_PARAM_CONNPOOL_MAX,
     NA_PARAM_LOOP_MAX,
+    NA_PARAM_EVENT_MODEL,
     NA_PARAM_ERROR_COUNT_MAX,
     NA_PARAM_IS_CONNPOOL_ONLY,
     NA_PARAM_REQUEST_BUFSIZE,
@@ -57,6 +58,7 @@ typedef enum na_param_t {
     NA_PARAM_MAX // Always add new codes to the end before this one
 } na_param_t;
 
+const char *na_event_model_name (na_event_model_t model);
 struct json_object *na_get_conf(const char *conf_file_json);
 struct json_object *na_get_environments(struct json_object *conf_obj, int *env_cnt);
 void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, int idx);
