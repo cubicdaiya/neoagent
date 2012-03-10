@@ -67,7 +67,6 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "event_model",          json_object_new_string(na_event_model_name(env->event_model)));
     json_object_object_add(stat_obj, "start_time",           json_object_new_string(start_dt));
     json_object_object_add(stat_obj, "up_time",              json_object_new_string(up_time));
-    json_object_object_add(stat_obj, "fsfd",                 json_object_new_int(env->fsfd));
     json_object_object_add(stat_obj, "fsport",               json_object_new_int(env->fsport));
     json_object_object_add(stat_obj, "fssockpath",           json_object_new_string(env->fssockpath));
     json_object_object_add(stat_obj, "target_host",          json_object_new_string(env->target_server.host.ipaddr));
