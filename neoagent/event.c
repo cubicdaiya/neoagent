@@ -61,9 +61,6 @@
         NA_STDERR_MESSAGE(na_error);                        \
     } while(false)
  
-// constants
-static const int NA_STAT_BUF_MAX = 8192;
-
 // globals
 static na_client_t *ClientPool;
 
@@ -77,7 +74,6 @@ inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd,
 
 static struct ev_loop *na_event_loop_create (na_event_model_t model);
 static void na_client_close (na_client_t *client, na_env_t *env);
-static void na_stat_callback (EV_P_ struct ev_io *w, int revents);
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
 static void na_front_server_callback (EV_P_ struct ev_io *w, int revents);
@@ -626,42 +622,4 @@ void *na_event_loop (void *args)
     NA_FREE(ClientPool);
 
     return NULL;
-}
-
-static void na_stat_callback (EV_P_ struct ev_io *w, int revents)
-{
-    int cfd, stfd, th_ret;
-    int size;
-    na_env_t *env;
-    char buf[NA_STAT_BUF_MAX + 1];
-    
-    th_ret = 0;
-    stfd   = w->fd;
-    env    = (na_env_t *)w->data;
-
-    if (SigExit == 1) {
-        pthread_exit(&th_ret);
-        return;
-    }
-    
-    if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
-        env->error_count = 0;
-        return;
-    }
-
-    if ((cfd = na_server_accept(stfd)) < 0) {
-        NA_STDERR("accept()");
-        return;
-    }
-
-    na_env_set_jbuf(buf, NA_STAT_BUF_MAX, env);
-
-    // send statictics of environment to client
-    if ((size = write(cfd, buf, strlen(buf))) < 0) {
-        NA_STDERR("failed to return stat response");
-        close(cfd);
-        return;
-    }
-
-    close(cfd);
 }

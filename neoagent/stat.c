@@ -31,18 +31,24 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <unistd.h>
 #include <time.h>
+#include <pthread.h>
 
+#include <ev.h>
+
+#include "error.h"
 #include "time.h"
 #include "conf.h"
 #include "stat.h"
 #include "version.h"
 
 // constants
-static const int NA_STAT_MBUF_MAX    = 8192;
+static const int NA_STAT_BUF_MAX  = 8192;
 
 // external globals
 time_t StartTimestamp;
+volatile sig_atomic_t SigExit;
 
 void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
 {
@@ -120,4 +126,42 @@ struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
         json_object_array_add(connpoolmap_obj, json_object_new_int(connpool->mark[i]));
     }
     return connpoolmap_obj;
+}
+
+void na_stat_callback (EV_P_ struct ev_io *w, int revents)
+{
+    int cfd, stfd, th_ret;
+    int size;
+    na_env_t *env;
+    char buf[NA_STAT_BUF_MAX + 1];
+    
+    th_ret = 0;
+    stfd   = w->fd;
+    env    = (na_env_t *)w->data;
+
+    if (SigExit == 1) {
+        pthread_exit(&th_ret);
+        return;
+    }
+    
+    if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
+        env->error_count = 0;
+        return;
+    }
+
+    if ((cfd = na_server_accept(stfd)) < 0) {
+        NA_STDERR("accept()");
+        return;
+    }
+
+    na_env_set_jbuf(buf, NA_STAT_BUF_MAX, env);
+
+    // send statictics of environment to client
+    if ((size = write(cfd, buf, strlen(buf))) < 0) {
+        NA_STDERR("failed to return stat response");
+        close(cfd);
+        return;
+    }
+
+    close(cfd);
 }
