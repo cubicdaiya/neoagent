@@ -40,6 +40,6 @@
 
 void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env);
 int na_available_conn (na_connpool_t *connpool);
-json_object *na_connpoolmap_array_json(na_connpool_t *connpool);
+struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool);
 
 #endif // NA_STAT_H

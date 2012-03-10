@@ -74,7 +74,7 @@ const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_RESPONSE_BUFSIZE_MAX] = "response_bufsize_max",
 };
 
-extern const char *na_event_models[NA_EVENT_MODEL_MAX] = {
+const char *na_event_models[NA_EVENT_MODEL_MAX] = {
     [NA_EVENT_MODEL_SELECT] = "select",
     [NA_EVENT_MODEL_EPOLL]  = "epoll",
     [NA_EVENT_MODEL_KQUEUE] = "kqueue",

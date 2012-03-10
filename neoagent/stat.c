@@ -112,7 +112,7 @@ int na_available_conn (na_connpool_t *connpool)
     return available_conn;
 }
 
-json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
+struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
 {
     struct json_object *connpoolmap_obj;
     connpoolmap_obj = json_object_new_array();

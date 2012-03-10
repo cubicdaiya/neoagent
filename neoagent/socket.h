@@ -51,6 +51,7 @@ void na_set_sockaddr (na_host_t *host, struct sockaddr_in *addr);
 na_host_t na_create_host(char *host);
 int na_front_server_tcpsock_init (uint16_t port);
 int na_front_server_unixsock_init (char *sockpath, mode_t mask);
+int na_stat_server_unixsock_init (char *sockpath, mode_t mask);
 int na_stat_server_tcpsock_init (uint16_t port);
 bool na_server_connect (int tsfd, struct sockaddr_in *tsaddr);
 int na_server_accept (int sfd);
