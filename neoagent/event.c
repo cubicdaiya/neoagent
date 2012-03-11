@@ -476,6 +476,8 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
+    na_set_nonblock(cfd);
+
     if (cur_pool != -1) {
         client = &ClientPool[cur_pool];
         if (client->tsfd > 0) {

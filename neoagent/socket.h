@@ -44,6 +44,7 @@ typedef struct na_host_t {
     uint16_t port;
 } na_host_t;
 
+void na_set_nonblock (int fd);
 int na_target_server_tcpsock_init (void);
 void na_target_server_tcpsock_setup (int tsfd, bool is_keepalive);
 void na_target_server_hcsock_setup (int tsfd);

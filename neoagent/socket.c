@@ -56,21 +56,11 @@ const int NA_BACKLOG_MAX = 1024;
 const int NA_IPADDR_MAX  = 15;
 
 inline static bool na_is_ipaddr (const char *ipaddr);
-static void na_set_nonblock (int fd);
 static void na_set_sockopt(int fd, int optname);
 
 inline static bool na_is_ipaddr (const char *ipaddr)
 {
     return inet_addr(ipaddr) != INADDR_NONE;
-}
-
-static void na_set_nonblock (int fd)
-{
-    if (fd > 0) {
-        fcntl(fd, F_SETFL, fcntl(fd, F_GETFL)|O_NONBLOCK);
-    } else {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
-    }
 }
 
 static void na_set_sockopt(int fd, int optname)
@@ -97,6 +87,15 @@ static void na_set_sockopt(int fd, int optname)
         // no through
         assert(false);
         break;
+    }
+}
+
+void na_set_nonblock (int fd)
+{
+    if (fd > 0) {
+        fcntl(fd, F_SETFL, fcntl(fd, F_GETFL)|O_NONBLOCK);
+    } else {
+        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
     }
 }
 
