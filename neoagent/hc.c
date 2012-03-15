@@ -42,14 +42,79 @@
 #include "connpool.h"
 #include "env.h"
 
+// constants
+static const char *na_hc_test_key = "neoagent_test_key";
+static const char *na_hc_test_val = "neoagent_test_val";
+
 // external globals
 volatile sig_atomic_t SigExit;
+
+static void na_hc_event_set(EV_P_ ev_timer * w, int revents);
+static bool na_hc_test_request(int tsfd);
 
 static void na_hc_event_set(EV_P_ ev_timer * w, int revents)
 {
     ev_timer_stop(EV_A_ w);
     ev_timer_set(w, 5., 0.);
     ev_timer_start(EV_A_ w);
+}
+
+static bool is_success_command(int tsfd, char *command, const char *expected)
+{
+    int len;
+    char rbuf[BUFSIZ];
+    if (write(tsfd, command, strlen(command)) < 0) {
+        return false;
+    }
+
+    if ((len = read(tsfd, rbuf, BUFSIZ)) < 0) {
+        return false;
+    }
+    rbuf[len] = '\0';
+
+    if (strcmp(rbuf, expected) != 0) {
+        return false;
+    }
+
+
+    return true;
+}
+
+static bool na_hc_test_request(int tsfd)
+{
+    int cnt_fail, try_max;
+    char scmd[BUFSIZ]; // set
+    char gcmd[BUFSIZ]; // get
+    char dcmd[BUFSIZ]; // delete
+    char gres[BUFSIZ]; // get response
+
+    cnt_fail = 0;
+    try_max  = 5;
+    snprintf(scmd, BUFSIZ, "set %s 0 0 %ld\r\n%s\r\n", na_hc_test_key, strlen(na_hc_test_val), na_hc_test_val);
+    snprintf(gcmd, BUFSIZ, "get    %s\r\n", na_hc_test_key);
+    snprintf(dcmd, BUFSIZ, "delete %s\r\n", na_hc_test_key);
+    snprintf(gres, BUFSIZ, "VALUE %s 0 %d\r\n%s\r\nEND\r\n", na_hc_test_key, strlen(na_hc_test_val), na_hc_test_val);
+
+    for (int i=0;i<try_max;++i) {
+
+        if (!is_success_command(tsfd, scmd, "STORED\r\n")) {
+            ++cnt_fail;
+        }
+
+        if (!is_success_command(tsfd, gcmd, gres)){
+            ++cnt_fail;
+        }
+
+        if (!is_success_command(tsfd, dcmd, "DELETED\r\n")) {
+            ++cnt_fail;
+        }
+    }
+
+    if (cnt_fail == (try_max * 3)) {
+        return false;
+    }
+
+    return true;
 }
 
 void na_hc_callback (EV_P_ ev_timer *w, int revents)
@@ -98,7 +163,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
             }
         }
     } else {
-        if (env->is_refused_active) {
+        if (env->is_refused_active && na_hc_test_request(tsfd)) {
             env->is_refused_accept = true;
             env->is_refused_active = false;
             pthread_mutex_lock(&env->lock_connpool);
@@ -107,6 +172,17 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
             env->current_conn = 0;
             env->is_refused_accept = false;
             NA_STDERR("switch target server");
+        } else {
+            if (!env->is_refused_active && !na_hc_test_request(tsfd)) {
+                env->is_refused_accept = true;
+                env->is_refused_active = true;
+                pthread_mutex_lock(&env->lock_connpool);
+                na_connpool_switch(env);
+                pthread_mutex_unlock(&env->lock_connpool);
+                env->current_conn = 0;
+                env->is_refused_accept = false;
+                NA_STDERR("switch backup server");
+            }
         }
     }
 
