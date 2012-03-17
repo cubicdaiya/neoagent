@@ -42,6 +42,7 @@ static const int  NA_PORT_DEFAULT             = 30001;
 static const int  NA_STPORT_DEFAULT           = 30011;
 static const int  NA_CONN_MAX_DEFAULT         = 1000;
 static const int  NA_CONNPOOL_MAX_DEFAULT     = 20;
+static const int  NA_CONNPOOL_USE_MAX_DEFAULT = 10000;
 static const int  NA_ERROR_COUNT_MAX_DEFAULT  = 1000;
 static const int  NA_ACCESS_MASK_DEFAULT      = 0664;
 static const int  NA_BUFSIZE_DEFAULT          = 65536;
@@ -78,6 +79,7 @@ void na_env_setup_default(na_env_t *env, int idx)
     env->stport               = NA_STPORT_DEFAULT + idx;
     env->conn_max             = NA_CONN_MAX_DEFAULT;
     env->connpool_max         = NA_CONNPOOL_MAX_DEFAULT;
+    env->connpool_use_max     = NA_CONNPOOL_USE_MAX_DEFAULT;
     env->error_count_max      = NA_ERROR_COUNT_MAX_DEFAULT;
     env->is_connpool_only     = NA_IS_CONNPOOL_ONLY_DEFAULT;
     env->is_use_backup        = false;

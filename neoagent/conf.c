@@ -64,6 +64,7 @@ const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_STSOCKPATH]           = "stsockpath",
     [NA_PARAM_CONN_MAX]             = "conn_max",
     [NA_PARAM_CONNPOOL_MAX]         = "connpool_max",
+    [NA_PARAM_CONNPOOL_USE_MAX]     = "connpool_use_max",
     [NA_PARAM_LOOP_MAX]             = "loop_max",
     [NA_PARAM_EVENT_MODEL]          = "event_model",
     [NA_PARAM_ERROR_COUNT_MAX]      = "error_count_max",
@@ -233,6 +234,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
         case NA_PARAM_CONNPOOL_MAX:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->connpool_max = json_object_get_int(param_obj);
+            break;
+        case NA_PARAM_CONNPOOL_USE_MAX:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
+            na_env->connpool_use_max = json_object_get_int(param_obj);
             break;
         case NA_PARAM_LOOP_MAX:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);

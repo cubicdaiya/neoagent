@@ -75,6 +75,7 @@ typedef struct na_server_t {
 typedef struct na_connpool_t {
     int *fd_pool;
     int *mark;
+    int *used_cnt;
     int max;
 } na_connpool_t;
 
@@ -109,6 +110,7 @@ typedef struct na_env_t {
     int error_count;
     int conn_max;
     int connpool_max;
+    int connpool_use_max;
     int loop_max;
     int error_count_max;
 } na_env_t;
