@@ -153,11 +153,11 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
         if (!env->is_refused_active) {
             if (errno != EINPROGRESS && errno != EALREADY) {
                 env->is_refused_accept = true;
-                env->is_refused_active = true;
                 pthread_mutex_lock(&env->lock_connpool);
                 na_connpool_switch(env);
                 pthread_mutex_unlock(&env->lock_connpool);
                 env->current_conn = 0;
+                env->is_refused_active = true;
                 env->is_refused_accept = false;
                 NA_STDERR("switch backup server");
             }
@@ -165,11 +165,11 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
     } else {
         if (env->is_refused_active && na_hc_test_request(tsfd)) {
             env->is_refused_accept = true;
-            env->is_refused_active = false;
             pthread_mutex_lock(&env->lock_connpool);
             na_connpool_switch(env);
             pthread_mutex_unlock(&env->lock_connpool);
             env->current_conn = 0;
+            env->is_refused_active = false;
             env->is_refused_accept = false;
             NA_STDERR("switch target server");
         } else {
