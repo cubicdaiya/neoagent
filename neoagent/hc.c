@@ -93,7 +93,7 @@ static bool na_hc_test_request(int tsfd)
     snprintf(scmd, BUFSIZ, "set %s 0 0 %ld\r\n%s\r\n", na_hc_test_key, strlen(na_hc_test_val), na_hc_test_val);
     snprintf(gcmd, BUFSIZ, "get    %s\r\n", na_hc_test_key);
     snprintf(dcmd, BUFSIZ, "delete %s\r\n", na_hc_test_key);
-    snprintf(gres, BUFSIZ, "VALUE %s 0 %d\r\n%s\r\nEND\r\n", na_hc_test_key, strlen(na_hc_test_val), na_hc_test_val);
+    snprintf(gres, BUFSIZ, "VALUE %s 0 %ld\r\n%s\r\nEND\r\n", na_hc_test_key, strlen(na_hc_test_val), na_hc_test_val);
 
     for (int i=0;i<try_max;++i) {
 
