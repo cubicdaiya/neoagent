@@ -1,3 +1,21 @@
+neoagent (0.4.3-1) oneiric; urgency=low
+
+  * fix problem(when recovery target_server connect with invalid pool)
+
+  * reconnect when connpool is used used_count > connpool_use_max
+
+  * improve health check(# 12):
+
+  * set non-blocking client descriptor
+
+  * remove 'fsport' in stats
+
+  * add parameter 'event_model'
+
+  * 0.4.3 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Sun, 18 Mar 2012 22:43:53 +0900
+
 neoagent (0.4.2-1) oneiric; urgency=low
 
   * refuse accept when switing server

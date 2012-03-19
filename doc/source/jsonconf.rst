@@ -24,6 +24,7 @@ Sample configuration
              "backup_server": "127.0.0.1:11212",
              "conn_max":1000,
              "connpool_max": 30,
+             "connpool_use_max": 10000,
              "error_count_max": 1000,
              "is_connpool_only": false,
              "request_bufsize":65536,
@@ -77,6 +78,10 @@ Sample configuration
 **connpool_max**
 
  connection pool size
+
+**connpool_use_max**
+
+ if a connection in connection pool is over this number, neoagent reconnect target server
 
 **error_count_max**
 

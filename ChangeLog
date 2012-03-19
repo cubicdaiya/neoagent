@@ -1,3 +1,19 @@
+2012-03-18 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix problem(when recovery target_server connect with invalid pool)
+
+	* reconnect when connpool is used used_count > connpool_use_max
+
+	* improve health check(# 12):
+
+	* set non-blocking client descriptor
+
+	* remove 'fsport' in stats
+
+	* add parameter 'event_model'
+
+	* 0.4.3 released
+
 2012-03-07 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* refuse accept when switing server
