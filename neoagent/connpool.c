@@ -71,19 +71,21 @@ void na_connpool_deactivate (na_connpool_t *connpool)
 void na_connpool_reconnect (na_env_t *env, int i)
 {
     na_server_t *server;
+    na_connpool_t *connpool;
     if (env->is_use_backup) {
         server = env->is_refused_active ? &env->backup_server : &env->target_server;
     } else {
         server = &env->target_server;
     }
-    close(env->connpool_active.fd_pool[i]);
-    env->connpool_active.fd_pool[i] = na_target_server_tcpsock_init();
-    na_target_server_tcpsock_setup(env->connpool_active.fd_pool[i], true);
-    if (env->connpool_active.fd_pool[i] <= 0) {
+    connpool = NA_CONNPOOL_SELECT(env);
+    close(connpool->fd_pool[i]);
+    connpool->fd_pool[i] = na_target_server_tcpsock_init();
+    na_target_server_tcpsock_setup(connpool->fd_pool[i], true);
+    if (connpool->fd_pool[i] <= 0) {
         NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
     }
 
-    if (!na_server_connect(env->connpool_active.fd_pool[i], &server->addr)) {
+    if (!na_server_connect(connpool->fd_pool[i], &server->addr)) {
         if (errno != EINPROGRESS && errno != EALREADY) {
             NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
         }
