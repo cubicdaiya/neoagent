@@ -52,7 +52,7 @@
 #include "error.h"
 #include "socket.h"
 
-const int NA_BACKLOG_MAX = 1024;
+const int NA_BACKLOG_MAX = 512;
 const int NA_IPADDR_MAX  = 15;
 
 inline static bool na_is_ipaddr (const char *ipaddr);
