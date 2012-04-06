@@ -120,6 +120,7 @@ static void na_client_close (na_client_t *client, na_env_t *env)
 {
     close(client->cfd);
     client->cfd = -1;
+    pthread_mutex_lock(&env->lock_connpool);
     if (client->is_use_connpool) {
         if (client->connpool->mark[client->cur_pool] == 0) {
             close(client->connpool->fd_pool[client->cur_pool]);
@@ -133,10 +134,13 @@ static void na_client_close (na_client_t *client, na_env_t *env)
         NA_FREE(client->srbuf);
         NA_FREE(client);
     }
+    pthread_mutex_unlock(&env->lock_connpool);
 
+    pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn > 0) {
         --env->current_conn;
     }
+    pthread_mutex_unlock(&env->lock_current_conn);
 }
 
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
@@ -150,10 +154,13 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
     env    = client->env;
     cfd    = client->cfd;
 
+    pthread_rwlock_rdlock(&env->lock_refused);
     if ((client->is_refused_active != env->is_refused_active) || env->is_refused_accept) {
+        pthread_rwlock_unlock(&env->lock_refused);
         NA_EVENT_FAIL(NA_ERROR_INVALID_CONNPOOL, EV_A, w, client, env);
         return; // request fail
     }
+    pthread_rwlock_unlock(&env->lock_refused);
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
         NA_EVENT_FAIL(NA_ERROR_OUTOF_LOOP, EV_A, w, client, env);
@@ -230,7 +237,9 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                 }
                 client->connpool->fd_pool[i] = na_target_server_tcpsock_init();
                 if (env->is_use_backup) {
+                    pthread_rwlock_rdlock(&env->lock_refused);
                     server = env->is_refused_active ? &env->backup_server : &env->target_server;
+                    pthread_rwlock_unlock(&env->lock_refused);
                 } else {
                     server = &env->target_server;
                 }
@@ -279,10 +288,13 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
     env    = client->env;
     tsfd   = client->tsfd;
 
+    pthread_rwlock_rdlock(&env->lock_refused);
     if ((client->is_refused_active != env->is_refused_active) || env->is_refused_accept) {
+        pthread_rwlock_unlock(&env->lock_refused);
         NA_EVENT_FAIL(NA_ERROR_INVALID_CONNPOOL, EV_A, w, client, env);
         return; // request fail
     }
+    pthread_rwlock_unlock(&env->lock_refused);
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
         NA_EVENT_FAIL(NA_ERROR_OUTOF_LOOP, EV_A, w, client, env);
@@ -414,25 +426,34 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         SigClear = 0;
     }
 
+    pthread_rwlock_rdlock(&env->lock_refused);
     if (env->is_refused_accept) {
+        pthread_rwlock_unlock(&env->lock_refused);
         return;
     }
+    pthread_rwlock_unlock(&env->lock_refused);
     
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
         env->error_count = 0;
         return;
     }
     
+    pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn >= env->conn_max) {
+        pthread_mutex_unlock(&env->lock_current_conn);
         return;
     }
+    pthread_mutex_unlock(&env->lock_current_conn);
 
-    connpool = NA_CONNPOOL_SELECT(env);
+    connpool = na_connpool_select(env);
 
     if (env->is_connpool_only) {
+        pthread_mutex_lock(&env->lock_current_conn);
         if (env->current_conn >= connpool->max) {
+            pthread_mutex_unlock(&env->lock_current_conn);
             return;
         }
+        pthread_mutex_unlock(&env->lock_current_conn);
         if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
             na_error_count_up(env);
             NA_STDERR("failed assign connection from connpool.");
@@ -450,7 +471,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             na_target_server_tcpsock_setup(tsfd, true);
 
             if (env->is_use_backup) {
+                pthread_rwlock_rdlock(&env->lock_refused);
                 server = env->is_refused_active ? &env->backup_server : &env->target_server;
+                pthread_rwlock_unlock(&env->lock_refused);
             } else {
                 server = &env->target_server;
             }
@@ -521,7 +544,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->env               = env;
     client->c_watcher.data    = client;
     client->ts_watcher.data   = client;
+    pthread_rwlock_rdlock(&env->lock_refused);
     client->is_refused_active = env->is_refused_active;
+    pthread_rwlock_unlock(&env->lock_refused);
     client->is_use_connpool   = cur_pool != -1 ? true : false;
     client->cur_pool          = cur_pool;
     client->crbufsize         = 0;
@@ -535,13 +560,15 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->res_cnt           = 0;
     client->loop_cnt          = 0;
     client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
-    client->connpool          = NA_CONNPOOL_SELECT(env);
+    client->connpool          = na_connpool_select(env);
 
+    pthread_mutex_lock(&env->lock_current_conn);
     ++env->current_conn;
 
     if (env->current_conn > env->current_conn_max) {
         env->current_conn_max = env->current_conn;
     }
+    pthread_mutex_unlock(&env->lock_current_conn);
 
     ev_io_init(&client->c_watcher,  na_client_callback,        cfd,  EV_READ);
     ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_NONE);

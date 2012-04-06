@@ -77,7 +77,7 @@ void na_connpool_reconnect (na_env_t *env, int i)
     } else {
         server = &env->target_server;
     }
-    connpool = NA_CONNPOOL_SELECT(env);
+    connpool = na_connpool_select(env);
     close(connpool->fd_pool[i]);
     connpool->fd_pool[i] = na_target_server_tcpsock_init();
     na_target_server_tcpsock_setup(connpool->fd_pool[i], true);
@@ -97,7 +97,7 @@ bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
     na_connpool_t *connpool;
     int ri;
 
-    connpool = NA_CONNPOOL_SELECT(env);
+    connpool = na_connpool_select(env);
 
     pthread_mutex_lock(&env->lock_connpool);
 
@@ -166,6 +166,17 @@ void na_connpool_init (na_env_t *env)
             }
         }
     }
+}
+
+na_connpool_t *na_connpool_select(na_env_t *env)
+{
+    pthread_rwlock_rdlock(&env->lock_refused);
+    if (env->is_refused_active) {
+        pthread_rwlock_unlock(&env->lock_refused);
+        return &env->connpool_backup;
+    }
+    pthread_rwlock_unlock(&env->lock_refused);
+    return &env->connpool_active;
 }
 
 void na_connpool_switch (na_env_t *env)
