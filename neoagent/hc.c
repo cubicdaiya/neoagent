@@ -152,35 +152,47 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
     if (!na_server_connect(tsfd, &env->target_server.addr)) {
         if (!env->is_refused_active) {
             if (errno != EINPROGRESS && errno != EALREADY) {
+                pthread_rwlock_wrlock(&env->lock_refused);
                 env->is_refused_accept = true;
+                env->is_refused_active = true;
                 pthread_mutex_lock(&env->lock_connpool);
                 na_connpool_switch(env);
                 pthread_mutex_unlock(&env->lock_connpool);
+                pthread_mutex_lock(&env->lock_current_conn);
                 env->current_conn = 0;
-                env->is_refused_active = true;
+                pthread_mutex_unlock(&env->lock_current_conn);
                 env->is_refused_accept = false;
+                pthread_rwlock_unlock(&env->lock_refused);
                 NA_STDERR("switch backup server");
             }
         }
     } else {
         if (env->is_refused_active && na_hc_test_request(tsfd)) {
+            pthread_rwlock_wrlock(&env->lock_refused);
             env->is_refused_accept = true;
+            env->is_refused_active = false;
             pthread_mutex_lock(&env->lock_connpool);
             na_connpool_switch(env);
             pthread_mutex_unlock(&env->lock_connpool);
+            pthread_mutex_lock(&env->lock_current_conn);
             env->current_conn = 0;
-            env->is_refused_active = false;
+            pthread_mutex_unlock(&env->lock_current_conn);
             env->is_refused_accept = false;
+            pthread_rwlock_unlock(&env->lock_refused);
             NA_STDERR("switch target server");
         } else {
             if (!env->is_refused_active && !na_hc_test_request(tsfd)) {
+                pthread_rwlock_wrlock(&env->lock_refused);
                 env->is_refused_accept = true;
                 env->is_refused_active = true;
                 pthread_mutex_lock(&env->lock_connpool);
                 na_connpool_switch(env);
                 pthread_mutex_unlock(&env->lock_connpool);
+                pthread_mutex_lock(&env->lock_current_conn);
                 env->current_conn = 0;
+                pthread_mutex_unlock(&env->lock_current_conn);
                 env->is_refused_accept = false;
+                pthread_rwlock_unlock(&env->lock_refused);
                 NA_STDERR("switch backup server");
             }
         }
