@@ -73,7 +73,7 @@ inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
 
 static struct ev_loop *na_event_loop_create (na_event_model_t model);
-static void na_client_close (na_client_t *client, na_env_t *env);
+static void na_client_close (EV_P_ na_client_t *client, na_env_t *env);
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
 static void na_front_server_callback (EV_P_ struct ev_io *w, int revents);
@@ -82,7 +82,7 @@ static void *na_support_loop (void *args);
 inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env)
 {
     ev_io_stop(EV_A_ w);
-    na_client_close(client, env);
+    na_client_close(EV_A_ client, env);
 }
 
 inline static void na_event_switch (EV_P_ struct ev_io *old, struct ev_io *new, int fd, int revent)
@@ -116,9 +116,11 @@ static struct ev_loop *na_event_loop_create(na_event_model_t model)
     return loop;
 }
 
-static void na_client_close (na_client_t *client, na_env_t *env)
+static void na_client_close (EV_P_ na_client_t *client, na_env_t *env)
 {
     close(client->cfd);
+    ev_io_stop(EV_A_ &client->c_watcher);
+    ev_io_stop(EV_A_ &client->ts_watcher);
     client->cfd = -1;
     pthread_mutex_lock(&env->lock_connpool);
     if (client->is_use_connpool) {
@@ -232,6 +234,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             } else if (client->is_use_connpool) {
                 int i = client->cur_pool;
                 na_server_t *server;
+                pthread_mutex_lock(&env->lock_connpool);
                 if (client->connpool->fd_pool[i] > 0) {
                     close(client->connpool->fd_pool[i]);
                 }
@@ -245,15 +248,18 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                 }
                 na_target_server_tcpsock_setup(client->connpool->fd_pool[i], true);
                 if (client->connpool->fd_pool[i] <= 0) {
+                    pthread_mutex_unlock(&env->lock_connpool);
                     NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
                 }
 
                 if (!na_server_connect(client->connpool->fd_pool[i], &server->addr)) {
                     if (errno != EINPROGRESS && errno != EALREADY) {
+                        pthread_mutex_unlock(&env->lock_connpool);
                         na_error_count_up(env);
                         NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
                     }
                 }
+                pthread_mutex_unlock(&env->lock_connpool);
             }
 
             if (errno == EPIPE) {
@@ -493,7 +499,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         if (cur_pool == -1) {
             close(tsfd);
         } else {
+            pthread_mutex_lock(&env->lock_connpool);
             connpool->mark[cur_pool] = 0;
+            pthread_mutex_unlock(&env->lock_connpool);
         }
         NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
         return;
@@ -513,7 +521,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             if (cur_pool == -1) {
                 close(tsfd);
             } else {
+                pthread_mutex_lock(&env->lock_connpool);
                 connpool->mark[cur_pool] = 0;
+                pthread_mutex_unlock(&env->lock_connpool);
             }
             na_error_count_up(env);
             NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
@@ -531,7 +541,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             if (cur_pool == -1) {
                 close(tsfd);
             } else {
+                pthread_mutex_lock(&env->lock_connpool);
                 connpool->mark[cur_pool] = 0;
+                pthread_mutex_unlock(&env->lock_connpool);
             }
             na_error_count_up(env);
             NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
@@ -570,6 +582,8 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
     pthread_mutex_unlock(&env->lock_current_conn);
 
+    ev_io_stop(EV_A_ &client->c_watcher);
+    ev_io_stop(EV_A_ &client->ts_watcher);
     ev_io_init(&client->c_watcher,  na_client_callback,        cfd,  EV_READ);
     ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_NONE);
     ev_io_start(EV_A_ &client->c_watcher);
