@@ -1,3 +1,13 @@
+2012-04-23 Tatsuhiko Kubo <cubicdaiya@gmail.com>, Mark Laws
+
+	* change default option for compilation([-g0 -O3] -> [-g -O2])
+
+	* reduce backlog(1024 -> 512)
+
+	* fix bug(crashing during backup->primary switch under load)
+
+	* 0.4.4 released
+
 2012-03-18 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fix problem(when recovery target_server connect with invalid pool)

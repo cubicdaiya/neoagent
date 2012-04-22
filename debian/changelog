@@ -1,3 +1,15 @@
+neoagent (0.4.4-1) oneiric; urgency=low
+
+  * change default option for compilation([-g0 -O3] -> [-g -O2])
+
+  * reduce backlog(1024 -> 512)
+
+  * fix bug(crashing during backup->primary switch under load)
+
+  * 0.4.4 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Sun, 22 Apr 2012 23:55:14 +0900
+
 neoagent (0.4.3-1) oneiric; urgency=low
 
   * fix problem(when recovery target_server connect with invalid pool)
