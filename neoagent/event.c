@@ -193,10 +193,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                     client->srbuf + client->srbufsize,
                     client->response_bufsize - client->srbufsize);
 
-        if (size == 0) {
-            NA_EVENT_FAIL(NA_ERROR_FAILED_READ, EV_A, w, client, env);
-            return; // request fail
-        } else if (size < 0) {
+        if (size <= 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 return; // not ready yet
             }
