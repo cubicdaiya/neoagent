@@ -101,7 +101,7 @@ void na_set_nonblock (int fd)
 
 bool na_server_connect (int tsfd, struct sockaddr_in *tsaddr)
 {
-    if (connect(tsfd, (struct sockaddr *)tsaddr, sizeof(*tsaddr)) != 0) {
+    if (connect(tsfd, (struct sockaddr *)tsaddr, sizeof(*tsaddr)) == -1) {
         return false;
     }
     return true;
