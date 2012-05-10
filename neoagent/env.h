@@ -113,6 +113,7 @@ typedef struct na_env_t {
     int conn_max;
     int connpool_max;
     int connpool_use_max;
+    int client_pool_max;
     int loop_max;
     int error_count_max;
 } na_env_t;
@@ -131,6 +132,8 @@ typedef struct na_client_t {
     na_memproto_cmd_t cmd;
     bool is_refused_active;
     bool is_use_connpool;
+    bool is_use_client_pool;
+    bool is_used;
     na_env_t *env;
     na_event_state_t event_state;
     na_connpool_t *connpool;

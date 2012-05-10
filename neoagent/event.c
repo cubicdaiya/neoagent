@@ -73,6 +73,7 @@ inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na
 inline static void na_event_switch (EV_P_ struct ev_io *old, ev_io *new, int fd, int revent);
 
 static struct ev_loop *na_event_loop_create (na_event_model_t model);
+static int na_client_assign (na_env_t *env);
 static void na_client_close (EV_P_ na_client_t *client, na_env_t *env);
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
@@ -116,6 +117,37 @@ static struct ev_loop *na_event_loop_create(na_event_model_t model)
     return loop;
 }
 
+static int na_client_assign (na_env_t *env)
+{
+    int ri;
+
+    ri = rand() % env->client_pool_max;
+    if (ClientPool[ri].is_used == false) {
+        ClientPool[ri].is_used = true;
+        return ri;
+    }
+
+    switch (rand() % 2) {
+    case 0:
+        for (int i=env->client_pool_max-1;i>=0;--i) {
+            if (ClientPool[i].is_used == false) {
+                ClientPool[i].is_used = true;
+                return i;
+            }
+        }
+        break;
+    default:
+        for (int i=0;i<env->client_pool_max;++i) {
+            if (ClientPool[i].is_used == false) {
+                ClientPool[i].is_used = true;
+                return i;
+            }
+        }
+        break;
+    }
+    return -1;
+}
+
 static void na_client_close (EV_P_ na_client_t *client, na_env_t *env)
 {
     close(client->cfd);
@@ -132,11 +164,16 @@ static void na_client_close (EV_P_ na_client_t *client, na_env_t *env)
     } else {
         close(client->tsfd);
         client->tsfd = -1;
+    }
+    pthread_mutex_unlock(&env->lock_connpool);
+
+    if (client->is_use_client_pool) {
+        client->is_used = false;
+    } else {
         NA_FREE(client->crbuf);
         NA_FREE(client->srbuf);
         NA_FREE(client);
     }
-    pthread_mutex_unlock(&env->lock_connpool);
 
     pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn > 0) {
@@ -406,7 +443,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
 void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 {
-    int fsfd, cfd, tsfd, cur_pool;
+    int fsfd, cfd, tsfd, cur_pool, cur_cli;
     int th_ret;
     na_env_t *env;
     na_client_t *client;
@@ -418,6 +455,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     cfd      = -1;
     tsfd     = -1;
     cur_pool = -1;
+    cur_cli  = -1;
 
     if (SigExit == 1) {
         pthread_exit(&th_ret);
@@ -506,8 +544,10 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
     na_set_nonblock(cfd);
 
-    if (cur_pool != -1) {
-        client = &ClientPool[cur_pool];
+    cur_cli = na_client_assign(env);
+
+    if (cur_cli >= 0) {
+        client = &ClientPool[cur_cli];
         if (client->tsfd > 0) {
             close(client->tsfd);
         }
@@ -557,6 +597,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->is_refused_active = env->is_refused_active;
     pthread_rwlock_unlock(&env->lock_refused);
     client->is_use_connpool   = cur_pool != -1 ? true : false;
+    client->is_use_client_pool = cur_cli != -1 ? true : false;
     client->cur_pool          = cur_pool;
     client->crbufsize         = 0;
     client->cwbufsize         = 0;
@@ -632,11 +673,12 @@ void *na_event_loop (void *args)
 
     na_connpool_init(env);
 
-    ClientPool = calloc(sizeof(na_client_t), env->connpool_max);
-    memset(ClientPool, 0, sizeof(na_client_t) * env->connpool_max);
-    for (int i=0;i<env->connpool_max;++i) {
-        ClientPool[i].crbuf = (char *)malloc(env->request_bufsize + 1);
-        ClientPool[i].srbuf = (char *)malloc(env->response_bufsize + 1);
+    ClientPool = calloc(sizeof(na_client_t), env->client_pool_max);
+    memset(ClientPool, 0, sizeof(na_client_t) * env->client_pool_max);
+    for (int i=0;i<env->client_pool_max;++i) {
+        ClientPool[i].crbuf   = (char *)malloc(env->request_bufsize + 1);
+        ClientPool[i].srbuf   = (char *)malloc(env->response_bufsize + 1);
+        ClientPool[i].is_used = false;
     }
 
     if (strlen(env->stsockpath) > 0) {
@@ -655,7 +697,7 @@ void *na_event_loop (void *args)
     ev_io_start(EV_A_ &env->fs_watcher);
     ev_loop(EV_A_ 0);
 
-    for (int i=0;i<env->connpool_max;++i) {
+    for (int i=0;i<env->client_pool_max;++i) {
         NA_FREE(ClientPool[i].crbuf);
         NA_FREE(ClientPool[i].srbuf);
     }

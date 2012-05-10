@@ -25,6 +25,7 @@ Sample configuration
              "conn_max":1000,
              "connpool_max": 30,
              "connpool_use_max": 10000,
+             "client_pool_max": 30,
              "error_count_max": 1000,
              "is_connpool_only": false,
              "request_bufsize":65536,
@@ -82,6 +83,10 @@ Sample configuration
 **connpool_use_max**
 
  if a connection in connection pool is over this number, neoagent reconnect target server
+
+**client_pool_max**
+
+ preserved client data size on startup
 
 **error_count_max**
 

@@ -14,6 +14,7 @@
             "conn_max"             : 1000,
             "connpool_max"         : 20,
             "connpool_use_max"     : 10000,
+            "client_pool_max"      : 100,
             "error_count_max"      : 1000,
             "is_connpool_only"     : false,
             "request_bufsize"      : 1024,
