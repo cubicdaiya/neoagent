@@ -21,7 +21,7 @@ Building Neoagent
 
  scons 
 
-If you use `TCMalloc <http://code.google.com/p/gperftools/>` in neoagent, you may build neoagent with the following option.
+If you use `TCMalloc <http://code.google.com/p/gperftools/>`_ in neoagent, you may build neoagent with the following option.
 
 .. code-block:: sh
 
