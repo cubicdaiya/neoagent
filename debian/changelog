@@ -1,3 +1,13 @@
+neoagent (0.4.5-1) precise; urgency=low
+
+  * add paramenter 'client_pool_max'
+
+  * support TCMalloc
+
+  * 0.4.5 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Fri, 11 May 2012 02:13:18 +0900
+
 neoagent (0.4.4-1) oneiric; urgency=low
 
   * change default option for compilation([-g0 -O3] -> [-g -O2])

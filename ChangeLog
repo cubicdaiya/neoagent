@@ -1,3 +1,11 @@
+2012-05-11 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* add paramenter 'client_pool_max'
+
+	* support TCMalloc
+
+	* 0.4.5 released
+
 2012-04-23 Tatsuhiko Kubo <cubicdaiya@gmail.com>, Mark Laws
 
 	* change default option for compilation([-g0 -O3] -> [-g -O2])
