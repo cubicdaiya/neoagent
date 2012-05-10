@@ -8,15 +8,21 @@ env = Environment(
     CPPPATH=build.config.includes,
 )
 
+libs         = build.config.libs
+use_tcmalloc = ARGUMENTS.get('tcmalloc', 'n');
+
+if use_tcmalloc == 'y' or use_tcmalloc == 'yes':
+    libs.append('tcmalloc')
+
 prog = env.Program(
     'neoagent',
     [ Glob('*.c'), Glob('ext/*.c') ],
-    LIBS=build.config.libs,
+    LIBS=libs,
 )
 
 if 'configure' in COMMAND_LINE_TARGETS:
     if build.util.configure(Configure(env),
-                            build.config.libs,
+                            libs,
                             build.config.headers,
                             build.config.funcs) is False:
         Exit(1)

@@ -21,6 +21,12 @@ Building Neoagent
 
  scons 
 
+If you use `TCMalloc <http://code.google.com/p/gperftools/>` in neoagent, you may build neoagent with the following option.
+
+.. code-block:: sh
+
+ scons tcmalloc=y
+
 ====================================
 Dependencies For Generating Document
 ====================================
@@ -50,4 +56,8 @@ Debian Packaging
 
  scons debian
 
-It's necessary to execute 'scons doc' before executing 'scons debian'.
+It's necessary to execute 'scons doc' and install 'libgoogle-perftools-dev' with the following command before executing 'scons debian'.
+
+.. code-block:: sh
+
+ sudo aptitude install libgoogle-perftools-dev
