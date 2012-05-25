@@ -114,6 +114,8 @@ typedef struct na_env_t {
     int connpool_max;
     int connpool_use_max;
     int client_pool_max;
+    int request_bufsize_current_max;
+    int response_bufsize_current_max;
     int loop_max;
     int error_count_max;
 } na_env_t;

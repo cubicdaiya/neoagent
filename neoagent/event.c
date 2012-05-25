@@ -241,6 +241,10 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         client->srbufsize                += size;
         client->srbuf[client->srbufsize]  = '\0';
 
+        if (client->srbufsize > env->response_bufsize_current_max) {
+            env->response_bufsize_current_max = client->srbufsize;
+        }
+
         if (client->cmd == NA_MEMPROTO_CMD_GET) {
             client->res_cnt = na_memproto_count_response_get(client->srbuf, client->srbufsize);
             if (client->res_cnt >= client->req_cnt) {
@@ -378,6 +382,10 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
         client->crbufsize                += size;
         client->crbuf[client->crbufsize]  = '\0';
+
+        if (client->crbufsize > env->request_bufsize_current_max) {
+            env->request_bufsize_current_max = client->crbufsize;
+        }
 
         client->cmd = na_memproto_detect_command(client->crbuf);
 
