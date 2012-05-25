@@ -103,7 +103,7 @@ def main(scr):
         stats['host'] = host
         stats['port'] = port
         stats_draw(pad, stats)
-        pad.refresh(0, 0, 0, 0, 30, 100)
+        pad.refresh(0, 0, 0, 0, 50, 100)
         scr.refresh()
         pad.clear()
         time.sleep(1)
