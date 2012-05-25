@@ -16,37 +16,39 @@ neostat is a status monitor for neoagent.
 
 .. code-block:: sh
 
- datetime: 2012-02-16 04:11:47
+ datetime: 2012-05-25 19:37:42
  name: neoagent
- version: 0.3.2
- host: localhost
- port: 30011
- environment_name: env_name
- start_time: 2012-02-16 04:11:36
- up_time: 00:00:11
- fsfd: 3
+ version: 0.4.5
+ host: 127.0.0.1
+ port: /tmp/neoagent_st.sock
+ environment_name: test1
+ event_model: auto
+ start_time: 2012-05-25 19:34:53
+ up_time: 00:02:49
  fsport: 30001
  fssockpath: /tmp/neoagent.sock
- target_host: 192.168.0.11
+ target_host: 127.0.0.1
  target_port: 11212
- backup_host: 192.168.0.12
+ backup_host: 127.0.0.1
  backup_port: 11213
- current_target_host: 192.168.0.11
+ current_target_host: 127.0.0.1
  current_target_port: 11212
  error_count: 0
- error_count_max: 50
- conn_max: 100
- connpool_max: 10
+ error_count_max: 1000
+ conn_max: 1000
+ connpool_max: 20
  is_connpool_only: false
  is_refused_active: false
- request_bufsize: 524288
+ request_bufsize: 1024
  request_bufsize_max: 1048576
- response_bufsize: 524288
+ request_bufsize_current_max: 54305
+ response_bufsize: 1024
  response_bufsize_max: 1048576
- current_conn: 4
- available_conn: 6
- current_conn_max: 10
- connpool_map: 1 1 1 0 1 0 0 0 0 0
+ response_bufsize_current_max: 31900
+ current_conn: 0
+ available_conn: 20
+ current_conn_max: 1
+ connpool_map: 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
 The meaning of Each entry is following.
  
@@ -150,6 +152,10 @@ The meaning of Each entry is following.
 
  maximum buffer size of each client's request
 
+**\request_bufsize_current_max**
+
+ recorded maximum buffer size of each client's request
+
 **\reponse_bufsize**
 
  starting buffer size of response from server
@@ -157,6 +163,10 @@ The meaning of Each entry is following.
 **\response_bufsize_max**
 
  maximum buffer size of response from server
+
+**\response_bufsize_current_max**
+
+ recoreded maximum buffer size of response from server
 
 **\current_conn**
 
