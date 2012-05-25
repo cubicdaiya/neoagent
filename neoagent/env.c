@@ -93,8 +93,10 @@ void na_env_setup_default(na_env_t *env, int idx)
 
 void na_env_clear (na_env_t *env)
 {
-    env->error_count      = 0;
-    env->current_conn_max = 0;
+    env->error_count                  = 0;
+    env->current_conn_max             = 0;
+    env->request_bufsize_current_max  = 0;
+    env->response_bufsize_current_max = 0;
 }
 
 void na_error_count_up (na_env_t *env)
