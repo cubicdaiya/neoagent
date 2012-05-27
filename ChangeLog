@@ -1,3 +1,9 @@
+2012-05-28 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* add monitoring entry '(request|response)_bufsize_current_max'
+
+	* 0.4.6 released
+
 2012-05-11 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* add paramenter 'client_pool_max'

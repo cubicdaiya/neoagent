@@ -1,3 +1,11 @@
+neoagent (0.4.6-1) quantal; urgency=low
+
+  * add monitoring entry '(request|response)_bufsize_current_max'
+
+  * 0.4.6 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 28 May 2012 00:39:19 +0900
+
 neoagent (0.4.5-1) precise; urgency=low
 
   * add paramenter 'client_pool_max'
