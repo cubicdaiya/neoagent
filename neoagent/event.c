@@ -246,7 +246,8 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         }
 
         if (client->cmd == NA_MEMPROTO_CMD_GET) {
-            client->res_cnt = na_memproto_count_response_get(client->srbuf, client->srbufsize);
+            char *cur_pos = client->srbuf + (client->srbufsize - size);
+            client->res_cnt += na_memproto_count_response_get(cur_pos, size);
             if (client->res_cnt >= client->req_cnt) {
                 client->event_state = NA_EVENT_STATE_CLIENT_WRITE;
                 na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
@@ -393,7 +394,8 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             na_event_stop(EV_A_ w, client, env);
             return; // request success
         } else if (client->cmd == NA_MEMPROTO_CMD_GET) {
-            client->req_cnt = na_memproto_count_request_get(client->crbuf, client->crbufsize);
+            char *cur_pos = client->crbuf + (client->crbufsize - size);
+            client->req_cnt += na_memproto_count_request_get(cur_pos, size);
         }
 
         if (client->crbufsize < 2) {
