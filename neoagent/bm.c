@@ -62,13 +62,8 @@ int na_bm_search (char *haystack, char *pattern, int *skip, int hlen, int plen)
     i   = 0;
     cnt = 0;
 
-    while (i < hlen) {
-
-    loop:
-
-        if (i > hlen) {
-            break;
-        }
+ loop:
+    while (i + plen - 1 < hlen) {
 
         for (int j=plen-1;j>=0;--j) {
             if (pattern[j] != haystack[i + j]) {
