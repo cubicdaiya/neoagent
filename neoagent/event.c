@@ -231,7 +231,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                     client->response_bufsize - client->srbufsize);
 
         if (size <= 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 return; // not ready yet
             }
             NA_EVENT_FAIL(NA_ERROR_FAILED_READ, EV_A, w, client, env);
@@ -373,7 +373,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             na_event_stop(EV_A_ w, client, env);
             return; // request success
         } else if (size < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 return; // not ready yet
             }
             NA_EVENT_FAIL(NA_ERROR_FAILED_READ, EV_A, w, client, env);
