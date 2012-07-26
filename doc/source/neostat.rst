@@ -8,9 +8,25 @@ DESCRIPTION
 neostat is a status monitor for neoagent
 
 ==================
-USAGE
+OPTIONS
 ==================
 
-.. code-block:: sh
+**\-h, --host**
 
- neostat ${hostname} ${port}
+ hostname
+
+**\-p, --port**
+
+ stat port number
+
+**\-s, --sock**
+
+ stat socket path
+
+**\-o, --once**
+
+ if this option specified, neostat gets stats only once
+
+**\--help**
+
+ show help
