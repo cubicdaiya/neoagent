@@ -9,20 +9,17 @@ import socket
 import signal
 import datetime
 import os
+import argparse
 
 def sig_handler(num, frame):
     global sig_exit_flg
     if num == signal.SIGINT:
         sig_exit_flg = True
 
-def usage():
-    s = "Usage: neostat $host $port or $socket_path"
-    print s
-
 def recv_stat_json(host, port, size):
-    if port.isdigit() is True:
+    if isinstance(port, int):
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        c.connect((host, int(port)))
+        c.connect((host, port))
     else:
         c = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         c.connect(port)
@@ -48,7 +45,7 @@ def stats_draw(pad, stats):
     nx = pad_addstr(pad, nx, 0, 'name                        : '  + stats['name'],                              curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'version                     : '  + stats['version'],                           curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'host                        : '  + stats['host'],                              curses.A_NORMAL)
-    nx = pad_addstr(pad, nx, 0, 'port                        : '  + stats['port'],                              curses.A_NORMAL)
+    nx = pad_addstr(pad, nx, 0, 'port                        : '  + str(stats['port']),                         curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'environment_name            : '  + stats['environment_name'],                  curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'event_model                 : '  + stats['event_model'],                       curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'start_time                  : '  + stats['start_time'],                        curses.A_NORMAL)
@@ -95,7 +92,7 @@ def main(scr):
         try:
             stats_json = recv_stat_json(host, port, 8192)
         except socket.error:
-            raise Exception("Connection Refused " + host + ":" + port)
+            raise Exception("Connection Refused " + host + ":" + str(port))
         try:
             stats = json.loads(stats_json)
         except ValueError:
@@ -110,23 +107,38 @@ def main(scr):
     scr.keypad(0);
 
 if __name__ == '__main__':
-    argc = len(sys.argv)
-    if argc < 2:
-        usage()
-        sys.exit(None)
-    elif argc == 2: # use Unix Domain Socket
-        host = socket.gethostname()
-        port = sys.argv[1]
-        if os.path.exists(port) is False:
-            print "socket file(" + port + ") is not found."
-            sys.exit(None)
-    else: # use TCP Socket
-        host = sys.argv[1]
-        port = sys.argv[2]
-        if port.isdigit() is False:
-            usage()
-            sys.exit(None)
+    parser = argparse.ArgumentParser(description='A Status Monitor For Neoagent', add_help=False)
+    parser.add_argument('-s', '--sock', action='store',      type=str,      help='unix domain socket path')
+    parser.add_argument('-h', '--host', action='store',      type=str,      help='hostname')
+    parser.add_argument('-p', '--port', action='store',      type=int,      help='port number')
+    parser.add_argument('-o', '--once', action='store_true', default=False, help='if this option specified, neostat gets stats only once')
+    parser.add_argument('--help',       action='store_true', default=False, help='show this help message and exit')
 
+    args = parser.parse_args()
+
+    if args.help == True:
+        parser.print_help()
+        sys.exit(0)
+    
+    if args.sock is not None and os.path.exists(args.sock):
+        host = socket.gethostname()
+        port = args.sock
+    elif args.host is not None and args.port is not None:
+        try:
+            socket.gethostbyname(args.host)
+        except socket.gaierror:
+            parser.print_help()
+            sys.exit(None)
+        host = args.host
+        port = args.port
+    else:
+        parser.print_help()
+        sys.exit(None)
+
+    if args.once == True:
+        print recv_stat_json(host, port, 8192)
+        sys.exit(0)
+    
     signal.signal(signal.SIGINT, sig_handler)
     sig_exit_flg = False
 
