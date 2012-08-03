@@ -52,8 +52,8 @@
 #include "error.h"
 #include "socket.h"
 
-const int NA_BACKLOG_MAX = 512;
-const int NA_IPADDR_MAX  = 15;
+const int NA_STAT_BACKLOG_MAX = 32;
+const int NA_IPADDR_MAX       = 15;
 
 inline static bool na_is_ipaddr (const char *ipaddr);
 static void na_set_sockopt(int fd, int optname);
@@ -237,7 +237,7 @@ void na_set_sockaddr (na_host_t *host, struct sockaddr_in *addr)
     }
 }
 
-int na_front_server_tcpsock_init (uint16_t port)
+int na_front_server_tcpsock_init (uint16_t port, int conn_max)
 {
     int fsfd;
     struct sockaddr_in iaddr;
@@ -268,7 +268,7 @@ int na_front_server_tcpsock_init (uint16_t port)
         return -1;
     }
 
-    if (listen(fsfd, NA_BACKLOG_MAX) == -1) {
+    if (listen(fsfd, conn_max) == -1) {
         close(fsfd);
         NA_STDERR("listen()");
         return -1;
@@ -277,7 +277,7 @@ int na_front_server_tcpsock_init (uint16_t port)
     return fsfd;
 }
 
-int na_front_server_unixsock_init (char *sockpath, mode_t mask)
+int na_front_server_unixsock_init (char *sockpath, mode_t mask, int conn_max)
 {
     int fsfd;
     mode_t old_umask;
@@ -321,7 +321,7 @@ int na_front_server_unixsock_init (char *sockpath, mode_t mask)
 
     umask(old_umask);
 
-    if (listen(fsfd, NA_BACKLOG_MAX) == -1) {
+    if (listen(fsfd, conn_max) == -1) {
         close(fsfd);
         NA_STDERR("listen()");
         return -1;
@@ -373,7 +373,7 @@ int na_stat_server_unixsock_init (char *sockpath, mode_t mask)
 
     umask(old_umask);
 
-    if (listen(stfd, NA_BACKLOG_MAX) == -1) {
+    if (listen(stfd, NA_STAT_BACKLOG_MAX) == -1) {
         close(stfd);
         NA_STDERR("listen()");
         return -1;
@@ -411,7 +411,7 @@ int na_stat_server_tcpsock_init (uint16_t port)
         return -1;
     }
 
-    if (listen(stfd, NA_BACKLOG_MAX) == -1) {
+    if (listen(stfd, NA_STAT_BACKLOG_MAX) == -1) {
         close(stfd);
         NA_STDERR("listen()");
         return -1;

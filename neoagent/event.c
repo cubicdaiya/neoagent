@@ -670,9 +670,9 @@ void *na_event_loop (void *args)
     env = (na_env_t *)args;
 
     if (strlen(env->fssockpath) > 0) {
-        env->fsfd = na_front_server_unixsock_init(env->fssockpath, env->access_mask);
+        env->fsfd = na_front_server_unixsock_init(env->fssockpath, env->access_mask, env->conn_max);
     } else {
-        env->fsfd = na_front_server_tcpsock_init(env->fsport);
+        env->fsfd = na_front_server_tcpsock_init(env->fsport, env->conn_max);
     }
 
     if (env->fsfd < 0) {
