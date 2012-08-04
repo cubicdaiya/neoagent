@@ -1,3 +1,11 @@
+neoagent (0.4.9-1) precise; urgency=low
+
+  * interlock backlog with env->conn_max
+
+  * 0.4.9 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Sat, 04 Aug 2012 13:53:39 +0900
+
 neoagent (0.4.8-1) quantal; urgency=low
 
   * add option '-o' to neostat

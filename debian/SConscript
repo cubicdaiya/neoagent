@@ -8,11 +8,11 @@ import build.dpkg
 arch = ARGUMENTS.get('arch', 'amd64')
 
 DEBNAME          = "neoagent"
-DEBVERSION       = "0.4.8"
+DEBVERSION       = "0.4.9"
 SUBVERSION       = "1"
 DEBMAINT         = "Tatsuhiko Kubo [cubicdaiya@gmail.com]"
 DEBARCH          = arch
-DEBDEPENDS       = "libev-dev, libjson0-dev, libgoogle-perftools-dev"
+DEBDEPENDS       = "libev-dev, libjson0-dev, libgoogle-perftools-dev, python-argparse"
 DEBDESC          = "A Yet Another Memcached Protocol Proxy Server"
 DEBCONTROLFILE   = os.path.join(DEBNAME, "DEBIAN/control")
 DEBCOPYRIGHTFILE = os.path.join(DEBNAME, "DEBIAN/copyright")

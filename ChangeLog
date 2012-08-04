@@ -1,3 +1,9 @@
+2012-08-04 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* interlock backlog with env->conn_max
+
+	* 0.4.9 released
+
 2012-07-26 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* add option '-o' to neostat
