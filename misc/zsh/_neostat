@@ -1,0 +1,14 @@
+#compdef neostat
+#
+# neostat completion
+# Tatsuhiko Kubo <cubicdaiya@gmail.com>
+#
+_neostat () {
+    _arguments -s \
+	'(-h --host)'{-h,--host}'[hostname]' \
+	'(-p --port)'{-p,--port}'[stat port number]' \
+	'(-s --sock)'{-s,--sock}'[stat socket path]:file:_files -g "*.sock"' \
+	'(-o --once)'{-o,--once}'[if this option specified, neostat gets stats only once]' \
+}
+
+_neostat "$@"
