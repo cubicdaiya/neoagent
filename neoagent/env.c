@@ -48,6 +48,7 @@ static const int  NA_ERROR_COUNT_MAX_DEFAULT  = 1000;
 static const int  NA_ACCESS_MASK_DEFAULT      = 0664;
 static const int  NA_BUFSIZE_DEFAULT          = 65536;
 static const bool NA_IS_CONNPOOL_ONLY_DEFAULT = false;
+static const int  NA_WORKER_MAX_DEFAULT       = 1;
 
 mpool_t *na_pool_create (int size)
 {
@@ -78,6 +79,7 @@ void na_env_setup_default(na_env_t *env, int idx)
     memcpy(&env->target_server.host, &host, sizeof(host));
     na_set_sockaddr(&host, &env->target_server.addr);
     env->stport               = NA_STPORT_DEFAULT + idx;
+    env->worker_max           = NA_WORKER_MAX_DEFAULT;
     env->conn_max             = NA_CONN_MAX_DEFAULT;
     env->connpool_max         = NA_CONNPOOL_MAX_DEFAULT;
     env->connpool_use_max     = NA_CONNPOOL_USE_MAX_DEFAULT;
