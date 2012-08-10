@@ -35,6 +35,7 @@ neostat is a status monitor for neoagent.
  current_target_port: 11212
  error_count: 0
  error_count_max: 1000
+ worker_max: 3
  conn_max: 1000
  connpool_max: 20
  is_connpool_only: false
@@ -127,6 +128,10 @@ The meaning of Each entry is following.
 **\error_count_max**
 
  when 'error_count' is over this value, neoagent is shutdown
+
+**\worker_max**
+
+ max count of event worker
 
 **\conn_max**
 
