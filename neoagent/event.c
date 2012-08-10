@@ -54,6 +54,7 @@
 #include "stat.h"
 #include "hc.h"
 #include "util.h"
+#include "queue.h"
 
 #define NA_EVENT_FAIL(na_error, loop, w, client, env) do {  \
         na_event_stop(loop, w, client, env);                \
@@ -63,6 +64,7 @@
  
 // globals
 static na_client_t *ClientPool;
+static na_event_queue_t *EventQueue;
 
 // external globals
 volatile sig_atomic_t SigExit;
@@ -78,6 +80,7 @@ static void na_client_close (EV_P_ na_client_t *client, na_env_t *env);
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
 static void na_front_server_callback (EV_P_ struct ev_io *w, int revents);
+static void *na_event_observer(void *args);
 static void *na_support_loop (void *args);
 
 inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env)
@@ -628,11 +631,37 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
     pthread_mutex_unlock(&env->lock_current_conn);
 
-    ev_io_stop(EV_A_ &client->c_watcher);
-    ev_io_stop(EV_A_ &client->ts_watcher);
-    ev_io_init(&client->c_watcher,  na_client_callback,        cfd,  EV_READ);
-    ev_io_init(&client->ts_watcher, na_target_server_callback, tsfd, EV_NONE);
-    ev_io_start(EV_A_ &client->c_watcher);
+    if (!na_event_queue_push(EventQueue, client)) {
+        na_error_count_up(env);
+        NA_STDERR("Too Many Connections!");
+    }
+}
+
+static void *na_event_observer(void *args)
+{
+    struct ev_loop *loop;
+    na_env_t *env;
+    na_client_t *client;
+
+    env  = (na_env_t *)args;
+    loop = na_event_loop_create(env->event_model);
+
+    while (true) {
+        client = na_event_queue_pop(EventQueue);
+
+        if (client == NULL) {
+            continue;
+        }
+
+        ev_io_stop(EV_A_ &client->c_watcher);
+        ev_io_stop(EV_A_ &client->ts_watcher);
+        ev_io_init(&client->c_watcher,  na_client_callback,        client->cfd,  EV_READ);
+        ev_io_init(&client->ts_watcher, na_target_server_callback, client->tsfd, EV_NONE);
+        ev_io_start(EV_A_ &client->c_watcher);
+        ev_loop(EV_A_ 0);
+    }
+
+    return NULL;
 }
 
 static void *na_support_loop (void *args)
@@ -664,8 +693,9 @@ static void *na_support_loop (void *args)
 void *na_event_loop (void *args)
 {
     struct ev_loop *loop;
-    na_env_t *env;
-    pthread_t th_support;
+    na_env_t  *env;
+    pthread_t  th_support;
+    pthread_t *th_workers;
 
     env = (na_env_t *)args;
 
@@ -689,6 +719,13 @@ void *na_event_loop (void *args)
         ClientPool[i].is_used = false;
     }
 
+    EventQueue = na_event_queue_create(env->conn_max);
+    th_workers = calloc(sizeof(pthread_t), env->worker_max);
+    for (int i=0;i<env->worker_max;++i) {
+        pthread_create(&th_workers[i], NULL, na_event_observer, env);
+    }
+
+
     if (strlen(env->stsockpath) > 0) {
         env->stfd = na_stat_server_unixsock_init(env->stsockpath, env->access_mask);
     } else {
@@ -710,6 +747,7 @@ void *na_event_loop (void *args)
         NA_FREE(ClientPool[i].srbuf);
     }
     NA_FREE(ClientPool);
+    na_event_queue_destroy(EventQueue);
 
     return NULL;
 }
