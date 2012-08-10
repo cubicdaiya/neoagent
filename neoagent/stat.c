@@ -31,6 +31,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdbool.h>
 #include <unistd.h>
 #include <time.h>
 #include <pthread.h>
@@ -44,11 +45,33 @@
 #include "version.h"
 
 // constants
-static const int NA_STAT_BUF_MAX  = 8192;
+static const int   NA_STAT_BUF_MAX   = 8192;
+static const char *NA_BOOL_STR_TRUE  = "true";
+static const char *NA_BOOL_STR_FALSE = "false";
 
 // external globals
 time_t StartTimestamp;
 volatile sig_atomic_t SigExit;
+
+// private functions
+static inline const char *na_bool2str(bool b);
+static inline char *na_active_host_select(na_env_t *env);
+static inline uint16_t na_active_port_select(na_env_t *env);
+
+static inline const char *na_bool2str(bool b)
+{
+    return b == true ? NA_BOOL_STR_TRUE : NA_BOOL_STR_FALSE;
+}
+
+static inline char *na_active_host_select(na_env_t *env)
+{
+    return env->is_refused_active ? env->backup_server.host.ipaddr : env->target_server.host.ipaddr;
+}
+
+static inline uint16_t na_active_port_select(na_env_t *env)
+{
+    return env->is_refused_active ? env->backup_server.host.port : env->target_server.host.port;
+}
 
 void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
 {
@@ -79,16 +102,14 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "target_port",                  json_object_new_int(env->target_server.host.port));
     json_object_object_add(stat_obj, "backup_host",                  json_object_new_string(env->backup_server.host.ipaddr));
     json_object_object_add(stat_obj, "backup_port",                  json_object_new_int(env->backup_server.host.port));
-    json_object_object_add(stat_obj, "current_target_host",          json_object_new_string(env->is_refused_active ? 
-                                                                                            env->backup_server.host.ipaddr : env->target_server.host.ipaddr));
-    json_object_object_add(stat_obj, "current_target_port",          json_object_new_int(env->is_refused_active ?
-                                                                                         env->backup_server.host.port : env->target_server.host.port));
+    json_object_object_add(stat_obj, "current_target_host",          json_object_new_string(na_active_host_select(env)));
+    json_object_object_add(stat_obj, "current_target_port",          json_object_new_int(na_active_port_select(env)));
     json_object_object_add(stat_obj, "error_count",                  json_object_new_int(env->error_count));
     json_object_object_add(stat_obj, "error_count_max",              json_object_new_int(env->error_count_max));
     json_object_object_add(stat_obj, "conn_max",                     json_object_new_int(env->conn_max));
     json_object_object_add(stat_obj, "connpool_max",                 json_object_new_int(env->connpool_max));
-    json_object_object_add(stat_obj, "is_connpool_only",             json_object_new_string(env->is_connpool_only ?  "true" : "false"));
-    json_object_object_add(stat_obj, "is_refused_active",            json_object_new_string(env->is_refused_active ? "true" : "false"));
+    json_object_object_add(stat_obj, "is_connpool_only",             json_object_new_string(na_bool2str(env->is_connpool_only)));
+    json_object_object_add(stat_obj, "is_refused_active",            json_object_new_string(na_bool2str(env->is_refused_active)));
     json_object_object_add(stat_obj, "request_bufsize",              json_object_new_int(env->request_bufsize));
     json_object_object_add(stat_obj, "request_bufsize_max",          json_object_new_int(env->request_bufsize_max));
     json_object_object_add(stat_obj, "request_bufsize_current_max",  json_object_new_int(env->request_bufsize_current_max));
