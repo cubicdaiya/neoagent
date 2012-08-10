@@ -85,6 +85,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
                                                                                          env->backup_server.host.port : env->target_server.host.port));
     json_object_object_add(stat_obj, "error_count",                  json_object_new_int(env->error_count));
     json_object_object_add(stat_obj, "error_count_max",              json_object_new_int(env->error_count_max));
+    json_object_object_add(stat_obj, "worker_max",                   json_object_new_int(env->worker_max));
     json_object_object_add(stat_obj, "conn_max",                     json_object_new_int(env->conn_max));
     json_object_object_add(stat_obj, "connpool_max",                 json_object_new_int(env->connpool_max));
     json_object_object_add(stat_obj, "is_connpool_only",             json_object_new_string(env->is_connpool_only ?  "true" : "false"));

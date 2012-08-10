@@ -60,6 +60,7 @@ def stats_draw(pad, stats):
     nx = pad_addstr(pad, nx, 0, 'current_target_port         : '  + str(stats['current_target_port']),          curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'error_count                 : '  + str(stats['error_count']),                  curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'error_count_max             : '  + str(stats['error_count_max']),              curses.A_NORMAL)
+    nx = pad_addstr(pad, nx, 0, 'worker_max                  : '  + str(stats['worker_max']),                   curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'conn_max                    : '  + str(stats['conn_max']),                     curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'connpool_max                : '  + str(stats['connpool_max']),                 curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'is_connpool_only            : '  + str(stats['is_connpool_only']),             curses.A_NORMAL)
