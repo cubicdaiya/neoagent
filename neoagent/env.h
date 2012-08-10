@@ -110,6 +110,7 @@ typedef struct na_env_t {
     pthread_rwlock_t lock_refused;
     na_event_model_t event_model;
     int error_count;
+    int worker_max;
     int conn_max;
     int connpool_max;
     int connpool_use_max;

@@ -11,6 +11,7 @@
             "stport"               : 30011,
             "stsockpath"           : "/tmp/neoagent_st.sock",
             "event_model"          : "auto",
+            "worker_max"           : 3,
             "conn_max"             : 1000,
             "connpool_max"         : 20,
             "connpool_use_max"     : 10000,

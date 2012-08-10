@@ -62,6 +62,7 @@ const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_BACKUP_SERVER]        = "backup_server",
     [NA_PARAM_STPORT]               = "stport",
     [NA_PARAM_STSOCKPATH]           = "stsockpath",
+    [NA_PARAM_WORKER_MAX]           = "worker_max",
     [NA_PARAM_CONN_MAX]             = "conn_max",
     [NA_PARAM_CONNPOOL_MAX]         = "connpool_max",
     [NA_PARAM_CONNPOOL_USE_MAX]     = "connpool_use_max",
@@ -227,6 +228,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
         case NA_PARAM_RESPONSE_BUFSIZE_MAX:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->response_bufsize_max = json_object_get_int(param_obj);
+            break;
+        case NA_PARAM_WORKER_MAX:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
+            na_env->worker_max = json_object_get_int(param_obj);
             break;
         case NA_PARAM_CONN_MAX:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
