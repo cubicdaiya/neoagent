@@ -1,7 +1,7 @@
 /**
    In short, neoagent is distributed under so called "BSD license",
    
-   Copyright (c) 2011-2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+   Copyright (c) 2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
    All rights reserved.
    
    Redistribution and use in source and binary forms, with or without modification, 
@@ -64,7 +64,7 @@ static void na_setup_signals (void);
 static void na_version(void)
 {
     const char *v = NA_NAME " " NA_VERSION;
-    const char *c = "Copyright 2011-2012 Tatsuhiko Kubo.";
+    const char *c = "Copyright 2012 Tatsuhiko Kubo.";
     printf("%s\n"
            "%s\n", 
            v, c);

@@ -2,7 +2,7 @@
 /**
    In short, neoagent is distributed under so called "BSD license",
    
-   Copyright (c) 2011-2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+   Copyright (c) 2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
    All rights reserved.
    
    Redistribution and use in source and binary forms, with or without modification, 
