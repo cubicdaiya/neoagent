@@ -82,7 +82,9 @@ static bool is_success_command(int tsfd, char *command, const char *expected)
 
 static bool na_hc_test_request(int tsfd)
 {
-    int cnt_fail, try_max;
+    int  cnt_fail, try_max;
+    char hostname[BUFSIZ];
+
     char scmd[BUFSIZ]; // set
     char gcmd[BUFSIZ]; // get
     char dcmd[BUFSIZ]; // delete
@@ -90,10 +92,11 @@ static bool na_hc_test_request(int tsfd)
 
     cnt_fail = 0;
     try_max  = 5;
-    snprintf(scmd, BUFSIZ, "set %s 0 0 %ld\r\n%s\r\n", na_hc_test_key, strlen(na_hc_test_val), na_hc_test_val);
-    snprintf(gcmd, BUFSIZ, "get    %s\r\n", na_hc_test_key);
-    snprintf(dcmd, BUFSIZ, "delete %s\r\n", na_hc_test_key);
-    snprintf(gres, BUFSIZ, "VALUE %s 0 %ld\r\n%s\r\nEND\r\n", na_hc_test_key, strlen(na_hc_test_val), na_hc_test_val);
+    gethostname(hostname, BUFSIZ);
+    snprintf(scmd, BUFSIZ, "set %s_%s 0 0 %ld\r\n%s_%s\r\n", na_hc_test_key, hostname, strlen(na_hc_test_val) + 1 + strlen(hostname), na_hc_test_val, hostname);
+    snprintf(gcmd, BUFSIZ, "get %s_%s\r\n", na_hc_test_key, hostname);
+    snprintf(dcmd, BUFSIZ, "delete %s_%s\r\n", na_hc_test_key, hostname);
+    snprintf(gres, BUFSIZ, "VALUE %s_%s 0 %ld\r\n%s_%s\r\nEND\r\n", na_hc_test_key, hostname, strlen(na_hc_test_val) + 1 + strlen(hostname), na_hc_test_val, hostname);
 
     for (int i=0;i<try_max;++i) {
 
