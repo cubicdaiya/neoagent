@@ -1,3 +1,13 @@
+neoagent (0.5.0-1) precise; urgency=low
+
+  * make neoagent multi-threaded
+
+  * add neostat completion
+
+  * 0.5.0 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Sat, 11 Aug 2012 03:50:27 +0900
+
 neoagent (0.4.9-1) precise; urgency=low
 
   * interlock backlog with env->conn_max

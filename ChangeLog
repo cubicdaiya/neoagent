@@ -1,3 +1,11 @@
+2012-08-11 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* make neoagent's event multi-threaded
+
+	* add neostat completion
+
+	* 0.5.0 released
+
 2012-08-04 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* interlock backlog with env->conn_max
