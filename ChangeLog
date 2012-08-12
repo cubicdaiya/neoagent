@@ -1,3 +1,11 @@
+2012-08-12 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix problem(CPU is busy every time)
+
+	* modify Copyright
+
+	* 0.5.1 released
+
 2012-08-11 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* make neoagent's event multi-threaded

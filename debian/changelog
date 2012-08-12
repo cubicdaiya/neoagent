@@ -1,3 +1,13 @@
+neoagent (0.5.1-1) precise; urgency=low
+
+  * fix problem(CPU is busy every time)
+
+  * modify Copyright
+
+  * 0.5.1 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Sun, 12 Aug 2012 15:36:19 +0900
+
 neoagent (0.5.0-1) precise; urgency=low
 
   * make neoagent multi-threaded
