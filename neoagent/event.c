@@ -634,6 +634,8 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     if (!na_event_queue_push(EventQueue, client)) {
         na_error_count_up(env);
         NA_STDERR("Too Many Connections!");
+    } else {
+        pthread_cond_signal(&env->q_empty);
     }
 }
 
@@ -650,6 +652,11 @@ static void *na_event_observer(void *args)
         client = na_event_queue_pop(EventQueue);
 
         if (client == NULL) {
+            pthread_mutex_lock(&EventQueue->lock);
+            while (EventQueue->cnt == 0) {
+                pthread_cond_wait(&env->q_empty, &EventQueue->lock);
+            }
+            pthread_mutex_unlock(&EventQueue->lock);
             continue;
         }
 

@@ -202,6 +202,7 @@ int main (int argc, char *argv[])
         pthread_mutex_init(&env[i]->lock_connpool, NULL);
         pthread_mutex_init(&env[i]->lock_current_conn, NULL);
         pthread_rwlock_init(&env[i]->lock_refused, NULL);
+        pthread_cond_init(&env[i]->q_empty, NULL);
         na_connpool_create(&env[i]->connpool_active, env[i]->connpool_max);
         if (env[i]->is_use_backup) {
             na_connpool_create(&env[i]->connpool_backup, env[i]->connpool_max);
