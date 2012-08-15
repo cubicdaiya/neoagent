@@ -103,12 +103,14 @@ typedef struct na_env_t {
     bool is_connpool_only;
     bool is_extensible_request_buf;
     bool is_extensible_response_buf;
+    bool *is_worker_busy;
     na_connpool_t connpool_active;
     na_connpool_t connpool_backup;
     pthread_mutex_t lock_connpool;
     pthread_mutex_t lock_current_conn;
+    pthread_mutex_t lock_tid;
     pthread_rwlock_t lock_refused;
-    pthread_cond_t   q_empty;
+    pthread_rwlock_t *lock_worker_busy;
     na_event_model_t event_model;
     int error_count;
     int worker_max;

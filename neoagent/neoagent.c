@@ -45,6 +45,7 @@
 #include "conf.h"
 #include "error.h"
 #include "memproto.h"
+#include "util.h"
 #include "version.h"
 
 // constants
@@ -197,12 +198,20 @@ int main (int argc, char *argv[])
         env[i]->current_conn      = 0;
         env[i]->is_refused_active = false;
         env[i]->is_refused_accept = false;
+        env[i]->is_worker_busy    = calloc(sizeof(bool), env[i]->worker_max);
+        for (int j=0;j<env[i]->worker_max;++j) {
+            env[i]->is_worker_busy[j] = false;
+        }
         env[i]->error_count       = 0;
         env[i]->current_conn_max  = 0;
         pthread_mutex_init(&env[i]->lock_connpool, NULL);
         pthread_mutex_init(&env[i]->lock_current_conn, NULL);
+        pthread_mutex_init(&env[i]->lock_tid, NULL);
         pthread_rwlock_init(&env[i]->lock_refused, NULL);
-        pthread_cond_init(&env[i]->q_empty, NULL);
+        env[i]->lock_worker_busy  = calloc(sizeof(pthread_rwlock_t), env[i]->worker_max);
+        for (int j=0;j<env[i]->worker_max;++j) {
+            pthread_rwlock_init(&env[i]->lock_worker_busy[j], NULL);
+        }
         na_connpool_create(&env[i]->connpool_active, env[i]->connpool_max);
         if (env[i]->is_use_backup) {
             na_connpool_create(&env[i]->connpool_backup, env[i]->connpool_max);
@@ -230,7 +239,13 @@ int main (int argc, char *argv[])
         }
         pthread_mutex_destroy(&env[i]->lock_connpool);
         pthread_mutex_destroy(&env[i]->lock_current_conn);
+        pthread_mutex_destroy(&env[i]->lock_tid);
         pthread_rwlock_destroy(&env[i]->lock_refused);
+        for (int j=0;j<env[i]->worker_max;++j) {
+            pthread_rwlock_destroy(&env[i]->lock_worker_busy[j]);
+        }
+        NA_FREE(env[i]->is_worker_busy);
+        NA_FREE(env[i]->lock_worker_busy);
         pthread_detach(th[i]);
     }
 

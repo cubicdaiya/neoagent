@@ -47,11 +47,14 @@ na_event_queue_t *na_event_queue_create(int c)
         q->queue[i] = (na_client_t *)NULL;
     }
     pthread_mutex_init(&q->lock, NULL);
+    pthread_cond_init (&q->cond, NULL);
     return q;
 }
 
 void na_event_queue_destroy(na_event_queue_t *q)
 {
+    pthread_mutex_destroy(&q->lock);
+    pthread_cond_destroy(&q->cond);
     NA_FREE(q->queue);
     NA_FREE(q);
 }
@@ -71,6 +74,10 @@ bool na_event_queue_push(na_event_queue_t *q, na_client_t *e)
     }
 
     ++q->cnt;
+
+    if (q->cnt == 1) {
+        pthread_cond_broadcast(&q->cond);
+    }
 
     pthread_mutex_unlock(&q->lock);
     return true;

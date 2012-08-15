@@ -64,7 +64,7 @@
  
 // globals
 static na_client_t *ClientPool;
-static na_event_queue_t *EventQueue;
+static na_event_queue_t *EventQueue = NULL;
 
 // external globals
 volatile sig_atomic_t SigExit;
@@ -80,6 +80,7 @@ static void na_client_close (EV_P_ na_client_t *client, na_env_t *env);
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents);
 static void na_client_callback (EV_P_ struct ev_io *w, int revents);
 static void na_front_server_callback (EV_P_ struct ev_io *w, int revents);
+static bool na_is_worker_busy(na_env_t *env);
 static void *na_event_observer(void *args);
 static void *na_support_loop (void *args);
 
@@ -631,12 +632,34 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
     pthread_mutex_unlock(&env->lock_current_conn);
 
-    if (!na_event_queue_push(EventQueue, client)) {
-        na_error_count_up(env);
-        NA_STDERR("Too Many Connections!");
+    if (!na_is_worker_busy(env)) {
+        if (!na_event_queue_push(EventQueue, client)) {
+            na_error_count_up(env);
+            NA_STDERR("Too Many Connections!");
+        }
     } else {
-        pthread_cond_signal(&env->q_empty);
+        ev_io_init(&client->c_watcher,  na_client_callback,        client->cfd,  EV_READ);
+        ev_io_init(&client->ts_watcher, na_target_server_callback, client->tsfd, EV_NONE);
+        ev_io_start(EV_A_ &client->c_watcher);
     }
+}
+
+static bool na_is_worker_busy(na_env_t *env)
+{
+    int count_is_woker_busy = 0;
+    for (int i=0;i<env->worker_max;++i) {
+        pthread_rwlock_rdlock(&env->lock_worker_busy[i]);
+        if (env->is_worker_busy[i]) {
+            ++count_is_woker_busy;
+        }
+        pthread_rwlock_unlock(&env->lock_worker_busy[i]);
+    }
+
+    if (count_is_woker_busy == env->worker_max) {
+        return true;
+    }
+
+    return false;
 }
 
 static void *na_event_observer(void *args)
@@ -644,28 +667,38 @@ static void *na_event_observer(void *args)
     struct ev_loop *loop;
     na_env_t *env;
     na_client_t *client;
+    static int tid_s = 0;
+    int tid;
 
     env  = (na_env_t *)args;
     loop = na_event_loop_create(env->event_model);
+
+    pthread_mutex_lock(&env->lock_tid);
+    tid = tid_s++;
+    pthread_mutex_unlock(&env->lock_tid);
 
     while (true) {
         client = na_event_queue_pop(EventQueue);
 
         if (client == NULL) {
             pthread_mutex_lock(&EventQueue->lock);
-            while (EventQueue->cnt == 0) {
-                pthread_cond_wait(&env->q_empty, &EventQueue->lock);
+            if (EventQueue->cnt == 0) {
+                pthread_cond_wait(&EventQueue->cond, &EventQueue->lock);
             }
             pthread_mutex_unlock(&EventQueue->lock);
             continue;
         }
 
-        ev_io_stop(EV_A_ &client->c_watcher);
-        ev_io_stop(EV_A_ &client->ts_watcher);
         ev_io_init(&client->c_watcher,  na_client_callback,        client->cfd,  EV_READ);
         ev_io_init(&client->ts_watcher, na_target_server_callback, client->tsfd, EV_NONE);
         ev_io_start(EV_A_ &client->c_watcher);
+        pthread_rwlock_wrlock(&env->lock_worker_busy[tid]);
+        env->is_worker_busy[tid] = true;
+        pthread_rwlock_unlock(&env->lock_worker_busy[tid]);
         ev_loop(EV_A_ 0);
+        pthread_rwlock_wrlock(&env->lock_worker_busy[tid]);
+        env->is_worker_busy[tid] = false;
+        pthread_rwlock_unlock(&env->lock_worker_busy[tid]);
     }
 
     return NULL;
@@ -726,12 +759,13 @@ void *na_event_loop (void *args)
         ClientPool[i].is_used = false;
     }
 
-    EventQueue = na_event_queue_create(env->conn_max);
+    if (EventQueue == NULL) {
+        EventQueue = na_event_queue_create(env->conn_max);
+    }
     th_workers = calloc(sizeof(pthread_t), env->worker_max);
     for (int i=0;i<env->worker_max;++i) {
         pthread_create(&th_workers[i], NULL, na_event_observer, env);
     }
-
 
     if (strlen(env->stsockpath) > 0) {
         env->stfd = na_stat_server_unixsock_init(env->stsockpath, env->access_mask);

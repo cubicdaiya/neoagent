@@ -46,6 +46,7 @@ typedef struct na_event_queue_t {
     size_t cnt;
     size_t max;
     pthread_mutex_t lock;
+    pthread_cond_t  cond;
 } na_event_queue_t;
 
 na_event_queue_t *na_event_queue_create(int c);
