@@ -636,6 +636,9 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         if (!na_event_queue_push(EventQueue, client)) {
             na_error_count_up(env);
             NA_STDERR("Too Many Connections!");
+            ev_io_init(&client->c_watcher,  na_client_callback,        client->cfd,  EV_READ);
+            ev_io_init(&client->ts_watcher, na_target_server_callback, client->tsfd, EV_NONE);
+            ev_io_start(EV_A_ &client->c_watcher);
         }
     } else {
         ev_io_init(&client->c_watcher,  na_client_callback,        client->cfd,  EV_READ);
