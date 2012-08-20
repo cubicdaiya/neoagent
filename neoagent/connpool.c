@@ -39,6 +39,23 @@
 #include "connpool.h"
 #include "util.h"
 
+// private functions
+static void na_connpool_deactivate (na_connpool_t *connpool);
+
+static void na_connpool_deactivate (na_connpool_t *connpool)
+{
+    for (int i=0;i<connpool->max;++i) {
+        if (connpool->fd_pool[i] > 0) {
+            if (connpool->mark[i] == 0) {
+                close(connpool->fd_pool[i]);
+                connpool->fd_pool[i]  = 0;
+                connpool->used_cnt[i] = 0;
+            }
+            connpool->mark[i] = 0;
+        }
+    }
+}
+
 void na_connpool_create (na_connpool_t *connpool, int c)
 {
     connpool->fd_pool  = calloc(sizeof(int), c);
@@ -52,20 +69,6 @@ void na_connpool_destroy (na_connpool_t *connpool)
     NA_FREE(connpool->fd_pool);
     NA_FREE(connpool->mark);
     NA_FREE(connpool->used_cnt);
-}
-
-void na_connpool_deactivate (na_connpool_t *connpool)
-{
-    for (int i=0;i<connpool->max;++i) {
-        if (connpool->fd_pool[i] > 0) {
-            if (connpool->mark[i] == 0) {
-                close(connpool->fd_pool[i]);
-                connpool->fd_pool[i]  = 0;
-                connpool->used_cnt[i] = 0;
-            }
-            connpool->mark[i] = 0;
-        }
-    }
 }
 
 void na_connpool_reconnect (na_env_t *env, int i)
