@@ -34,14 +34,6 @@
 #ifndef NA_STAT_H
 #define NA_STAT_H
 
-#include <json/json.h>
-
-#include "env.h"
-
-void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env);
-int na_available_conn (na_connpool_t *connpool);
-struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool);
-struct json_object *na_workermap_array_json(na_env_t *env);
 void na_stat_callback (EV_P_ struct ev_io *w, int revents);
 
 #endif // NA_STAT_H

@@ -37,6 +37,7 @@
 #include <pthread.h>
 
 #include <ev.h>
+#include <json/json.h>
 
 #include "error.h"
 #include "time.h"
@@ -58,6 +59,11 @@ static inline const char *na_bool2str(bool b);
 static inline char *na_active_host_select(na_env_t *env);
 static inline uint16_t na_active_port_select(na_env_t *env);
 
+static void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env);
+static int na_available_conn (na_connpool_t *connpool);
+static struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool);
+static struct json_object *na_workermap_array_json(na_env_t *env);
+
 static inline const char *na_bool2str(bool b)
 {
     return b == true ? NA_BOOL_STR_TRUE : NA_BOOL_STR_FALSE;
@@ -73,7 +79,7 @@ static inline uint16_t na_active_port_select(na_env_t *env)
     return env->is_refused_active ? env->backup_server.host.port : env->target_server.host.port;
 }
 
-void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
+static void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
 {
     na_connpool_t *connpool;
     struct json_object *stat_obj;
@@ -130,7 +136,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_put(stat_obj);
 }    
 
-int na_available_conn (na_connpool_t *connpool)
+static int na_available_conn (na_connpool_t *connpool)
 {
     int available_conn;
 
@@ -145,7 +151,7 @@ int na_available_conn (na_connpool_t *connpool)
     return available_conn;
 }
 
-struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
+static struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
 {
     struct json_object *connpoolmap_obj;
     connpoolmap_obj = json_object_new_array();
@@ -155,7 +161,7 @@ struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
     return connpoolmap_obj;
 }
 
-struct json_object *na_workermap_array_json(na_env_t *env)
+static struct json_object *na_workermap_array_json(na_env_t *env)
 {
     struct json_object *workermap_obj;
     workermap_obj = json_object_new_array();
