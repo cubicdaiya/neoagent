@@ -33,6 +33,15 @@ def connpool_map_string(connpool_map):
         s = s + ('%d ' % i)
     return s
 
+def worker_map_string(worker_map):
+    s = ''
+    for i in worker_map:
+        if i is True:
+            s = s + '1 '
+        else:
+            s = s + '0 '
+    return s
+
 def pad_addstr(pad, x, y, s, attr):
     pad.addstr(x, y, s, attr)
     return x + 1
@@ -40,6 +49,7 @@ def pad_addstr(pad, x, y, s, attr):
 def stats_draw(pad, stats):
     current_datetime = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
     connpool_map_str = connpool_map_string(stats['connpool_map'])
+    worker_map_str   = connpool_map_string(stats['worker_map'])
     nx = 0
     nx = pad_addstr(pad, nx, 0, 'datetime                    : '  + current_datetime,                           curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'name                        : '  + stats['name'],                              curses.A_NORMAL)
@@ -75,6 +85,7 @@ def stats_draw(pad, stats):
     nx = pad_addstr(pad, nx, 0, 'available_conn              : '  + str(stats['available_conn']),               curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'current_conn_max            : '  + str(stats['current_conn_max']),             curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'connpool_map                : '  + connpool_map_str,                           curses.A_NORMAL)
+    nx = pad_addstr(pad, nx, 0, 'worker_map                  : '  + worker_map_str,                             curses.A_NORMAL)
 
 def main(scr):
     global sig_exit_flg, host, port

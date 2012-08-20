@@ -78,6 +78,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     na_connpool_t *connpool;
     struct json_object *stat_obj;
     struct json_object *connpoolmap_obj;
+    struct json_object *workermap_obj;
     time_t up_diff;
     char start_dt[NA_DATETIME_BUF_MAX];
     char up_time[NA_DATETIME_BUF_MAX];
@@ -85,6 +86,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     connpool        = env->is_refused_active ? &env->connpool_backup : &env->connpool_active;
     stat_obj        = json_object_new_object();
     connpoolmap_obj = na_connpoolmap_array_json(connpool);
+    workermap_obj   = na_workermap_array_json(env);
     up_diff         = time(NULL) - StartTimestamp;
 
     na_ts2dt(&StartTimestamp, "%Y-%m-%d %H:%M:%S", start_dt, NA_DATETIME_BUF_MAX);
@@ -121,6 +123,7 @@ void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "available_conn",               json_object_new_int(na_available_conn(connpool)));
     json_object_object_add(stat_obj, "current_conn_max",             json_object_new_int(env->current_conn_max));
     json_object_object_add(stat_obj, "connpool_map",                 connpoolmap_obj);
+    json_object_object_add(stat_obj, "worker_map",                   workermap_obj);
 
     snprintf(buf, bufsize, "%s", json_object_to_json_string(stat_obj));
 
@@ -150,6 +153,16 @@ struct json_object *na_connpoolmap_array_json(na_connpool_t *connpool)
         json_object_array_add(connpoolmap_obj, json_object_new_int(connpool->mark[i]));
     }
     return connpoolmap_obj;
+}
+
+struct json_object *na_workermap_array_json(na_env_t *env)
+{
+    struct json_object *workermap_obj;
+    workermap_obj = json_object_new_array();
+    for (int i=0;i<env->worker_max;++i) {
+        json_object_array_add(workermap_obj, json_object_new_boolean(env->is_worker_busy[i]));
+    }
+    return workermap_obj;
 }
 
 void na_stat_callback (EV_P_ struct ev_io *w, int revents)
