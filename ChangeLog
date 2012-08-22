@@ -1,3 +1,13 @@
+2012-08-22 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* some refactoring
+
+	* monitoring if workers are active
+
+	* fix problem(event worker threads go into infinite-loop when continuous connections are lots)
+
+	* 0.5.2 released
+
 2012-08-12 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fix problem(CPU is busy every time)

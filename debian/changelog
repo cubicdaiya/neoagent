@@ -1,3 +1,15 @@
+neoagent (0.5.2-1) precise; urgency=low
+
+  * some refactoring
+
+  * monitoring if workers are active
+
+  * fix problem(event worker threads go into infinite-loop when continuous connections are lots)
+
+  * 0.5.2 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 22 Aug 2012 12:55:56 +0900
+
 neoagent (0.5.1-1) precise; urgency=low
 
   * fix problem(CPU is busy every time)
