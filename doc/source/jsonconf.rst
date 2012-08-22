@@ -22,6 +22,7 @@ Sample configuration
              "access_mask": "0666",
              "target_server": "127.0.0.1:11211",
              "backup_server": "127.0.0.1:11212",
+             "worker_max":4
              "conn_max":1000,
              "connpool_max": 30,
              "connpool_use_max": 10000,
@@ -71,6 +72,10 @@ Sample configuration
 **backup_server**
 
  target memcached server with port number
+
+**worker_max**
+
+ max of event worker
 
 **conn_max**
 
