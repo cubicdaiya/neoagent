@@ -33,8 +33,14 @@ Dependencies For Neostat
 
 Neostat is a monitoring program for Neoagent. Neostat requires python-argparse.
 
+.. code-block:: sh
+
  sudo pip install argparse
- # or
+
+Alternatively, 
+
+.. code-block:: sh
+
  sudo aptitude install python-argparse
 
 ====================================
