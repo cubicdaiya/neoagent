@@ -28,6 +28,16 @@ If you use `TCMalloc <http://code.google.com/p/gperftools/>`_ in neoagent, you m
  scons tcmalloc=y
 
 ====================================
+Dependencies For Neostat
+====================================
+
+Neostat is a monitoring program for Neoagent. Neostat requires python-argparse.
+
+ sudo pip install argparse
+ # or
+ sudo aptitude install python-argparse
+
+====================================
 Dependencies For Generating Document
 ====================================
 
@@ -36,7 +46,6 @@ If OS is Debian Squeeze, you may install with following command.
 
 .. code-block:: sh
 
- sudo aptitude install python-pip
  sudo pip install Sphinx
  sudo pip install sphinxtogithub
 
@@ -56,8 +65,8 @@ Debian Packaging
 
  scons debian
 
-It's necessary to execute 'scons doc' and install 'libgoogle-perftools-dev' with the following command before executing 'scons debian'.
+It's necessary to execute 'scons doc' and install 'libgoogle-perftools-dev' and 'python-argparse' with the following command before executing 'scons debian'.
 
 .. code-block:: sh
 
- sudo aptitude install libgoogle-perftools-dev
+ sudo aptitude install libgoogle-perftools-dev python-argparse
