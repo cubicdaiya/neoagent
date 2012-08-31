@@ -126,26 +126,35 @@ static int na_client_assign (na_env_t *env)
     int ri;
 
     ri = rand() % env->client_pool_max;
+    pthread_mutex_lock(&ClientPool[ri].lock_use);
     if (ClientPool[ri].is_used == false) {
         ClientPool[ri].is_used = true;
+        pthread_mutex_unlock(&ClientPool[ri].lock_use);
         return ri;
     }
+    pthread_mutex_unlock(&ClientPool[ri].lock_use);
 
     switch (rand() % 2) {
     case 0:
         for (int i=env->client_pool_max-1;i>=0;--i) {
+            pthread_mutex_lock(&ClientPool[i].lock_use);
             if (ClientPool[i].is_used == false) {
                 ClientPool[i].is_used = true;
+                pthread_mutex_unlock(&ClientPool[i].lock_use);
                 return i;
             }
+            pthread_mutex_unlock(&ClientPool[i].lock_use);
         }
         break;
     default:
         for (int i=0;i<env->client_pool_max;++i) {
+            pthread_mutex_lock(&ClientPool[i].lock_use);
             if (ClientPool[i].is_used == false) {
                 ClientPool[i].is_used = true;
+                pthread_mutex_unlock(&ClientPool[i].lock_use);
                 return i;
             }
+            pthread_mutex_unlock(&ClientPool[i].lock_use);
         }
         break;
     }
@@ -172,7 +181,9 @@ static void na_client_close (EV_P_ na_client_t *client, na_env_t *env)
     pthread_mutex_unlock(&env->lock_connpool);
 
     if (client->is_use_client_pool) {
+        pthread_mutex_lock(&client->lock_use);
         client->is_used = false;
+        pthread_mutex_unlock(&client->lock_use);
     } else {
         NA_FREE(client->crbuf);
         NA_FREE(client->srbuf);
@@ -674,7 +685,9 @@ static void *na_event_observer(void *args)
     int tid;
 
     env  = (na_env_t *)args;
+    pthread_mutex_lock(&env->lock_loop);
     loop = na_event_loop_create(env->event_model);
+    pthread_mutex_unlock(&env->lock_loop);
 
     pthread_mutex_lock(&env->lock_tid);
     tid = tid_s++;
@@ -715,7 +728,9 @@ static void *na_support_loop (void *args)
     ev_io    st_watcher;
 
     env  = (na_env_t *)args;
+    pthread_mutex_lock(&env->lock_loop);
     loop = ev_loop_new(EVFLAG_AUTO);
+    pthread_mutex_unlock(&env->lock_loop);
 
     // health check event
     if (env->is_use_backup) {
@@ -760,6 +775,7 @@ void *na_event_loop (void *args)
         ClientPool[i].crbuf   = (char *)malloc(env->request_bufsize + 1);
         ClientPool[i].srbuf   = (char *)malloc(env->response_bufsize + 1);
         ClientPool[i].is_used = false;
+        pthread_mutex_init(&ClientPool[i].lock_use, NULL);
     }
 
     if (EventQueue == NULL) {
@@ -780,7 +796,9 @@ void *na_event_loop (void *args)
     // for assign connection from connpool directional-ramdomly
     srand(time(NULL));
 
+    pthread_mutex_lock(&env->lock_loop);
     loop = na_event_loop_create(env->event_model);
+    pthread_mutex_unlock(&env->lock_loop);
     env->fs_watcher.data = env;
     ev_io_init(&env->fs_watcher, na_front_server_callback, env->fsfd, EV_READ);
     ev_io_start(EV_A_ &env->fs_watcher);
@@ -789,6 +807,7 @@ void *na_event_loop (void *args)
     for (int i=0;i<env->client_pool_max;++i) {
         NA_FREE(ClientPool[i].crbuf);
         NA_FREE(ClientPool[i].srbuf);
+        pthread_mutex_destroy(&ClientPool[i].lock_use);
     }
     NA_FREE(ClientPool);
     na_event_queue_destroy(EventQueue);
