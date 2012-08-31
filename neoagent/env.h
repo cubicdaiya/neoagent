@@ -150,6 +150,7 @@ typedef struct na_client_t {
     int cur_pool;
     ev_io c_watcher;
     ev_io ts_watcher;
+    pthread_mutex_t lock_use;
 } na_client_t;
 
 mpool_t *na_pool_create (int size);
