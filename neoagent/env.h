@@ -109,6 +109,7 @@ typedef struct na_env_t {
     pthread_mutex_t lock_connpool;
     pthread_mutex_t lock_current_conn;
     pthread_mutex_t lock_tid;
+    pthread_mutex_t lock_loop;
     pthread_rwlock_t lock_refused;
     pthread_rwlock_t *lock_worker_busy;
     na_event_model_t event_model;

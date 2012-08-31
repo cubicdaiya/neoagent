@@ -674,7 +674,9 @@ static void *na_event_observer(void *args)
     int tid;
 
     env  = (na_env_t *)args;
+    pthread_mutex_lock(&env->lock_loop);
     loop = na_event_loop_create(env->event_model);
+    pthread_mutex_unlock(&env->lock_loop);
 
     pthread_mutex_lock(&env->lock_tid);
     tid = tid_s++;
@@ -715,7 +717,9 @@ static void *na_support_loop (void *args)
     ev_io    st_watcher;
 
     env  = (na_env_t *)args;
+    pthread_mutex_lock(&env->lock_loop);
     loop = ev_loop_new(EVFLAG_AUTO);
+    pthread_mutex_unlock(&env->lock_loop);
 
     // health check event
     if (env->is_use_backup) {
@@ -780,7 +784,9 @@ void *na_event_loop (void *args)
     // for assign connection from connpool directional-ramdomly
     srand(time(NULL));
 
+    pthread_mutex_lock(&env->lock_loop);
     loop = na_event_loop_create(env->event_model);
+    pthread_mutex_unlock(&env->lock_loop);
     env->fs_watcher.data = env;
     ev_io_init(&env->fs_watcher, na_front_server_callback, env->fsfd, EV_READ);
     ev_io_start(EV_A_ &env->fs_watcher);

@@ -207,6 +207,7 @@ int main (int argc, char *argv[])
         pthread_mutex_init(&env[i]->lock_connpool, NULL);
         pthread_mutex_init(&env[i]->lock_current_conn, NULL);
         pthread_mutex_init(&env[i]->lock_tid, NULL);
+        pthread_mutex_init(&env[i]->lock_loop, NULL);
         pthread_rwlock_init(&env[i]->lock_refused, NULL);
         env[i]->lock_worker_busy  = calloc(sizeof(pthread_rwlock_t), env[i]->worker_max);
         for (int j=0;j<env[i]->worker_max;++j) {
