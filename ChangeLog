@@ -1,3 +1,11 @@
+2012-09-03 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* add dependency of debian package(python-argparse)
+
+	* fix race condition bug(Each entry of ClientPool is accessed by multi event workers possibly)
+
+	* 0.5.3 released
+
 2012-08-22 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* some refactoring

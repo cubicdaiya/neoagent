@@ -1,3 +1,13 @@
+neoagent (0.5.3-1) precise; urgency=low
+
+  * add dependency of debian package(python-argparse)
+
+  * fix race condition bug(Each entry of ClientPool is accessed by multi event workers possibly)
+
+  * 0.5.3 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 03 Sep 2012 00:50:40 +0900
+
 neoagent (0.5.2-1) precise; urgency=low
 
   * some refactoring
