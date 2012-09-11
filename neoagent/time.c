@@ -35,21 +35,12 @@
 
 #include "time.h"
 
-void na_cts2dt(char *format, char *buf, size_t bufsize)
-{
-    time_t cts;
-    size_t len;
-    cts = time(NULL);
-    len = strftime(buf, bufsize, format, localtime(&cts));
-    if (len == 0) {
-        buf[0] = '\0';
-    }
-}
-
 void na_ts2dt(time_t *time, char *format, char *buf, size_t bufsize)
 {
     size_t len;
-    len = strftime(buf, bufsize, format, localtime(time));
+    struct tm tmp;
+    localtime_r(time, &tmp);
+    len = strftime(buf, bufsize, format, localtime_r(time, &tmp));
     if (len == 0) {
         buf[0] = '\0';
     }
