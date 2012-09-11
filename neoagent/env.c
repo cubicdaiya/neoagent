@@ -104,6 +104,8 @@ void na_env_clear (na_env_t *env)
 void na_error_count_up (na_env_t *env)
 {
     if (env->error_count_max > 0) {
+        pthread_mutex_lock(&env->lock_error_count);
         env->error_count++;
+        pthread_mutex_unlock(&env->lock_error_count);
     }
 }

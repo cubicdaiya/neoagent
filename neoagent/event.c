@@ -256,9 +256,13 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
         client->srbufsize                += size;
         client->srbuf[client->srbufsize]  = '\0';
 
+        pthread_rwlock_rdlock(&env->lock_response_bufsize_max);
         if (client->srbufsize > env->response_bufsize_current_max) {
+            pthread_rwlock_unlock(&env->lock_response_bufsize_max);
+            pthread_rwlock_wrlock(&env->lock_response_bufsize_max);
             env->response_bufsize_current_max = client->srbufsize;
         }
+        pthread_rwlock_unlock(&env->lock_response_bufsize_max);
 
         if (client->cmd == NA_MEMPROTO_CMD_GET) {
             client->res_cnt = na_memproto_count_response_get(client->srbuf, client->srbufsize);
@@ -398,9 +402,13 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
         client->crbufsize                += size;
         client->crbuf[client->crbufsize]  = '\0';
 
+        pthread_rwlock_rdlock(&env->lock_request_bufsize_max);
         if (client->crbufsize > env->request_bufsize_current_max) {
+            pthread_rwlock_unlock(&env->lock_request_bufsize_max);
+            pthread_rwlock_wrlock(&env->lock_request_bufsize_max);
             env->request_bufsize_current_max = client->crbufsize;
         }
+        pthread_rwlock_unlock(&env->lock_request_bufsize_max);
 
         client->cmd = na_memproto_detect_command(client->crbuf);
 
@@ -497,10 +505,13 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
     pthread_rwlock_unlock(&env->lock_refused);
     
+    pthread_mutex_lock(&env->lock_error_count);
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
         env->error_count = 0;
+        pthread_mutex_unlock(&env->lock_error_count);
         return;
     }
+    pthread_mutex_unlock(&env->lock_error_count);
     
     pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn >= env->conn_max) {

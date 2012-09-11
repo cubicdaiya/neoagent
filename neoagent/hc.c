@@ -134,11 +134,14 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
         return;
     }
     
+    pthread_mutex_lock(&env->lock_error_count);
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
         na_hc_event_set(EV_A_ w, revents);
         env->error_count = 0;
+        pthread_mutex_unlock(&env->lock_error_count);
         return;
     }
+    pthread_mutex_unlock(&env->lock_error_count);
 
     tsfd = na_target_server_tcpsock_init();
 

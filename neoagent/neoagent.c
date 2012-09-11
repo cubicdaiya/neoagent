@@ -208,7 +208,10 @@ int main (int argc, char *argv[])
         pthread_mutex_init(&env[i]->lock_current_conn, NULL);
         pthread_mutex_init(&env[i]->lock_tid, NULL);
         pthread_mutex_init(&env[i]->lock_loop, NULL);
+        pthread_mutex_init(&env[i]->lock_error_count, NULL);
         pthread_rwlock_init(&env[i]->lock_refused, NULL);
+        pthread_rwlock_init(&env[i]->lock_request_bufsize_max, NULL);
+        pthread_rwlock_init(&env[i]->lock_response_bufsize_max, NULL);
         env[i]->lock_worker_busy  = calloc(sizeof(pthread_rwlock_t), env[i]->worker_max);
         for (int j=0;j<env[i]->worker_max;++j) {
             pthread_rwlock_init(&env[i]->lock_worker_busy[j], NULL);
@@ -241,7 +244,10 @@ int main (int argc, char *argv[])
         pthread_mutex_destroy(&env[i]->lock_connpool);
         pthread_mutex_destroy(&env[i]->lock_current_conn);
         pthread_mutex_destroy(&env[i]->lock_tid);
+        pthread_mutex_destroy(&env[i]->lock_error_count);
         pthread_rwlock_destroy(&env[i]->lock_refused);
+        pthread_rwlock_destroy(&env[i]->lock_request_bufsize_max);
+        pthread_rwlock_destroy(&env[i]->lock_response_bufsize_max);
         for (int j=0;j<env[i]->worker_max;++j) {
             pthread_rwlock_destroy(&env[i]->lock_worker_busy[j]);
         }
