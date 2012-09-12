@@ -202,8 +202,8 @@ int main (int argc, char *argv[])
         for (int j=0;j<env[i]->worker_max;++j) {
             env[i]->is_worker_busy[j] = false;
         }
-        env[i]->error_count       = 0;
-        env[i]->current_conn_max  = 0;
+        env[i]->error_count      = 0;
+        env[i]->current_conn_max = 0;
         pthread_mutex_init(&env[i]->lock_connpool, NULL);
         pthread_mutex_init(&env[i]->lock_current_conn, NULL);
         pthread_mutex_init(&env[i]->lock_tid, NULL);
@@ -212,7 +212,7 @@ int main (int argc, char *argv[])
         pthread_rwlock_init(&env[i]->lock_refused, NULL);
         pthread_rwlock_init(&env[i]->lock_request_bufsize_max, NULL);
         pthread_rwlock_init(&env[i]->lock_response_bufsize_max, NULL);
-        env[i]->lock_worker_busy  = calloc(sizeof(pthread_rwlock_t), env[i]->worker_max);
+        env[i]->lock_worker_busy = calloc(sizeof(pthread_rwlock_t), env[i]->worker_max);
         for (int j=0;j<env[i]->worker_max;++j) {
             pthread_rwlock_init(&env[i]->lock_worker_busy[j], NULL);
         }
