@@ -38,7 +38,7 @@
 
 #define NA_DATETIME_BUF_MAX 32
 
-void na_ts2dt(time_t *time, char *format, char *buf, size_t bufsize);
+void na_ts2dt(time_t time, char *format, char *buf, size_t bufsize);
 void na_elapsed_time(time_t time, char *buf, size_t bufsize);
 
 #endif // NA_TIME_H

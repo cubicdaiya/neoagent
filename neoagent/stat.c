@@ -95,7 +95,7 @@ static void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     workermap_obj   = na_workermap_array_json(env);
     up_diff         = time(NULL) - StartTimestamp;
 
-    na_ts2dt(&StartTimestamp, "%Y-%m-%d %H:%M:%S", start_dt, NA_DATETIME_BUF_MAX);
+    na_ts2dt(StartTimestamp, "%Y-%m-%d %H:%M:%S", start_dt, NA_DATETIME_BUF_MAX);
     na_elapsed_time(up_diff, up_time, NA_DATETIME_BUF_MAX);
 
     json_object_object_add(stat_obj, "name",                         json_object_new_string(NA_NAME));

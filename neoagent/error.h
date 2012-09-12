@@ -68,14 +68,14 @@ typedef enum na_error_t {
 #define NA_STDERR(s) do {                                               \
         char buf_dt[NA_DATETIME_BUF_MAX];                               \
         time_t cts = time(NULL);                                        \
-        na_ts2dt(&cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX);  \
+        na_ts2dt(cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX);  \
         fprintf(stderr, "%s, %s: %s %d\n", buf_dt, s, __FILE__, __LINE__); \
     } while (false)
 
 #define NA_STDERR_MESSAGE(na_error) do {                                \
         char buf_dt[NA_DATETIME_BUF_MAX];                               \
         time_t cts = time(NULL);                                        \
-        na_ts2dt(&cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX); \
+        na_ts2dt(cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX); \
         fprintf(stderr, "%s %s: %s %d\n", buf_dt, na_error_message(na_error), __FILE__, __LINE__); \
     } while (false)
 
@@ -83,7 +83,7 @@ typedef enum na_error_t {
     do {                                                                \
         char buf_dt[NA_DATETIME_BUF_MAX];                               \
         time_t cts = time(NULL);                                        \
-        na_ts2dt(&cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX); \
+        na_ts2dt(cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX); \
         fprintf(stderr, "%s %s: %s, %s %d\n", buf_dt, na_error_message(na_error), __FILE__, __FUNCTION__, __LINE__); \
         exit(1);                                                        \
     } while (false)
