@@ -1,3 +1,11 @@
+neoagent (0.5.4-1) precise; urgency=low
+
+  * fix race condition problem when switching server
+
+  * 0.5.4 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Thu, 13 Sep 2012 16:05:08 +0900
+
 neoagent (0.5.3-1) precise; urgency=low
 
   * add dependency of debian package(python-argparse)
