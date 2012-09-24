@@ -33,6 +33,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "env.h"
 #include "mpool.h"
