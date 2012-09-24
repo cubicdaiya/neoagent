@@ -1,33 +1,33 @@
 /**
    In short, neoagent is distributed under so called "BSD license",
-   
+
    Copyright (c) 2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
    All rights reserved.
-   
-   Redistribution and use in source and binary forms, with or without modification, 
+
+   Redistribution and use in source and binary forms, with or without modification,
    are permitted provided that the following conditions are met:
-   
-   * Redistributions of source code must retain the above copyright notice, 
+
+   * Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
-   
-   * Redistributions in binary form must reproduce the above copyright notice, 
-   this list of conditions and the following disclaimer in the documentation 
+
+   * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
-   
-   * Neither the name of the authors nor the names of its contributors 
-   may be used to endorse or promote products derived from this software 
+
+   * Neither the name of the authors nor the names of its contributors
+   may be used to endorse or promote products derived from this software
    without specific prior written permission.
-   
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
-   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
-   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -61,7 +61,7 @@
         na_error_count_up(env);                             \
         NA_STDERR_MESSAGE(na_error);                        \
     } while(false)
- 
+
 // globals
 static na_client_t *ClientPool;
 static na_event_queue_t *EventQueue = NULL;
@@ -241,7 +241,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             client->response_bufsize = es;
         }
 
-        size = read(tsfd, 
+        size = read(tsfd,
                     client->srbuf + client->srbufsize,
                     client->response_bufsize - client->srbufsize);
 
@@ -281,8 +281,8 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
     } else if (revents & EV_WRITE) {
 
-        size = write(tsfd, 
-                     client->crbuf + client->swbufsize, 
+        size = write(tsfd,
+                     client->crbuf + client->swbufsize,
                      client->crbufsize - client->swbufsize);
 
         if (size < 0) {
@@ -384,7 +384,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             client->request_bufsize = es;
         }
 
-        size = read(cfd, 
+        size = read(cfd,
                     client->crbuf + client->crbufsize,
                     client->request_bufsize - client->crbufsize);
 
@@ -468,7 +468,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_READ);
             return;
         }
-        
+
     }
 }
 
@@ -504,7 +504,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
     pthread_rwlock_unlock(&env->lock_refused);
-    
+
     pthread_mutex_lock(&env->lock_error_count);
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
         env->error_count = 0;
@@ -512,7 +512,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
     pthread_mutex_unlock(&env->lock_error_count);
-    
+
     pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn >= env->conn_max) {
         pthread_mutex_unlock(&env->lock_current_conn);
@@ -671,16 +671,16 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
 static bool na_is_worker_busy(na_env_t *env)
 {
-    int count_is_woker_busy = 0;
+    int count_is_worker_busy = 0;
     for (int i=0;i<env->worker_max;++i) {
         pthread_rwlock_rdlock(&env->lock_worker_busy[i]);
         if (env->is_worker_busy[i]) {
-            ++count_is_woker_busy;
+            ++count_is_worker_busy;
         }
         pthread_rwlock_unlock(&env->lock_worker_busy[i]);
     }
 
-    if (count_is_woker_busy == env->worker_max) {
+    if (count_is_worker_busy == env->worker_max) {
         return true;
     }
 
