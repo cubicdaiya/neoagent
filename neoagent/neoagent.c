@@ -55,11 +55,17 @@ static const int NA_ENV_MAX = 1;
 extern volatile sig_atomic_t SigExit;
 extern volatile sig_atomic_t SigClear;
 extern time_t StartTimestamp;
+extern const char *ConfFile;
+
+// globals
+volatile sig_atomic_t SigReconf;
+pthread_rwlock_t LockReconf;
 
 static void na_version(void);
 static void na_usage(void);
 static void na_signal_exit_handler (int sig);
 static void na_signal_clear_handler (int sig);
+static void na_signal_reconf_handler (int sig);
 static void na_setup_signals (void);
 
 static void na_version(void)
@@ -91,23 +97,33 @@ static void na_signal_clear_handler (int sig)
     SigClear = 1;
 }
 
+static void na_signal_reconf_handler (int sig)
+{
+    SigReconf = 1;
+}
+
 static void na_setup_signals (void)
 {
     struct sigaction sig_exit_handler;
     struct sigaction sig_clear_handler;
+    struct sigaction sig_reconf_handler;
 
     sigemptyset(&sig_exit_handler.sa_mask);
     sigemptyset(&sig_clear_handler.sa_mask);
-    sig_exit_handler.sa_handler  = na_signal_exit_handler;
-    sig_clear_handler.sa_handler = na_signal_clear_handler;
-    sig_exit_handler.sa_flags    = 0;
-    sig_clear_handler.sa_flags   = 0;
+    sigemptyset(&sig_reconf_handler.sa_mask);
+    sig_exit_handler.sa_handler   = na_signal_exit_handler;
+    sig_clear_handler.sa_handler  = na_signal_clear_handler;
+    sig_reconf_handler.sa_handler = na_signal_reconf_handler;
+    sig_exit_handler.sa_flags     = 0;
+    sig_clear_handler.sa_flags    = 0;
+    sig_reconf_handler.sa_flags   = 0;
 
-    if (sigaction(SIGTERM, &sig_exit_handler,  NULL) == -1 ||
-        sigaction(SIGINT,  &sig_exit_handler,  NULL) == -1 ||
-        sigaction(SIGALRM, &sig_exit_handler,  NULL) == -1 ||
-        sigaction(SIGHUP,  &sig_exit_handler,  NULL) == -1 ||
-        sigaction(SIGUSR1, &sig_clear_handler, NULL) == -1)
+    if (sigaction(SIGTERM, &sig_exit_handler,   NULL) == -1 ||
+        sigaction(SIGINT,  &sig_exit_handler,   NULL) == -1 ||
+        sigaction(SIGALRM, &sig_exit_handler,   NULL) == -1 ||
+        sigaction(SIGHUP,  &sig_exit_handler,   NULL) == -1 ||
+        sigaction(SIGUSR1, &sig_clear_handler,  NULL) == -1 ||
+        sigaction(SIGUSR2, &sig_reconf_handler, NULL) == -1)
     {
         NA_DIE_WITH_ERROR(NA_ERROR_FAILED_SETUP_SIGNAL);
     }
@@ -116,8 +132,9 @@ static void na_setup_signals (void)
         NA_DIE_WITH_ERROR(NA_ERROR_FAILED_IGNORE_SIGNAL);
     }
 
-    SigExit  = 0;
-    SigClear = 0;
+    SigExit   = 0;
+    SigClear  = 0;
+    SigReconf = 0;
 
 }
 
@@ -145,6 +162,7 @@ int main (int argc, char *argv[])
             is_daemon = true;
             break;
         case 'f':
+            ConfFile         = optarg;
             conf_obj         = na_get_conf(optarg);
             environments_obj = na_get_environments(conf_obj, &env_cnt);
             break;
@@ -188,7 +206,7 @@ int main (int argc, char *argv[])
         for (int i=0;i<env_cnt;++i) {
             env[i] = na_env_add(&env_pool);
             na_env_setup_default(env[i], i);
-            na_conf_env_init(environments_obj, env[i], i);
+            na_conf_env_init(environments_obj, env[i], i, false);
         }
     }
 
@@ -212,6 +230,7 @@ int main (int argc, char *argv[])
         pthread_rwlock_init(&env[i]->lock_refused, NULL);
         pthread_rwlock_init(&env[i]->lock_request_bufsize_max, NULL);
         pthread_rwlock_init(&env[i]->lock_response_bufsize_max, NULL);
+        pthread_rwlock_init(&LockReconf, NULL);
         env[i]->lock_worker_busy = calloc(sizeof(pthread_rwlock_t), env[i]->worker_max);
         for (int j=0;j<env[i]->worker_max;++j) {
             pthread_rwlock_init(&env[i]->lock_worker_busy[j], NULL);
@@ -233,6 +252,21 @@ int main (int argc, char *argv[])
             break;
         }
 
+        if (SigReconf == 1) {
+            conf_obj         = na_get_conf(ConfFile);
+            environments_obj = na_get_environments(conf_obj, &env_cnt);
+
+            pthread_rwlock_wrlock(&LockReconf);
+            for (int i=0;i<env_cnt;++i) {
+                na_conf_env_init(environments_obj, env[i], i, true);
+            }
+            pthread_rwlock_unlock(&LockReconf);
+
+            json_object_put(conf_obj);
+            SigReconf = 0;
+        }
+
+        // XXX we should sleep forever and only wake upon a signal
         sleep(1);
     }
 
@@ -248,6 +282,7 @@ int main (int argc, char *argv[])
         pthread_rwlock_destroy(&env[i]->lock_refused);
         pthread_rwlock_destroy(&env[i]->lock_request_bufsize_max);
         pthread_rwlock_destroy(&env[i]->lock_response_bufsize_max);
+        pthread_rwlock_destroy(&LockReconf);
         for (int j=0;j<env[i]->worker_max;++j) {
             pthread_rwlock_destroy(&env[i]->lock_worker_busy[j]);
         }

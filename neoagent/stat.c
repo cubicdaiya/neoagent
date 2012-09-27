@@ -54,6 +54,9 @@ static const char *NA_BOOL_STR_FALSE = "false";
 time_t StartTimestamp;
 volatile sig_atomic_t SigExit;
 
+// refs to external globals
+extern pthread_rwlock_t LockReconf;
+
 // private functions
 static inline const char *na_bool2str(bool b);
 static inline char *na_active_host_select(na_env_t *env);
@@ -187,14 +190,15 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents)
         return;
     }
 
+    pthread_rwlock_rdlock(&LockReconf);
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
         env->error_count = 0;
-        return;
+        goto unlock_reconf;
     }
 
     if ((cfd = na_server_accept(stfd)) < 0) {
         NA_STDERR("accept()");
-        return;
+        goto unlock_reconf;
     }
 
     na_env_set_jbuf(buf, NA_STAT_BUF_MAX, env);
@@ -203,8 +207,10 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
         NA_STDERR("failed to return stat response");
         close(cfd);
-        return;
+        goto unlock_reconf;
     }
 
     close(cfd);
+unlock_reconf:
+    pthread_rwlock_unlock(&LockReconf);
 }

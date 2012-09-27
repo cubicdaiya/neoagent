@@ -49,6 +49,9 @@ static const char *na_hc_test_val = "neoagent_test_val";
 // external globals
 volatile sig_atomic_t SigExit;
 
+// refs to external globals
+extern pthread_rwlock_t LockReconf;
+
 static void na_hc_event_set(EV_P_ ev_timer * w, int revents);
 static bool na_hc_test_request(int tsfd);
 
@@ -134,12 +137,13 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
         return;
     }
 
+    pthread_rwlock_rdlock(&LockReconf);
     pthread_mutex_lock(&env->lock_error_count);
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
         na_hc_event_set(EV_A_ w, revents);
         env->error_count = 0;
         pthread_mutex_unlock(&env->lock_error_count);
-        return;
+        goto unlock_reconf;
     }
     pthread_mutex_unlock(&env->lock_error_count);
 
@@ -149,7 +153,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
         na_hc_event_set(EV_A_ w, revents);
         na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
-        return;
+        goto unlock_reconf;
     }
 
     na_target_server_hcsock_setup(tsfd);
@@ -207,4 +211,6 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
     close(tsfd);
 
     na_hc_event_set(EV_A_ w, revents);
+unlock_reconf:
+    pthread_rwlock_unlock(&LockReconf);
 }
