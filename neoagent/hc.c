@@ -1,33 +1,33 @@
 /**
    In short, neoagent is distributed under so called "BSD license",
-   
+
    Copyright (c) 2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
    All rights reserved.
-   
-   Redistribution and use in source and binary forms, with or without modification, 
+
+   Redistribution and use in source and binary forms, with or without modification,
    are permitted provided that the following conditions are met:
-   
-   * Redistributions of source code must retain the above copyright notice, 
+
+   * Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
-   
-   * Redistributions in binary form must reproduce the above copyright notice, 
-   this list of conditions and the following disclaimer in the documentation 
+
+   * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
-   
-   * Neither the name of the authors nor the names of its contributors 
-   may be used to endorse or promote products derived from this software 
+
+   * Neither the name of the authors nor the names of its contributors
+   may be used to endorse or promote products derived from this software
    without specific prior written permission.
-   
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
-   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
-   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -48,6 +48,9 @@ static const char *na_hc_test_val = "neoagent_test_val";
 
 // external globals
 volatile sig_atomic_t SigExit;
+
+// refs to external globals
+extern pthread_rwlock_t LockReconf;
 
 static void na_hc_event_set(EV_P_ ev_timer * w, int revents);
 static bool na_hc_test_request(int tsfd);
@@ -133,13 +136,14 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
         pthread_exit(&th_ret);
         return;
     }
-    
+
+    pthread_rwlock_rdlock(&LockReconf);
     pthread_mutex_lock(&env->lock_error_count);
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
         na_hc_event_set(EV_A_ w, revents);
         env->error_count = 0;
         pthread_mutex_unlock(&env->lock_error_count);
-        return;
+        goto unlock_reconf;
     }
     pthread_mutex_unlock(&env->lock_error_count);
 
@@ -149,7 +153,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
         na_hc_event_set(EV_A_ w, revents);
         na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
-        return;
+        goto unlock_reconf;
     }
 
     na_target_server_hcsock_setup(tsfd);
@@ -207,4 +211,6 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
     close(tsfd);
 
     na_hc_event_set(EV_A_ w, revents);
+unlock_reconf:
+    pthread_rwlock_unlock(&LockReconf);
 }

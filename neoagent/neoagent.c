@@ -1,33 +1,33 @@
 /**
    In short, neoagent is distributed under so called "BSD license",
-   
+
    Copyright (c) 2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
    All rights reserved.
-   
-   Redistribution and use in source and binary forms, with or without modification, 
+
+   Redistribution and use in source and binary forms, with or without modification,
    are permitted provided that the following conditions are met:
-   
-   * Redistributions of source code must retain the above copyright notice, 
+
+   * Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
-   
-   * Redistributions in binary form must reproduce the above copyright notice, 
-   this list of conditions and the following disclaimer in the documentation 
+
+   * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
-   
-   * Neither the name of the authors nor the names of its contributors 
-   may be used to endorse or promote products derived from this software 
+
+   * Neither the name of the authors nor the names of its contributors
+   may be used to endorse or promote products derived from this software
    without specific prior written permission.
-   
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
-   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
-   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -56,10 +56,16 @@ extern volatile sig_atomic_t SigExit;
 extern volatile sig_atomic_t SigClear;
 extern time_t StartTimestamp;
 
+// globals
+volatile sig_atomic_t SigReconf;
+pthread_rwlock_t LockReconf;
+const char *ConfFile;
+
 static void na_version(void);
 static void na_usage(void);
 static void na_signal_exit_handler (int sig);
 static void na_signal_clear_handler (int sig);
+static void na_signal_reconf_handler (int sig);
 static void na_setup_signals (void);
 
 static void na_version(void)
@@ -67,7 +73,7 @@ static void na_version(void)
     const char *v = NA_NAME " " NA_VERSION;
     const char *c = "Copyright 2012 Tatsuhiko Kubo.";
     printf("%s\n"
-           "%s\n", 
+           "%s\n",
            v, c);
 }
 
@@ -91,23 +97,33 @@ static void na_signal_clear_handler (int sig)
     SigClear = 1;
 }
 
+static void na_signal_reconf_handler (int sig)
+{
+    SigReconf = 1;
+}
+
 static void na_setup_signals (void)
 {
     struct sigaction sig_exit_handler;
     struct sigaction sig_clear_handler;
+    struct sigaction sig_reconf_handler;
 
     sigemptyset(&sig_exit_handler.sa_mask);
     sigemptyset(&sig_clear_handler.sa_mask);
-    sig_exit_handler.sa_handler  = na_signal_exit_handler;
-    sig_clear_handler.sa_handler = na_signal_clear_handler;
-    sig_exit_handler.sa_flags    = 0;
-    sig_clear_handler.sa_flags   = 0;
+    sigemptyset(&sig_reconf_handler.sa_mask);
+    sig_exit_handler.sa_handler   = na_signal_exit_handler;
+    sig_clear_handler.sa_handler  = na_signal_clear_handler;
+    sig_reconf_handler.sa_handler = na_signal_reconf_handler;
+    sig_exit_handler.sa_flags     = 0;
+    sig_clear_handler.sa_flags    = 0;
+    sig_reconf_handler.sa_flags   = 0;
 
-    if (sigaction(SIGTERM, &sig_exit_handler,  NULL) == -1 ||
-        sigaction(SIGINT,  &sig_exit_handler,  NULL) == -1 ||
-        sigaction(SIGALRM, &sig_exit_handler,  NULL) == -1 ||
-        sigaction(SIGHUP,  &sig_exit_handler,  NULL) == -1 ||
-        sigaction(SIGUSR1, &sig_clear_handler, NULL) == -1)
+    if (sigaction(SIGTERM, &sig_exit_handler,   NULL) == -1 ||
+        sigaction(SIGINT,  &sig_exit_handler,   NULL) == -1 ||
+        sigaction(SIGALRM, &sig_exit_handler,   NULL) == -1 ||
+        sigaction(SIGHUP,  &sig_exit_handler,   NULL) == -1 ||
+        sigaction(SIGUSR1, &sig_clear_handler,  NULL) == -1 ||
+        sigaction(SIGUSR2, &sig_reconf_handler, NULL) == -1)
     {
         NA_DIE_WITH_ERROR(NA_ERROR_FAILED_SETUP_SIGNAL);
     }
@@ -116,8 +132,9 @@ static void na_setup_signals (void)
         NA_DIE_WITH_ERROR(NA_ERROR_FAILED_IGNORE_SIGNAL);
     }
 
-    SigExit  = 0;
-    SigClear = 0;
+    SigExit   = 0;
+    SigClear  = 0;
+    SigReconf = 0;
 
 }
 
@@ -145,6 +162,7 @@ int main (int argc, char *argv[])
             is_daemon = true;
             break;
         case 'f':
+            ConfFile         = optarg;
             conf_obj         = na_get_conf(optarg);
             environments_obj = na_get_environments(conf_obj, &env_cnt);
             break;
@@ -188,7 +206,7 @@ int main (int argc, char *argv[])
         for (int i=0;i<env_cnt;++i) {
             env[i] = na_env_add(&env_pool);
             na_env_setup_default(env[i], i);
-            na_conf_env_init(environments_obj, env[i], i);
+            na_conf_env_init(environments_obj, env[i], i, false);
         }
     }
 
@@ -212,6 +230,7 @@ int main (int argc, char *argv[])
         pthread_rwlock_init(&env[i]->lock_refused, NULL);
         pthread_rwlock_init(&env[i]->lock_request_bufsize_max, NULL);
         pthread_rwlock_init(&env[i]->lock_response_bufsize_max, NULL);
+        pthread_rwlock_init(&LockReconf, NULL);
         env[i]->lock_worker_busy = calloc(sizeof(pthread_rwlock_t), env[i]->worker_max);
         for (int j=0;j<env[i]->worker_max;++j) {
             pthread_rwlock_init(&env[i]->lock_worker_busy[j], NULL);
@@ -233,6 +252,21 @@ int main (int argc, char *argv[])
             break;
         }
 
+        if (SigReconf == 1) {
+            conf_obj         = na_get_conf(ConfFile);
+            environments_obj = na_get_environments(conf_obj, &env_cnt);
+
+            pthread_rwlock_wrlock(&LockReconf);
+            for (int i=0;i<env_cnt;++i) {
+                na_conf_env_init(environments_obj, env[i], i, true);
+            }
+            pthread_rwlock_unlock(&LockReconf);
+
+            json_object_put(conf_obj);
+            SigReconf = 0;
+        }
+
+        // XXX we should sleep forever and only wake upon a signal
         sleep(1);
     }
 
@@ -248,6 +282,7 @@ int main (int argc, char *argv[])
         pthread_rwlock_destroy(&env[i]->lock_refused);
         pthread_rwlock_destroy(&env[i]->lock_request_bufsize_max);
         pthread_rwlock_destroy(&env[i]->lock_response_bufsize_max);
+        pthread_rwlock_destroy(&LockReconf);
         for (int j=0;j<env[i]->worker_max;++j) {
             pthread_rwlock_destroy(&env[i]->lock_worker_busy[j]);
         }

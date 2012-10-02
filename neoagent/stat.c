@@ -1,33 +1,33 @@
 /**
    In short, neoagent is distributed under so called "BSD license",
-   
+
    Copyright (c) 2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>
    All rights reserved.
-   
-   Redistribution and use in source and binary forms, with or without modification, 
+
+   Redistribution and use in source and binary forms, with or without modification,
    are permitted provided that the following conditions are met:
-   
-   * Redistributions of source code must retain the above copyright notice, 
+
+   * Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
-   
-   * Redistributions in binary form must reproduce the above copyright notice, 
-   this list of conditions and the following disclaimer in the documentation 
+
+   * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
-   
-   * Neither the name of the authors nor the names of its contributors 
-   may be used to endorse or promote products derived from this software 
+
+   * Neither the name of the authors nor the names of its contributors
+   may be used to endorse or promote products derived from this software
    without specific prior written permission.
-   
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
-   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
-   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -53,6 +53,9 @@ static const char *NA_BOOL_STR_FALSE = "false";
 // external globals
 time_t StartTimestamp;
 volatile sig_atomic_t SigExit;
+
+// refs to external globals
+extern pthread_rwlock_t LockReconf;
 
 // private functions
 static inline const char *na_bool2str(bool b);
@@ -134,7 +137,7 @@ static void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     snprintf(buf, bufsize, "%s", json_object_to_json_string(stat_obj));
 
     json_object_put(stat_obj);
-}    
+}
 
 static int na_available_conn (na_connpool_t *connpool)
 {
@@ -177,7 +180,7 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     int size;
     na_env_t *env;
     char buf[NA_STAT_BUF_MAX + 1];
-    
+
     th_ret = 0;
     stfd   = w->fd;
     env    = (na_env_t *)w->data;
@@ -186,15 +189,16 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents)
         pthread_exit(&th_ret);
         return;
     }
-    
+
+    pthread_rwlock_rdlock(&LockReconf);
     if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
         env->error_count = 0;
-        return;
+        goto unlock_reconf;
     }
 
     if ((cfd = na_server_accept(stfd)) < 0) {
         NA_STDERR("accept()");
-        return;
+        goto unlock_reconf;
     }
 
     na_env_set_jbuf(buf, NA_STAT_BUF_MAX, env);
@@ -203,8 +207,10 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
         NA_STDERR("failed to return stat response");
         close(cfd);
-        return;
+        goto unlock_reconf;
     }
 
     close(cfd);
+unlock_reconf:
+    pthread_rwlock_unlock(&LockReconf);
 }
