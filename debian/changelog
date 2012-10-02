@@ -1,3 +1,11 @@
+neoagent (0.5.5-1) precise; urgency=low
+
+  * support reconfiguration with SIGUSR2
+
+  * 0.5.5 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 02 Oct 2012 19:51:00 +0900
+
 neoagent (0.5.4-1) precise; urgency=low
 
   * fix race condition problem when switching server
