@@ -53,9 +53,6 @@
 
 static const int NA_JSON_BUF_MAX = 65536;
 
-// globals
-const char *ConfFile;
-
 const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_NAME]                 = "name",
     [NA_PARAM_PORT]                 = "port",

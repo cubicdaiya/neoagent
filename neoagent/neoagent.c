@@ -55,11 +55,11 @@ static const int NA_ENV_MAX = 1;
 extern volatile sig_atomic_t SigExit;
 extern volatile sig_atomic_t SigClear;
 extern time_t StartTimestamp;
-extern const char *ConfFile;
 
 // globals
 volatile sig_atomic_t SigReconf;
 pthread_rwlock_t LockReconf;
+const char *ConfFile;
 
 static void na_version(void);
 static void na_usage(void);
