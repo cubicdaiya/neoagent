@@ -75,6 +75,7 @@ const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_REQUEST_BUFSIZE_MAX]  = "request_bufsize_max",
     [NA_PARAM_RESPONSE_BUFSIZE]     = "response_bufsize",
     [NA_PARAM_RESPONSE_BUFSIZE_MAX] = "response_bufsize_max",
+    [NA_PARAM_SLOW_QUERY_TIME]      = "slow_query_time"
 };
 
 const char *na_event_models[NA_EVENT_MODEL_MAX] = {
@@ -199,6 +200,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
         case NA_PARAM_ERROR_COUNT_MAX:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->error_count_max = json_object_get_int(param_obj);
+            continue;
+        case NA_PARAM_SLOW_QUERY_TIME:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
+            na_env->slow_query_time = json_object_get_int(param_obj);
             continue;
         default:
             break;

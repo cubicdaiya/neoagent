@@ -285,6 +285,10 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
     } else if (revents & EV_WRITE) {
 
+        if (client->query_time_begin.tv_sec == 0 &&
+            client->query_time_begin.tv_nsec == 0)
+            clock_gettime(CLOCK_MONOTONIC, &client->query_time_begin);
+
         size = write(tsfd,
                      client->crbuf + client->swbufsize,
                      client->crbufsize - client->swbufsize);
@@ -463,6 +467,29 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
             goto unlock_reconf;
         } else {
+            struct timespec query_time;
+
+            clock_gettime(CLOCK_MONOTONIC, &client->query_time_end);
+            na_difftime(&query_time, &client->query_time_begin,
+                        &client->query_time_end);
+
+            // if slow, print slow query notice
+            if (env->slow_query_time && env->slow_query_time < query_time.tv_sec) {
+                struct sockaddr_in caddr;
+                socklen_t clen = sizeof(caddr);
+                const size_t bufsz = 256;
+                char buf[bufsz];
+
+                if (getpeername(client->cfd, &caddr, &clen) == 0) {
+                    snprintf(buf, bufsz,
+                             "SLOWQUERY: client %s:%hu time %ld.%ld querytxt \"%s\"",
+                             inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port),
+                             query_time.tv_sec, query_time.tv_nsec,
+                             client->crbuf);
+                    NA_STDERR(buf);
+                }
+            }
+            
             client->crbufsize        = 0;
             client->cwbufsize        = 0;
             client->srbufsize        = 0;
@@ -472,6 +499,8 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             client->event_state      = NA_EVENT_STATE_CLIENT_READ;
             client->req_cnt          = 0;
             client->res_cnt          = 0;
+            memset(&client->query_time_begin, 0, sizeof(struct timespec));
+            memset(&client->query_time_end, 0, sizeof(struct timespec));
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_READ);
             goto unlock_reconf;
         }
@@ -656,6 +685,8 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->loop_cnt          = 0;
     client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
     client->connpool          = na_connpool_select(env);
+    memset(&client->query_time_begin, 0, sizeof(struct timespec));
+    memset(&client->query_time_end, 0, sizeof(struct timespec));
 
     pthread_mutex_lock(&env->lock_current_conn);
     ++env->current_conn;

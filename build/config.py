@@ -14,6 +14,7 @@ libs = [
     'pthread',
     'ev',
     'json',
+    'rt',
     ]
 
 includes = [

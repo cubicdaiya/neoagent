@@ -92,6 +92,7 @@ void na_env_setup_default(na_env_t *env, int idx)
     env->request_bufsize_max  = NA_BUFSIZE_DEFAULT;
     env->response_bufsize     = NA_BUFSIZE_DEFAULT;
     env->response_bufsize_max = NA_BUFSIZE_DEFAULT;
+    env->slow_query_time      = 0;
 }
 
 void na_env_clear (na_env_t *env)

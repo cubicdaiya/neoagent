@@ -53,3 +53,14 @@ void na_elapsed_time(time_t time, char *buf, size_t bufsize)
     sec  = time % 60;
     snprintf(buf, bufsize, "%02d:%02d:%02d", hour, min, sec);
 }
+
+void na_difftime(struct timespec *ret, struct timespec *start, struct timespec *end)
+{
+    if ((end->tv_nsec - start->tv_nsec) < 0) {
+        ret->tv_sec = end->tv_sec - start->tv_sec - 1;
+        ret->tv_nsec = 1000000000 + end->tv_nsec - start->tv_nsec;
+    } else {
+        ret->tv_sec = end->tv_sec - start->tv_sec;
+        ret->tv_nsec = end->tv_nsec - start->tv_nsec;
+    }
+}

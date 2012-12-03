@@ -35,10 +35,13 @@
 #define NA_ENV_H
 
 #include <stdint.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include <ev.h>
 
@@ -126,6 +129,7 @@ typedef struct na_env_t {
     int response_bufsize_current_max;
     int loop_max;
     int error_count_max;
+    int slow_query_time;
 } na_env_t;
 
 typedef struct na_client_t {
@@ -154,6 +158,8 @@ typedef struct na_client_t {
     ev_io c_watcher;
     ev_io ts_watcher;
     pthread_mutex_t lock_use;
+    struct timespec query_time_begin;
+    struct timespec query_time_end;
 } na_client_t;
 
 mpool_t *na_pool_create (int size);
