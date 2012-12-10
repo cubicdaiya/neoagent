@@ -361,7 +361,8 @@ unlock_reconf:
     pthread_rwlock_unlock(&LockReconf);
 }
 
-static void na_slow_query_check(struct ev_io *w)
+//static void na_slow_query_check(struct ev_io *w)
+static void na_slow_query_check(na_client_t *client)
 {
     na_client_t *client = (na_client_t *)w->data;
     na_env_t *env = client->env;
@@ -373,9 +374,9 @@ static void na_slow_query_check(struct ev_io *w)
                 &client->na_to_client_time_end);
     na_addtime(&total_query_time, &na_to_ts_time, &na_to_client_time);
 
-    if (((env->slow_query_time.tv_sec > total_query_time.tv_sec) ||
+    if (((env->slow_query_time.tv_sec < total_query_time.tv_sec) ||
          (env->slow_query_time.tv_sec == total_query_time.tv_sec)) &&
-        (env->slow_query_time.tv_nsec > total_query_time.tv_nsec)) {
+        (env->slow_query_time.tv_nsec < total_query_time.tv_nsec)) {
         struct sockaddr_in caddr;
         socklen_t clen = sizeof(caddr);
         const size_t bufsz = 256;
@@ -384,10 +385,10 @@ static void na_slow_query_check(struct ev_io *w)
         if (getpeername(client->cfd, &caddr, &clen) == 0) {
             client->crbuf[client->crbufsize - 2] = '\0'; // don't want newline
             snprintf(buf, bufsz,
-                     "SLOWQUERY: client %s:%hu na2ts %ld.%ld na2c %ld.%ld querytxt \"%s\"",
+                     "SLOWQUERY: client %s:%hu na2ts %f na2c %f querytxt \"%s\"",
                      inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port),
-                     na_to_ts_time.tv_sec, na_to_ts_time.tv_nsec,
-                     na_to_client_time.tv_sec, na_to_client_time.tv_nsec,
+                     (double)((double)na_to_ts_time.tv_sec     + (double)na_to_ts_time.tv_nsec / 1000000000L),
+                     (double)((double)na_to_client_time.tv_sec + (double)na_to_client_time.tv_nsec / 1000000000L),
                      client->crbuf);
             NA_STDERR(buf);
         }
