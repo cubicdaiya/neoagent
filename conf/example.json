@@ -22,6 +22,7 @@
             "request_bufsize_max"  : 1048576,
             "response_bufsize"     : 1024,
             "response_bufsize_max" : 1048576,
+            "slow_query_sec"       : 0.0,
         },
     ],
 }

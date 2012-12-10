@@ -75,7 +75,7 @@ const char *na_params[NA_PARAM_MAX] = {
     [NA_PARAM_REQUEST_BUFSIZE_MAX]  = "request_bufsize_max",
     [NA_PARAM_RESPONSE_BUFSIZE]     = "response_bufsize",
     [NA_PARAM_RESPONSE_BUFSIZE_MAX] = "response_bufsize_max",
-    [NA_PARAM_SLOW_QUERY_TIME]      = "slow_query_time"
+    [NA_PARAM_SLOW_QUERY_SEC]       = "slow_query_sec"
 };
 
 const char *na_event_models[NA_EVENT_MODEL_MAX] = {
@@ -164,7 +164,7 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
     environment_obj = json_object_array_get_idx(environments_obj, idx);
 
     for (int i=0;i<NA_PARAM_MAX;++i) {
-        double slow_query_time;
+        double slow_query_sec;
 
         param_obj = json_object_object_get(environment_obj, na_param_name(i));
 
@@ -202,11 +202,11 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->error_count_max = json_object_get_int(param_obj);
             continue;
-        case NA_PARAM_SLOW_QUERY_TIME:
+        case NA_PARAM_SLOW_QUERY_SEC:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_double);
-            slow_query_time = json_object_get_double(param_obj);
-            na_env->slow_query_time.tv_sec = slow_query_time;
-            na_env->slow_query_time.tv_nsec = 1000000000 * (slow_query_time - (long)slow_query_time);
+            slow_query_sec = json_object_get_double(param_obj);
+            na_env->slow_query_sec.tv_sec = slow_query_sec;
+            na_env->slow_query_sec.tv_nsec = 1000000000L * (slow_query_sec - (long)slow_query_sec);
             continue;
         default:
             break;
