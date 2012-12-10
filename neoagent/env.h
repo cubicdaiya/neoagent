@@ -129,7 +129,7 @@ typedef struct na_env_t {
     int response_bufsize_current_max;
     int loop_max;
     int error_count_max;
-    struct timespec slow_query_time;
+    struct timespec slow_query_sec;
 } na_env_t;
 
 typedef struct na_client_t {

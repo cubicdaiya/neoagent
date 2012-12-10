@@ -58,7 +58,7 @@ void na_difftime(struct timespec *ret, struct timespec *start, struct timespec *
 {
     if ((end->tv_nsec - start->tv_nsec) < 0) {
         ret->tv_sec = end->tv_sec - start->tv_sec - 1;
-        ret->tv_nsec = 1000000000 + end->tv_nsec - start->tv_nsec;
+        ret->tv_nsec = 1000000000L + end->tv_nsec - start->tv_nsec;
     } else {
         ret->tv_sec = end->tv_sec - start->tv_sec;
         ret->tv_nsec = end->tv_nsec - start->tv_nsec;
