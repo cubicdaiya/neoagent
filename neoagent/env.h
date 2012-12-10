@@ -158,6 +158,8 @@ typedef struct na_client_t {
     ev_io c_watcher;
     ev_io ts_watcher;
     pthread_mutex_t lock_use;
+    struct timespec na_from_ts_time_begin;
+    struct timespec na_from_ts_time_end;
     struct timespec na_to_ts_time_begin;
     struct timespec na_to_ts_time_end;
     struct timespec na_to_client_time_begin;
