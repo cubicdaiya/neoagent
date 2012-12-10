@@ -74,25 +74,25 @@ void na_env_setup_default(na_env_t *env, int idx)
     char *target_server_s = "127.0.0.1:11211";
     na_host_t host;
     sprintf(env->name, "env%d", idx);
-    env->fsport               = NA_PORT_DEFAULT + idx;
-    env->access_mask          = NA_ACCESS_MASK_DEFAULT;
-    host                      = na_create_host(target_server_s);
+    env->fsport                  = NA_PORT_DEFAULT + idx;
+    env->access_mask             = NA_ACCESS_MASK_DEFAULT;
+    host                         = na_create_host(target_server_s);
     memcpy(&env->target_server.host, &host, sizeof(host));
     na_set_sockaddr(&host, &env->target_server.addr);
-    env->stport               = NA_STPORT_DEFAULT + idx;
-    env->worker_max           = NA_WORKER_MAX_DEFAULT;
-    env->conn_max             = NA_CONN_MAX_DEFAULT;
-    env->connpool_max         = NA_CONNPOOL_MAX_DEFAULT;
-    env->connpool_use_max     = NA_CONNPOOL_USE_MAX_DEFAULT;
-    env->client_pool_max      = NA_CLIENT_POOL_MAX_DEFAULT;
-    env->error_count_max      = NA_ERROR_COUNT_MAX_DEFAULT;
-    env->is_connpool_only     = NA_IS_CONNPOOL_ONLY_DEFAULT;
-    env->is_use_backup        = false;
-    env->request_bufsize      = NA_BUFSIZE_DEFAULT;
-    env->request_bufsize_max  = NA_BUFSIZE_DEFAULT;
-    env->response_bufsize     = NA_BUFSIZE_DEFAULT;
-    env->response_bufsize_max = NA_BUFSIZE_DEFAULT;
-    env->slow_query_time      = 0;
+    env->stport                  = NA_STPORT_DEFAULT + idx;
+    env->worker_max              = NA_WORKER_MAX_DEFAULT;
+    env->conn_max                = NA_CONN_MAX_DEFAULT;
+    env->connpool_max            = NA_CONNPOOL_MAX_DEFAULT;
+    env->connpool_use_max        = NA_CONNPOOL_USE_MAX_DEFAULT;
+    env->client_pool_max         = NA_CLIENT_POOL_MAX_DEFAULT;
+    env->error_count_max         = NA_ERROR_COUNT_MAX_DEFAULT;
+    env->is_connpool_only        = NA_IS_CONNPOOL_ONLY_DEFAULT;
+    env->is_use_backup           = false;
+    env->request_bufsize         = NA_BUFSIZE_DEFAULT;
+    env->request_bufsize_max     = NA_BUFSIZE_DEFAULT;
+    env->response_bufsize        = NA_BUFSIZE_DEFAULT;
+    env->response_bufsize_max    = NA_BUFSIZE_DEFAULT;
+    memset(&env->slow_query_time, 0, sizeof(struct timespec));
 }
 
 void na_env_clear (na_env_t *env)

@@ -64,3 +64,14 @@ void na_difftime(struct timespec *ret, struct timespec *start, struct timespec *
         ret->tv_nsec = end->tv_nsec - start->tv_nsec;
     }
 }
+
+void na_addtime(struct timespec *ret, struct timespec *t1, struct timespec *t2)
+{
+    ret->tv_sec = t1->tv_sec + t2->tv_sec;
+    ret->tv_nsec = t1->tv_nsec + t2->tv_nsec;
+
+    if (ret->tv_nsec >= 1000000000L) {
+        ret->tv_sec++;
+        ret->tv_nsec = ret->tv_nsec - 1000000000L;
+    }
+}

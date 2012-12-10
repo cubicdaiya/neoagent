@@ -129,7 +129,7 @@ typedef struct na_env_t {
     int response_bufsize_current_max;
     int loop_max;
     int error_count_max;
-    int slow_query_time;
+    struct timespec slow_query_time;
 } na_env_t;
 
 typedef struct na_client_t {
@@ -158,8 +158,10 @@ typedef struct na_client_t {
     ev_io c_watcher;
     ev_io ts_watcher;
     pthread_mutex_t lock_use;
-    struct timespec query_time_begin;
-    struct timespec query_time_end;
+    struct timespec na_to_ts_time_begin;
+    struct timespec na_to_ts_time_end;
+    struct timespec na_to_client_time_begin;
+    struct timespec na_to_client_time_end;
 } na_client_t;
 
 mpool_t *na_pool_create (int size);

@@ -164,6 +164,7 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
     environment_obj = json_object_array_get_idx(environments_obj, idx);
 
     for (int i=0;i<NA_PARAM_MAX;++i) {
+        double slow_query_time;
 
         param_obj = json_object_object_get(environment_obj, na_param_name(i));
 
@@ -202,8 +203,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
             na_env->error_count_max = json_object_get_int(param_obj);
             continue;
         case NA_PARAM_SLOW_QUERY_TIME:
-            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
-            na_env->slow_query_time = json_object_get_int(param_obj);
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_double);
+            slow_query_time = json_object_get_double(param_obj);
+            na_env->slow_query_time.tv_sec = slow_query_time;
+            na_env->slow_query_time.tv_nsec = 1000000000 * (slow_query_time - (long)slow_query_time);
             continue;
         default:
             break;
