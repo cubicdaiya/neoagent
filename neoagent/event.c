@@ -55,6 +55,7 @@
 #include "hc.h"
 #include "util.h"
 #include "queue.h"
+#include "slowlog.h"
 
 #define NA_EVENT_FAIL(na_error, loop, w, client, env) do {  \
         na_event_stop(loop, w, client, env);                \
@@ -198,13 +199,6 @@ static void na_client_close (EV_P_ na_client_t *client, na_env_t *env)
         --env->current_conn;
     }
     pthread_mutex_unlock(&env->lock_current_conn);
-}
-
-static void na_slow_query_gettime(na_env_t *env, struct timespec *time)
-{
-    if ((env->slow_query_sec.tv_sec != 0) ||
-        (env->slow_query_sec.tv_nsec != 0))
-        clock_gettime(CLOCK_MONOTONIC, time);
 }
 
 static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
@@ -363,51 +357,6 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 unlock_reconf:
     pthread_rwlock_unlock(&LockReconf);
 }
-
-static void na_slow_query_check(na_client_t *client)
-{
-    na_env_t *env = client->env;
-    struct timespec na_to_ts_time, na_from_ts_time, na_to_client_time,
-      total_query_time;
-
-    na_difftime(&na_to_ts_time, &client->na_to_ts_time_begin,
-                &client->na_to_ts_time_end);
-    na_difftime(&na_from_ts_time, &client->na_from_ts_time_begin,
-                &client->na_from_ts_time_end);
-    na_difftime(&na_to_client_time, &client->na_to_client_time_begin,
-                &client->na_to_client_time_end);
-    na_addtime(&total_query_time, &na_to_ts_time, &na_from_ts_time);
-    na_addtime(&total_query_time, &total_query_time, &na_to_client_time);
-
-    if ((env->slow_query_sec.tv_sec < total_query_time.tv_sec) ||
-        ((env->slow_query_sec.tv_sec == total_query_time.tv_sec) &&
-         (env->slow_query_sec.tv_nsec < total_query_time.tv_nsec))) {
-        struct sockaddr_in caddr;
-        socklen_t clen = sizeof(caddr);
-        const size_t bufsz = 256;
-        char buf[bufsz];
-
-        if (getpeername(client->cfd, &caddr, &clen) == 0) {
-            client->crbuf[client->crbufsize - 2] = '\0'; // don't want newline
-            snprintf(buf, bufsz,
-                     "SLOWQUERY: client %s:%hu na->ts %g na<-ts %g na->c %g querytxt \"%s\"",
-                     inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port),
-                     (double)((double)na_to_ts_time.tv_sec     + (double)na_to_ts_time.tv_nsec / 1000000000L),
-                     (double)((double)na_from_ts_time.tv_sec   + (double)na_from_ts_time.tv_nsec / 1000000000L),
-                     (double)((double)na_to_client_time.tv_sec + (double)na_to_client_time.tv_nsec / 1000000000L),
-                     client->crbuf);
-            NA_STDERR(buf);
-        }
-    }
-
-    memset(&client->na_from_ts_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_from_ts_time_end, 0, sizeof(struct timespec));
-    memset(&client->na_to_ts_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_to_ts_time_end, 0, sizeof(struct timespec));
-    memset(&client->na_to_client_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_to_client_time_end, 0, sizeof(struct timespec));
-}
-
 
 static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 {
