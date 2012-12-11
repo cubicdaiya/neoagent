@@ -32,7 +32,8 @@ Sample configuration
              "request_bufsize":65536,
              "request_bufsize_max":131072,
              "response_bufsize":65536,
-             "response_bufsize_max":131072
+             "response_bufsize_max":131072,
+             "slow_query_sec":0.0
          }
      ]
  }
@@ -116,3 +117,7 @@ Sample configuration
 **response_bufsize_max**
 
  maximum buffer size of response from server
+
+**slow_query_sec**
+
+ print information of request which takes more than intended seconds
