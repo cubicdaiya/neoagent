@@ -45,7 +45,7 @@
 
 #include <ev.h>
 
-#include "mpool.h"
+#include "ext/mpool.h"
 #include "socket.h"
 #include "memproto.h"
 
