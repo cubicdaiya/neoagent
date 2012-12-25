@@ -133,6 +133,9 @@ static void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "current_conn_max",             json_object_new_int(env->current_conn_max));
     json_object_object_add(stat_obj, "worker_map",                   workermap_obj);
     json_object_object_add(stat_obj, "connpool_map",                 connpoolmap_obj);
+    json_object_object_add(stat_obj, "slow_query_sec",               json_object_new_double((double)((double)env->slow_query_sec.tv_sec +
+                                                                                                     (double)env->slow_query_sec.tv_nsec /
+                                                                                                     1000000000L)));
 
     snprintf(buf, bufsize, "%s", json_object_to_json_string(stat_obj));
 
