@@ -84,9 +84,9 @@ def stats_draw(pad, stats):
     nx = pad_addstr(pad, nx, 0, 'current_conn                : '  + str(stats['current_conn']),                 curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'available_conn              : '  + str(stats['available_conn']),               curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'current_conn_max            : '  + str(stats['current_conn_max']),             curses.A_NORMAL)
+    nx = pad_addstr(pad, nx, 0, 'slow_query_sec              : '  + str(stats['slow_query_sec']),               curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'worker_map                  : '  + worker_map_str,                             curses.A_NORMAL)
     nx = pad_addstr(pad, nx, 0, 'connpool_map                : '  + connpool_map_str,                           curses.A_NORMAL)
-    nx = pad_addstr(pad, nx, 0, 'slow_query_sec              : '  + str(stats['slow_query_sec']),               curses.A_NORMAL)
 
 def main(scr):
     global sig_exit_flg, host, port
