@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'neoagent'
-copyright = u'2012 Tatsuhiko Kubo <cubicdaiya@gmail.com>'
+copyright = u'2013 Tatsuhiko Kubo <cubicdaiya@gmail.com>'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
