@@ -59,6 +59,7 @@ typedef enum na_param_t {
     NA_PARAM_RESPONSE_BUFSIZE,
     NA_PARAM_RESPONSE_BUFSIZE_MAX,
     NA_PARAM_SLOW_QUERY_SEC,
+    NA_PARAM_SLOW_QUERY_FILE,
     NA_PARAM_MAX // Always add new codes to the end before this one
 } na_param_t;
 

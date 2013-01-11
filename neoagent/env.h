@@ -42,6 +42,7 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <time.h>
+#include <stdio.h>
 
 #include <ev.h>
 
@@ -50,7 +51,7 @@
 #include "memproto.h"
 
 #define NA_NAME_MAX     64
-#define NA_SOCKPATH_MAX 256
+#define NA_PATH_MAX 256
 
 typedef enum na_event_state_t {
     NA_EVENT_STATE_CLIENT_READ,
@@ -88,8 +89,8 @@ typedef struct na_env_t {
     uint16_t fsport;
     int stfd;
     uint16_t stport;
-    char fssockpath[NA_SOCKPATH_MAX + 1];
-    char stsockpath[NA_SOCKPATH_MAX + 1];
+    char fssockpath[NA_PATH_MAX + 1];
+    char stsockpath[NA_PATH_MAX + 1];
     mode_t access_mask;
     na_server_t target_server;
     na_server_t backup_server;
@@ -130,6 +131,8 @@ typedef struct na_env_t {
     int loop_max;
     int error_count_max;
     struct timespec slow_query_sec;
+    char slow_query_file[NA_PATH_MAX + 1];
+    FILE *slow_query_fp;
 } na_env_t;
 
 typedef struct na_client_t {
