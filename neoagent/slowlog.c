@@ -64,7 +64,7 @@ void na_slow_query_check(na_client_t *client)
         if (getpeername(client->cfd, &caddr, &clen) == 0) {
             client->crbuf[client->crbufsize - 2] = '\0'; // don't want newline
             fprintf(env->slow_query_fp,
-                    "SLOWQUERY: client %s:%hu na->ts %g na<-ts %g na->c %g querytxt \"%s\"\n",
+                    "SLOWQUERY: client %s:%hu na->ts %g na<-ts %g na->c %g querytxt \"%.128s\"\n",
                     inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port),
                     (double)((double)na_to_ts_time.tv_sec     + (double)na_to_ts_time.tv_nsec / 1000000000L),
                     (double)((double)na_from_ts_time.tv_sec   + (double)na_from_ts_time.tv_nsec / 1000000000L),
