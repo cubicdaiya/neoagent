@@ -54,30 +54,30 @@
 
 static const int NA_JSON_BUF_MAX = 65536;
 
-const char *na_params[NA_PARAM_MAX] = {
-    [NA_PARAM_NAME]                 = "name",
-    [NA_PARAM_PORT]                 = "port",
-    [NA_PARAM_SOCKPATH]             = "sockpath",
-    [NA_PARAM_ACCESS_MASK]          = "access_mask",
-    [NA_PARAM_TARGET_SERVER]        = "target_server",
-    [NA_PARAM_BACKUP_SERVER]        = "backup_server",
-    [NA_PARAM_STPORT]               = "stport",
-    [NA_PARAM_STSOCKPATH]           = "stsockpath",
-    [NA_PARAM_WORKER_MAX]           = "worker_max",
-    [NA_PARAM_CONN_MAX]             = "conn_max",
-    [NA_PARAM_CONNPOOL_MAX]         = "connpool_max",
-    [NA_PARAM_CONNPOOL_USE_MAX]     = "connpool_use_max",
-    [NA_PARAM_CLIENT_POOL_MAX]      = "client_pool_max",
-    [NA_PARAM_LOOP_MAX]             = "loop_max",
-    [NA_PARAM_EVENT_MODEL]          = "event_model",
-    [NA_PARAM_ERROR_COUNT_MAX]      = "error_count_max",
-    [NA_PARAM_IS_CONNPOOL_ONLY]     = "is_connpool_only",
-    [NA_PARAM_REQUEST_BUFSIZE]      = "request_bufsize",
-    [NA_PARAM_REQUEST_BUFSIZE_MAX]  = "request_bufsize_max",
-    [NA_PARAM_RESPONSE_BUFSIZE]     = "response_bufsize",
-    [NA_PARAM_RESPONSE_BUFSIZE_MAX] = "response_bufsize_max",
-    [NA_PARAM_SLOW_QUERY_SEC]       = "slow_query_sec",
-    [NA_PARAM_SLOW_QUERY_FILE]      = "slow_query_file"
+const char *na_params[NA_PARAM_MAX]     = {
+    [NA_PARAM_NAME]                     = "name",
+    [NA_PARAM_PORT]                     = "port",
+    [NA_PARAM_SOCKPATH]                 = "sockpath",
+    [NA_PARAM_ACCESS_MASK]              = "access_mask",
+    [NA_PARAM_TARGET_SERVER]            = "target_server",
+    [NA_PARAM_BACKUP_SERVER]            = "backup_server",
+    [NA_PARAM_STPORT]                   = "stport",
+    [NA_PARAM_STSOCKPATH]               = "stsockpath",
+    [NA_PARAM_WORKER_MAX]               = "worker_max",
+    [NA_PARAM_CONN_MAX]                 = "conn_max",
+    [NA_PARAM_CONNPOOL_MAX]             = "connpool_max",
+    [NA_PARAM_CONNPOOL_USE_MAX]         = "connpool_use_max",
+    [NA_PARAM_CLIENT_POOL_MAX]          = "client_pool_max",
+    [NA_PARAM_LOOP_MAX]                 = "loop_max",
+    [NA_PARAM_EVENT_MODEL]              = "event_model",
+    [NA_PARAM_ERROR_COUNT_MAX]          = "error_count_max",
+    [NA_PARAM_IS_CONNPOOL_ONLY]         = "is_connpool_only",
+    [NA_PARAM_REQUEST_BUFSIZE]          = "request_bufsize",
+    [NA_PARAM_REQUEST_BUFSIZE_MAX]      = "request_bufsize_max",
+    [NA_PARAM_RESPONSE_BUFSIZE]         = "response_bufsize",
+    [NA_PARAM_RESPONSE_BUFSIZE_MAX]     = "response_bufsize_max",
+    [NA_PARAM_SLOW_QUERY_SEC]           = "slow_query_sec",
+    [NA_PARAM_SLOW_QUERY_LOG_PATH]      = "slow_query_log_path"
 };
 
 const char *na_event_models[NA_EVENT_MODEL_MAX] = {
@@ -162,7 +162,7 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
     na_host_t host;
     struct json_object *environment_obj;
     struct json_object *param_obj;
-    bool have_slow_query_file_opt = false;
+    bool have_slow_query_log_path_opt = false;
 
     environment_obj = json_object_array_get_idx(environments_obj, idx);
 
@@ -211,10 +211,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
             na_env->slow_query_sec.tv_sec = slow_query_sec;
             na_env->slow_query_sec.tv_nsec = 1000000000L * (slow_query_sec - (long)slow_query_sec);
             continue;
-        case NA_PARAM_SLOW_QUERY_FILE:
+        case NA_PARAM_SLOW_QUERY_LOG_PATH:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
-            strncpy(na_env->slow_query_file, json_object_get_string(param_obj), NA_PATH_MAX);
-            have_slow_query_file_opt = true;
+            strncpy(na_env->slow_query_log_path, json_object_get_string(param_obj), NA_PATH_MAX);
+            have_slow_query_log_path_opt = true;
             continue;
         default:
             break;
@@ -303,7 +303,7 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
     // open slow query log, if enabled
     if (((na_env->slow_query_sec.tv_sec  != 0)  ||
          (na_env->slow_query_sec.tv_nsec != 0))) {
-        if (!have_slow_query_file_opt)
+        if (!have_slow_query_log_path_opt)
             NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
         else
             na_slow_query_open(na_env);

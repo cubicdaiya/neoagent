@@ -86,7 +86,7 @@ void na_slow_query_open(na_env_t *env)
     // close and reopen log file, to permit rotation
     if (env->slow_query_fp)
         fclose(env->slow_query_fp);
-    env->slow_query_fp = fopen(env->slow_query_file, "a");
+    env->slow_query_fp = fopen(env->slow_query_log_path, "a");
 
     if (!env->slow_query_fp) {
         NA_STDERR_MESSAGE(NA_ERROR_CANT_OPEN_SLOWLOG);

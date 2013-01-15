@@ -131,7 +131,7 @@ typedef struct na_env_t {
     int loop_max;
     int error_count_max;
     struct timespec slow_query_sec;
-    char slow_query_file[NA_PATH_MAX + 1];
+    char slow_query_log_path[NA_PATH_MAX + 1];
     FILE *slow_query_fp;
 } na_env_t;
 
