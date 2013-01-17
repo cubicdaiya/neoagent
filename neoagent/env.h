@@ -71,6 +71,13 @@ typedef enum na_event_model_t {
     NA_EVENT_MODEL_MAX // Always add new codes to the end before this one
 } na_event_model_t;
 
+typedef enum na_log_format_t {
+    NA_LOG_FORMAT_PLAIN,
+    NA_LOG_FORMAT_JSON,
+    NA_LOG_FORMAT_UNKNOWN,
+    NA_LOG_FORMAT_MAX // Always add new codes to the end before this one
+} na_log_format_t;
+
 typedef struct na_server_t {
     na_host_t host;
     struct sockaddr_in addr;
@@ -133,6 +140,7 @@ typedef struct na_env_t {
     struct timespec slow_query_sec;
     char slow_query_log_path[NA_PATH_MAX + 1];
     FILE *slow_query_fp;
+    na_log_format_t slow_query_log_format;
 } na_env_t;
 
 typedef struct na_client_t {

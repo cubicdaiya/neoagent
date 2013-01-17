@@ -77,15 +77,20 @@ const char *na_params[NA_PARAM_MAX]     = {
     [NA_PARAM_RESPONSE_BUFSIZE]         = "response_bufsize",
     [NA_PARAM_RESPONSE_BUFSIZE_MAX]     = "response_bufsize_max",
     [NA_PARAM_SLOW_QUERY_SEC]           = "slow_query_sec",
-    [NA_PARAM_SLOW_QUERY_LOG_PATH]      = "slow_query_log_path"
+    [NA_PARAM_SLOW_QUERY_LOG_PATH]      = "slow_query_log_path",
+    [NA_PARAM_SLOW_QUERY_LOG_FORMAT]    = "slow_query_log_format"
 };
 
-const char *na_event_models[NA_EVENT_MODEL_MAX] = {
+static const char *na_event_models[NA_EVENT_MODEL_MAX] = {
     [NA_EVENT_MODEL_SELECT] = "select",
     [NA_EVENT_MODEL_EPOLL]  = "epoll",
     [NA_EVENT_MODEL_KQUEUE] = "kqueue",
     [NA_EVENT_MODEL_AUTO]   = "auto",
+};
 
+static const char *na_log_formats[NA_LOG_FORMAT_MAX] = {
+    [NA_LOG_FORMAT_PLAIN] = "text",
+    [NA_LOG_FORMAT_JSON]  = "json"
 };
 
 static const char *na_param_name (na_param_t param);
@@ -111,6 +116,19 @@ static na_event_model_t na_detect_event_model (const char *model_str)
         model = NA_EVENT_MODEL_UNKNOWN;
     }
     return model;
+}
+
+static na_log_format_t na_detect_log_format (const char *format_str)
+{
+    na_log_format_t format;
+    if (strcmp(format_str, na_log_formats[NA_LOG_FORMAT_JSON]) == 0) {
+        format = NA_LOG_FORMAT_JSON;
+    } else if (strcmp(format_str, na_log_formats[NA_LOG_FORMAT_PLAIN]) == 0) {
+        format = NA_LOG_FORMAT_PLAIN;
+    } else {
+        format = NA_LOG_FORMAT_UNKNOWN;
+    }
+    return format;
 }
 
 const char *na_event_model_name (na_event_model_t model)
@@ -286,6 +304,13 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
                 NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
                 na_env->event_model = na_detect_event_model(json_object_get_string(param_obj));
                 if (na_env->event_model == NA_EVENT_MODEL_UNKNOWN) {
+                    NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+                }
+                break;
+            case NA_PARAM_SLOW_QUERY_LOG_FORMAT:
+                NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+                na_env->slow_query_log_format = na_detect_log_format(json_object_get_string(param_obj));
+                if (na_env->slow_query_log_format == NA_LOG_FORMAT_UNKNOWN) {
                     NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
                 }
                 break;
