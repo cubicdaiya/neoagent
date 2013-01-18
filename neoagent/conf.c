@@ -44,6 +44,7 @@
 #include "env.h"
 #include "socket.h"
 #include "error.h"
+#include "slowlog.h"
 
 #define NA_PARAM_TYPE_CHECK(param_obj, expected_type) do {            \
         if (!json_object_is_type(param_obj, expected_type)) {         \
@@ -53,37 +54,43 @@
 
 static const int NA_JSON_BUF_MAX = 65536;
 
-const char *na_params[NA_PARAM_MAX] = {
-    [NA_PARAM_NAME]                 = "name",
-    [NA_PARAM_PORT]                 = "port",
-    [NA_PARAM_SOCKPATH]             = "sockpath",
-    [NA_PARAM_ACCESS_MASK]          = "access_mask",
-    [NA_PARAM_TARGET_SERVER]        = "target_server",
-    [NA_PARAM_BACKUP_SERVER]        = "backup_server",
-    [NA_PARAM_STPORT]               = "stport",
-    [NA_PARAM_STSOCKPATH]           = "stsockpath",
-    [NA_PARAM_WORKER_MAX]           = "worker_max",
-    [NA_PARAM_CONN_MAX]             = "conn_max",
-    [NA_PARAM_CONNPOOL_MAX]         = "connpool_max",
-    [NA_PARAM_CONNPOOL_USE_MAX]     = "connpool_use_max",
-    [NA_PARAM_CLIENT_POOL_MAX]      = "client_pool_max",
-    [NA_PARAM_LOOP_MAX]             = "loop_max",
-    [NA_PARAM_EVENT_MODEL]          = "event_model",
-    [NA_PARAM_ERROR_COUNT_MAX]      = "error_count_max",
-    [NA_PARAM_IS_CONNPOOL_ONLY]     = "is_connpool_only",
-    [NA_PARAM_REQUEST_BUFSIZE]      = "request_bufsize",
-    [NA_PARAM_REQUEST_BUFSIZE_MAX]  = "request_bufsize_max",
-    [NA_PARAM_RESPONSE_BUFSIZE]     = "response_bufsize",
-    [NA_PARAM_RESPONSE_BUFSIZE_MAX] = "response_bufsize_max",
-    [NA_PARAM_SLOW_QUERY_SEC]       = "slow_query_sec"
+const char *na_params[NA_PARAM_MAX]     = {
+    [NA_PARAM_NAME]                     = "name",
+    [NA_PARAM_PORT]                     = "port",
+    [NA_PARAM_SOCKPATH]                 = "sockpath",
+    [NA_PARAM_ACCESS_MASK]              = "access_mask",
+    [NA_PARAM_TARGET_SERVER]            = "target_server",
+    [NA_PARAM_BACKUP_SERVER]            = "backup_server",
+    [NA_PARAM_STPORT]                   = "stport",
+    [NA_PARAM_STSOCKPATH]               = "stsockpath",
+    [NA_PARAM_WORKER_MAX]               = "worker_max",
+    [NA_PARAM_CONN_MAX]                 = "conn_max",
+    [NA_PARAM_CONNPOOL_MAX]             = "connpool_max",
+    [NA_PARAM_CONNPOOL_USE_MAX]         = "connpool_use_max",
+    [NA_PARAM_CLIENT_POOL_MAX]          = "client_pool_max",
+    [NA_PARAM_LOOP_MAX]                 = "loop_max",
+    [NA_PARAM_EVENT_MODEL]              = "event_model",
+    [NA_PARAM_ERROR_COUNT_MAX]          = "error_count_max",
+    [NA_PARAM_IS_CONNPOOL_ONLY]         = "is_connpool_only",
+    [NA_PARAM_REQUEST_BUFSIZE]          = "request_bufsize",
+    [NA_PARAM_REQUEST_BUFSIZE_MAX]      = "request_bufsize_max",
+    [NA_PARAM_RESPONSE_BUFSIZE]         = "response_bufsize",
+    [NA_PARAM_RESPONSE_BUFSIZE_MAX]     = "response_bufsize_max",
+    [NA_PARAM_SLOW_QUERY_SEC]           = "slow_query_sec",
+    [NA_PARAM_SLOW_QUERY_LOG_PATH]      = "slow_query_log_path",
+    [NA_PARAM_SLOW_QUERY_LOG_FORMAT]    = "slow_query_log_format"
 };
 
-const char *na_event_models[NA_EVENT_MODEL_MAX] = {
+static const char *na_event_models[NA_EVENT_MODEL_MAX] = {
     [NA_EVENT_MODEL_SELECT] = "select",
     [NA_EVENT_MODEL_EPOLL]  = "epoll",
     [NA_EVENT_MODEL_KQUEUE] = "kqueue",
     [NA_EVENT_MODEL_AUTO]   = "auto",
+};
 
+static const char *na_log_formats[NA_LOG_FORMAT_MAX] = {
+    [NA_LOG_FORMAT_PLAIN] = "text",
+    [NA_LOG_FORMAT_JSON]  = "json"
 };
 
 static const char *na_param_name (na_param_t param);
@@ -111,9 +118,27 @@ static na_event_model_t na_detect_event_model (const char *model_str)
     return model;
 }
 
+static na_log_format_t na_detect_log_format (const char *format_str)
+{
+    na_log_format_t format;
+    if (strcmp(format_str, na_log_formats[NA_LOG_FORMAT_JSON]) == 0) {
+        format = NA_LOG_FORMAT_JSON;
+    } else if (strcmp(format_str, na_log_formats[NA_LOG_FORMAT_PLAIN]) == 0) {
+        format = NA_LOG_FORMAT_PLAIN;
+    } else {
+        format = NA_LOG_FORMAT_UNKNOWN;
+    }
+    return format;
+}
+
 const char *na_event_model_name (na_event_model_t model)
 {
     return na_event_models[model];
+}
+
+const char *na_log_format_name (na_log_format_t format)
+{
+    return na_log_formats[format];
 }
 
 struct json_object *na_get_conf (const char *conf_file_json)
@@ -160,6 +185,7 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
     na_host_t host;
     struct json_object *environment_obj;
     struct json_object *param_obj;
+    bool have_slow_query_log_path_opt = false;
 
     environment_obj = json_object_array_get_idx(environments_obj, idx);
 
@@ -208,6 +234,11 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
             na_env->slow_query_sec.tv_sec = slow_query_sec;
             na_env->slow_query_sec.tv_nsec = 1000000000L * (slow_query_sec - (long)slow_query_sec);
             continue;
+        case NA_PARAM_SLOW_QUERY_LOG_PATH:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            strncpy(na_env->slow_query_log_path, json_object_get_string(param_obj), NA_PATH_MAX);
+            have_slow_query_log_path_opt = true;
+            continue;
         default:
             break;
         }
@@ -221,7 +252,7 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
                 break;
             case NA_PARAM_SOCKPATH:
                 NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
-                strncpy(na_env->fssockpath, json_object_get_string(param_obj), NA_SOCKPATH_MAX);
+                strncpy(na_env->fssockpath, json_object_get_string(param_obj), NA_PATH_MAX);
                 break;
             case NA_PARAM_TARGET_SERVER:
                 NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
@@ -248,7 +279,7 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
                 break;
             case NA_PARAM_STSOCKPATH:
                 NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
-                strncpy(na_env->stsockpath, json_object_get_string(param_obj), NA_SOCKPATH_MAX);
+                strncpy(na_env->stsockpath, json_object_get_string(param_obj), NA_PATH_MAX);
                 break;
             case NA_PARAM_ACCESS_MASK:
                 NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
@@ -281,6 +312,13 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
                     NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
                 }
                 break;
+            case NA_PARAM_SLOW_QUERY_LOG_FORMAT:
+                NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+                na_env->slow_query_log_format = na_detect_log_format(json_object_get_string(param_obj));
+                if (na_env->slow_query_log_format == NA_LOG_FORMAT_UNKNOWN) {
+                    NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+                }
+                break;
             default:
                 // no through
                 assert(false);
@@ -292,4 +330,12 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
     na_env->is_extensible_request_buf  = na_env->request_bufsize  < na_env->request_bufsize_max  ? true : false;
     na_env->is_extensible_response_buf = na_env->response_bufsize < na_env->response_bufsize_max ? true : false;
 
+    // open slow query log, if enabled
+    if (((na_env->slow_query_sec.tv_sec  != 0)  ||
+         (na_env->slow_query_sec.tv_nsec != 0))) {
+        if (!have_slow_query_log_path_opt)
+            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+        else
+            na_slow_query_open(na_env);
+    }
 }

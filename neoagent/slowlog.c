@@ -31,6 +31,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <json/json.h>
+
 #include "slowlog.h"
 
 void na_slow_query_gettime(na_env_t *env, struct timespec *time)
@@ -60,19 +62,36 @@ void na_slow_query_check(na_client_t *client)
          (env->slow_query_sec.tv_nsec < total_query_time.tv_nsec))) {
         struct sockaddr_in caddr;
         socklen_t clen = sizeof(caddr);
-        const size_t bufsz = 256;
-        char buf[bufsz];
 
         if (getpeername(client->cfd, &caddr, &clen) == 0) {
+            char *clientaddr = inet_ntoa(caddr.sin_addr);
+            uint16_t clientport = ntohs(caddr.sin_port);
+            double na_to_ts     = (double)((double)na_to_ts_time.tv_sec     + (double)na_to_ts_time.tv_nsec / 1000000000L),
+                   na_from_ts   = (double)((double)na_from_ts_time.tv_sec   + (double)na_from_ts_time.tv_nsec / 1000000000L),
+                   na_to_client = (double)((double)na_to_client_time.tv_sec + (double)na_to_client_time.tv_nsec / 1000000000L);
+
             client->crbuf[client->crbufsize - 2] = '\0'; // don't want newline
-            snprintf(buf, bufsz,
-                     "SLOWQUERY: client %s:%hu na->ts %g na<-ts %g na->c %g querytxt \"%s\"",
-                     inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port),
-                     (double)((double)na_to_ts_time.tv_sec     + (double)na_to_ts_time.tv_nsec / 1000000000L),
-                     (double)((double)na_from_ts_time.tv_sec   + (double)na_from_ts_time.tv_nsec / 1000000000L),
-                     (double)((double)na_to_client_time.tv_sec + (double)na_to_client_time.tv_nsec / 1000000000L),
-                     client->crbuf);
-            NA_STDERR(buf);
+            if (env->slow_query_log_format == NA_LOG_FORMAT_JSON) {
+                struct json_object *json;
+                const size_t bufsz = 128;
+                char querybuf[bufsz];
+
+                json = json_object_new_object();
+                json_object_object_add(json, "clientaddr",   json_object_new_string(clientaddr));
+                json_object_object_add(json, "clientport",   json_object_new_int(clientport));
+                json_object_object_add(json, "na_to_ts",     json_object_new_double(na_to_ts));
+                json_object_object_add(json, "na_from_ts",   json_object_new_double(na_from_ts));
+                json_object_object_add(json, "na_to_client", json_object_new_double(na_to_client));
+                snprintf(querybuf, bufsz, "%s", client->crbuf);
+                json_object_object_add(json, "querytxt",     json_object_new_string(querybuf));
+
+                fprintf(env->slow_query_fp, "%s\n", json_object_to_json_string(json));
+                json_object_put(json);
+            } else { // plain text format
+                fprintf(env->slow_query_fp,
+                        "SLOWQUERY: client %s:%hu na->ts %g na<-ts %g na->c %g querytxt \"%.128s\"\n",
+                        clientaddr, clientport, na_to_ts, na_from_ts, na_to_client, client->crbuf);
+            }
         }
     }
 
@@ -82,4 +101,18 @@ void na_slow_query_check(na_client_t *client)
     memset(&client->na_to_ts_time_end, 0, sizeof(struct timespec));
     memset(&client->na_to_client_time_begin, 0, sizeof(struct timespec));
     memset(&client->na_to_client_time_end, 0, sizeof(struct timespec));
+}
+
+void na_slow_query_open(na_env_t *env)
+{
+    // close and reopen log file, to permit rotation
+    if (env->slow_query_fp)
+        fclose(env->slow_query_fp);
+    env->slow_query_fp = fopen(env->slow_query_log_path, "a");
+
+    if (!env->slow_query_fp) {
+        NA_STDERR_MESSAGE(NA_ERROR_CANT_OPEN_SLOWLOG);
+        // disable slow query log, since we couldn't open the file
+        memset(&env->slow_query_sec, 0, sizeof(struct timespec));
+    }
 }

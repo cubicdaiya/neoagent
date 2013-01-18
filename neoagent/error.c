@@ -58,6 +58,7 @@ const char *na_error_messages[NA_ERROR_MAX] = {
     [NA_ERROR_FAILED_WRITE]          = "failed to write",
     [NA_ERROR_BROKEN_PIPE]           = "broken pipe",
     [NA_ERROR_TOO_MANY_ENVIRONMENTS] = "too many environments",
+    [NA_ERROR_CANT_OPEN_SLOWLOG]     = "can't open slow query log file",
     [NA_ERROR_UNKNOWN]               = "unknown error"
 };
 
