@@ -61,6 +61,7 @@ void na_slow_query_check(na_client_t *client)
         ((env->slow_query_sec.tv_sec == total_query_time.tv_sec) &&
          (env->slow_query_sec.tv_nsec < total_query_time.tv_nsec))) {
         struct sockaddr_in caddr;
+        memset(&caddr, 0, sizeof(caddr));
         socklen_t clen = sizeof(caddr);
 
         if (getpeername(client->cfd, &caddr, &clen) == 0) {
