@@ -136,6 +136,11 @@ const char *na_event_model_name (na_event_model_t model)
     return na_event_models[model];
 }
 
+const char *na_log_format_name (na_log_format_t format)
+{
+    return na_log_formats[format];
+}
+
 struct json_object *na_get_conf (const char *conf_file_json)
 {
     struct json_object *conf_obj;
