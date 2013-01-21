@@ -1,3 +1,13 @@
+2013-01-21 Mark Laws<marktan@pixiv.com>, Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* slow query log can be output as plain text or json
+
+	* write slow_query_log to file instead of stderr
+
+	* print slow_query_sec and slow_query_log_path in neostat
+
+	* 0.6.1 released
+
 2012-12-11 Mark Laws<marktan@pixiv.com>, Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* add function(slow query logging)

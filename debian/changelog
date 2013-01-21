@@ -1,7 +1,19 @@
+neoagent (0.6.1-1) precise; urgency=low
+
+ * slow query log can be output as plain text or json
+
+ * write slow_query_log to file instead of stderr
+
+ * print slow_query_sec and slow_query_log_path in neostat
+
+ * 0.6.1 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 21 Jan 2013 12:02:45 +0900
+
 neoagent (0.6.0-1) precise; urgency=low
 
   *-add function(slow query logging)
-  
+
   *-0.6.0 released
 
  -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 11 Dec 2012 13:22:02 +0900
