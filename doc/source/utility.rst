@@ -49,6 +49,9 @@ neostat is a status monitor for neoagent.
  current_conn: 0
  available_conn: 20
  current_conn_max: 1
+ slow_query_sec : 0.01
+ slow_query_log_format : json
+ worker_map: 0 0 0 0
  connpool_map: 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
 The meaning of Each entry is following.
@@ -185,6 +188,18 @@ The meaning of Each entry is following.
 
  recorded maximum count of connection after neoagent start 
 
+**\slow_query_sec**
+
+ threashold(second) of slow query log
+
+**\slow_query_log_path**
+
+ slow query log path
+
+**\worker_map**
+
+ condition of each worker(1 is active)
+
 **\connpool_map**
 
- condition of connection-pool
+ condition of each connection in connection-pool(1 is active)
