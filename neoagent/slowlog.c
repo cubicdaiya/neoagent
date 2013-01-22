@@ -31,6 +31,10 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <time.h>
+#include <unistd.h>
+#include <limits.h>
+
 #include <json/json.h>
 
 #include "slowlog.h"
@@ -65,6 +69,10 @@ void na_slow_query_check(na_client_t *client)
         socklen_t clen = sizeof(caddr);
 
         if (getpeername(client->cfd, &caddr, &clen) == 0) {
+            char host[HOST_NAME_MAX];
+            if (gethostname(host, HOST_NAME_MAX) < 0)
+                host[HOST_NAME_MAX - 1] = '\0';
+            time_t now = time(NULL);
             char *clientaddr = inet_ntoa(caddr.sin_addr);
             uint16_t clientport = ntohs(caddr.sin_port);
             double na_to_ts     = (double)((double)na_to_ts_time.tv_sec     + (double)na_to_ts_time.tv_nsec / 1000000000L),
@@ -78,6 +86,9 @@ void na_slow_query_check(na_client_t *client)
                 char querybuf[bufsz];
 
                 json = json_object_new_object();
+                json_object_object_add(json, "time",         json_object_new_int(now));
+                json_object_object_add(json, "type",         json_object_new_string(env->name));
+                json_object_object_add(json, "host",         json_object_new_string(host));
                 json_object_object_add(json, "clientaddr",   json_object_new_string(clientaddr));
                 json_object_object_add(json, "clientport",   json_object_new_int(clientport));
                 json_object_object_add(json, "na_to_ts",     json_object_new_double(na_to_ts));
@@ -90,8 +101,8 @@ void na_slow_query_check(na_client_t *client)
                 json_object_put(json);
             } else { // plain text format
                 fprintf(env->slow_query_fp,
-                        "SLOWQUERY: client %s:%hu na->ts %g na<-ts %g na->c %g querytxt \"%.128s\"\n",
-                        clientaddr, clientport, na_to_ts, na_from_ts, na_to_client, client->crbuf);
+                        "SLOWQUERY: time %lu type %s host %s client %s:%hu na->ts %g na<-ts %g na->c %g querytxt \"%.128s\"\n",
+                        now, env->name, host, clientaddr, clientport, na_to_ts, na_from_ts, na_to_client, client->crbuf);
             }
         }
     }
