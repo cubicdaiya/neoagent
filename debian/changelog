@@ -1,3 +1,11 @@
+neoagent (0.6.2-1) precise; urgency=low
+
+  * include time, type, host in slow log
+
+  * 0.6.2 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 22 Jan 2013 18:48:02 +0900
+
 neoagent (0.6.1-1) precise; urgency=low
 
  * slow query log can be output as plain text or json

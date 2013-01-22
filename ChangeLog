@@ -1,3 +1,9 @@
+2013-01-22 Mark Laws<marktan@pixiv.com>, Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* include time, type, host in slow log
+
+	* 0.6.2 released
+
 2013-01-21 Mark Laws<marktan@pixiv.com>, Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* slow query log can be output as plain text or json
