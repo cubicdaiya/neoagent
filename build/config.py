@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import sys
+
 cflags = [
     '-std=c99',
     '-Wall',
@@ -14,8 +16,9 @@ libs = [
     'pthread',
     'ev',
     'json',
-    'rt',
     ]
+if sys.platform != 'darwin':
+    libs.append('rt')
 
 includes = [
     #'ext',

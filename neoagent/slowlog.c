@@ -34,10 +34,28 @@
 #include <time.h>
 #include <unistd.h>
 #include <limits.h>
+#include <sys/time.h>
 
 #include <json/json.h>
 
 #include "slowlog.h"
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 64
+#endif
+
+#ifndef CLOCK_MONOTONIC
+#define CLOCK_MONOTONIC 0
+static int clock_gettime(int dummy, struct timespec *ts); 
+static int clock_gettime(int dummy, struct timespec *ts)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    ts->tv_sec  = tv.tv_sec;
+    ts->tv_nsec = tv.tv_usec * 1000;
+    return 0;
+} 
+#endif
 
 void na_slow_query_gettime(na_env_t *env, struct timespec *time)
 {
