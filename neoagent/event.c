@@ -434,7 +434,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
         if (client->cmd == NA_MEMPROTO_CMD_QUIT) {
             na_event_stop(EV_A_ w, client, env);
             goto unlock_reconf; // request success
-        } else if (client->cmd == NA_MEMPROTO_CMD_GET) {
+        } else if (client->cmd == NA_MEMPROTO_CMD_GET || client->cmd == NA_MEMPROTO_CMD_SET) {
             client->req_cnt = na_memproto_count_request_get(client->crbuf, client->crbufsize);
         }
 
@@ -446,6 +446,8 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
                 na_event_stop(EV_A_ w, client, env);
                 goto unlock_reconf; // request fail
+            } else if (client->cmd == NA_MEMPROTO_CMD_SET && client->req_cnt < 2) {
+                goto unlock_reconf; // not ready yet
             }
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
             na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_WRITE);
