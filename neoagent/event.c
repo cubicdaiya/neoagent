@@ -558,13 +558,13 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             goto unlock_reconf;
         }
         pthread_mutex_unlock(&env->lock_current_conn);
-        if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
+        if (!na_connpool_assign(env, connpool, &cur_pool, &tsfd)) {
             na_error_count_up(env);
             NA_STDERR("failed assign connection from connpool.");
             goto unlock_reconf;
         }
     } else {
-        if (!na_connpool_assign(env, &cur_pool, &tsfd)) {
+        if (!na_connpool_assign(env, connpool, &cur_pool, &tsfd)) {
             na_server_t *server;
             tsfd = na_target_server_tcpsock_init();
             if (tsfd < 0) {

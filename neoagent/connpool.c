@@ -95,12 +95,9 @@ void na_connpool_reconnect (na_env_t *env, int i)
     }
 }
 
-bool na_connpool_assign (na_env_t *env, int *cur, int *fd)
+bool na_connpool_assign (na_env_t *env, na_connpool_t *connpool, int *cur, int *fd)
 {
-    na_connpool_t *connpool;
     int ri;
-
-    connpool = na_connpool_select(env);
 
     pthread_mutex_lock(&env->lock_connpool);
 
