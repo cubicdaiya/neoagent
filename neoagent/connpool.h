@@ -38,7 +38,7 @@
 
 void na_connpool_create (na_connpool_t *connpool, int c);
 void na_connpool_destroy (na_connpool_t *connpool);
-bool na_connpool_assign (na_env_t *env, int *cur, int *fd);
+bool na_connpool_assign (na_env_t *env, na_connpool_t *connpool, int *cur, int *fd);
 void na_connpool_init (na_env_t *env);
 na_connpool_t *na_connpool_select(na_env_t *env);
 void na_connpool_switch (na_env_t *env);
