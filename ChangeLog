@@ -1,3 +1,13 @@
+2013-02-21 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix #20 (connpool may switch from active to backup between na_connpool_select and na_connpool_assign). Thanks for edvakf
+
+	* fix protocol problem(when set request is send with telnet neoagent cannot proxy)
+
+	* fix #19 (build error in Mac OS X). Thanks for walf443
+
+	* 0.6.3 released
+
 2013-01-22 Mark Laws<marktan@pixiv.com>, Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* include time, type, host in slow log
