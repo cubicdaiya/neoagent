@@ -61,7 +61,9 @@ void na_slow_query_gettime(na_env_t *env, struct timespec *time)
 {
     if ((env->slow_query_sec.tv_sec != 0) ||
         (env->slow_query_sec.tv_nsec != 0))
+    {
         clock_gettime(CLOCK_MONOTONIC, time);
+    }
 }
 
 void na_slow_query_check(na_client_t *client)
@@ -88,8 +90,9 @@ void na_slow_query_check(na_client_t *client)
 
         if (getpeername(client->cfd, &caddr, &clen) == 0) {
             char host[HOST_NAME_MAX];
-            if (gethostname(host, HOST_NAME_MAX) < 0)
+            if (gethostname(host, HOST_NAME_MAX) < 0) {
                 host[HOST_NAME_MAX - 1] = '\0';
+            }
             time_t now = time(NULL);
             char *clientaddr = inet_ntoa(caddr.sin_addr);
             uint16_t clientport = ntohs(caddr.sin_port);
@@ -125,19 +128,20 @@ void na_slow_query_check(na_client_t *client)
         }
     }
 
-    memset(&client->na_from_ts_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_from_ts_time_end, 0, sizeof(struct timespec));
-    memset(&client->na_to_ts_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_to_ts_time_end, 0, sizeof(struct timespec));
+    memset(&client->na_from_ts_time_begin,   0, sizeof(struct timespec));
+    memset(&client->na_from_ts_time_end,     0, sizeof(struct timespec));
+    memset(&client->na_to_ts_time_begin,     0, sizeof(struct timespec));
+    memset(&client->na_to_ts_time_end,       0, sizeof(struct timespec));
     memset(&client->na_to_client_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_to_client_time_end, 0, sizeof(struct timespec));
+    memset(&client->na_to_client_time_end,   0, sizeof(struct timespec));
 }
 
 void na_slow_query_open(na_env_t *env)
 {
     // close and reopen log file, to permit rotation
-    if (env->slow_query_fp)
+    if (env->slow_query_fp) {
         fclose(env->slow_query_fp);
+    }
     env->slow_query_fp = fopen(env->slow_query_log_path, "a");
 
     if (!env->slow_query_fp) {

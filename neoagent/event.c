@@ -294,7 +294,9 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
         if ((client->na_to_ts_time_begin.tv_sec == 0) &&
             (client->na_to_ts_time_begin.tv_nsec == 0))
+        {
             na_slow_query_gettime(env, &client->na_to_ts_time_begin);
+        }
 
         size = write(tsfd,
                      client->crbuf + client->swbufsize,
@@ -458,7 +460,9 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
         if ((client->na_to_client_time_begin.tv_sec == 0) &&
             (client->na_to_client_time_begin.tv_nsec == 0))
+        {
             na_slow_query_gettime(env, &client->na_to_client_time_begin);
+        }
 
         size = write(cfd,
                      client->srbuf + client->cwbufsize,

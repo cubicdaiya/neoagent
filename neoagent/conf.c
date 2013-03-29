@@ -333,9 +333,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
     // open slow query log, if enabled
     if (((na_env->slow_query_sec.tv_sec  != 0)  ||
          (na_env->slow_query_sec.tv_nsec != 0))) {
-        if (!have_slow_query_log_path_opt)
+        if (!have_slow_query_log_path_opt) {
             NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
-        else
+        } else {
             na_slow_query_open(na_env);
+        }
     }
 }
