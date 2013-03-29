@@ -57,10 +57,10 @@ void na_bm_create_table (char *pattern, int *skip)
 
 int na_bm_search (char *haystack, char *pattern, int *skip, int hlen, int plen)
 {
-    int i, cnt;
+    int i, c;
 
-    i   = 0;
-    cnt = 0;
+    i = 0;
+    c = 0;
 
  loop:
     while (i + plen <= hlen) {
@@ -91,8 +91,8 @@ int na_bm_search (char *haystack, char *pattern, int *skip, int hlen, int plen)
             i += plen;
         }
 
-        ++cnt;
+        ++c;
     }
 
-    return cnt;
+    return c;
 }
