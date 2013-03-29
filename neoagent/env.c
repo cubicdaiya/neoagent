@@ -94,6 +94,7 @@ void na_env_setup_default(na_env_t *env, int idx)
     env->response_bufsize_max    = NA_BUFSIZE_DEFAULT;
     memset(&env->slow_query_sec, 0, sizeof(struct timespec));
     env->slow_query_log_format   = NA_LOG_FORMAT_PLAIN;
+    env->slow_query_log_access_mask = NA_ACCESS_MASK_DEFAULT;
 }
 
 void na_env_clear (na_env_t *env)

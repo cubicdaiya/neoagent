@@ -61,6 +61,7 @@ typedef enum na_param_t {
     NA_PARAM_SLOW_QUERY_SEC,
     NA_PARAM_SLOW_QUERY_LOG_PATH,
     NA_PARAM_SLOW_QUERY_LOG_FORMAT,
+    NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK,
     NA_PARAM_MAX // Always add new codes to the end before this one
 } na_param_t;
 

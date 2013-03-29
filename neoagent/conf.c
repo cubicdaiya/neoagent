@@ -78,7 +78,8 @@ const char *na_params[NA_PARAM_MAX]     = {
     [NA_PARAM_RESPONSE_BUFSIZE_MAX]     = "response_bufsize_max",
     [NA_PARAM_SLOW_QUERY_SEC]           = "slow_query_sec",
     [NA_PARAM_SLOW_QUERY_LOG_PATH]      = "slow_query_log_path",
-    [NA_PARAM_SLOW_QUERY_LOG_FORMAT]    = "slow_query_log_format"
+    [NA_PARAM_SLOW_QUERY_LOG_FORMAT]    = "slow_query_log_format",
+    [NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK] = "slow_query_log_access_mask"
 };
 
 static const char *na_event_models[NA_EVENT_MODEL_MAX] = {
@@ -318,6 +319,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
                 if (na_env->slow_query_log_format == NA_LOG_FORMAT_UNKNOWN) {
                     NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
                 }
+                break;
+            case NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK:
+                NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+                na_env->slow_query_log_access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
                 break;
             default:
                 // no through

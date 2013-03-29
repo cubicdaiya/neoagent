@@ -141,6 +141,7 @@ typedef struct na_env_t {
     char slow_query_log_path[NA_PATH_MAX + 1];
     FILE *slow_query_fp;
     na_log_format_t slow_query_log_format;
+    mode_t slow_query_log_access_mask;
 } na_env_t;
 
 typedef struct na_client_t {
