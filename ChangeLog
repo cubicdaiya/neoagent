@@ -1,3 +1,9 @@
+2013-04-01 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* add parameter 'slow_query_log_access_mask'
+
+	* 0.6.4 released
+
 2013-02-21 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fix #20 (connpool may switch from active to backup between na_connpool_select and na_connpool_assign). Thanks for edvakf

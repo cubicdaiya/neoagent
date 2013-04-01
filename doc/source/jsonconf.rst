@@ -33,7 +33,10 @@ Sample configuration
              "request_bufsize_max":131072,
              "response_bufsize":65536,
              "response_bufsize_max":131072,
-             "slow_query_sec":0.0
+             "slow_query_sec":0.0,
+             "slow_query_log_path":"/var/log/neoagent_slow.log",
+             "slow_query_log_format":"json"
+             "slow_query_log_access_mask":"0666",
          }
      ]
  }
@@ -121,3 +124,15 @@ Sample configuration
 **slow_query_sec**
 
  print information of request which takes more than intended seconds
+
+**slow_query_log_path**
+
+ full path of slow query log file
+
+**slow_query_log_format**
+
+ format of slow query(currently, json only)
+
+**slow_query_log_access_mask**
+
+ access mask for slow query log file
