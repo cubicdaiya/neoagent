@@ -13,3 +13,4 @@ debian/neoagent
 neoagent_*.deb
 doc/build/
 neoagent/neoagent
+neoctl/neoctl

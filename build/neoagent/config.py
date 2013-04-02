@@ -10,19 +10,20 @@ cflags = [
 #    '-fno-strict-aliasing',
     '-D_GNU_SOURCE',
     '-Wimplicit-function-declaration'
-    ]
+]
 
 libs = [
     'pthread',
     'ev',
     'json',
-    ]
+]
+
 if sys.platform != 'darwin':
     libs.append('rt')
 
 includes = [
     #'ext',
-    ]
+]
 
 headers = [
     'stdint.h',
@@ -40,9 +41,9 @@ headers = [
     'errno.h',
     'pthread.h',
     'ev.h',
-    ]
+]
 
 funcs = [
     'sigaction',
     'sigignore',
-    ]
+]

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import build.util
-import build.config
+from build.neoagent import config
 
 env = Environment(
-    CFLAGS=build.config.cflags,
-    CPPPATH=build.config.includes,
+    CFLAGS=config.cflags,
+    CPPPATH=config.includes,
 )
 
-libs         = build.config.libs
+libs         = config.libs
 use_tcmalloc = ARGUMENTS.get('tcmalloc', 'n');
 
 if use_tcmalloc == 'y' or use_tcmalloc == 'yes':
@@ -23,8 +23,8 @@ prog = env.Program(
 if 'configure' in COMMAND_LINE_TARGETS:
     if build.util.configure(Configure(env),
                             libs,
-                            build.config.headers,
-                            build.config.funcs) is False:
+                            config.headers,
+                            config.funcs) is False:
         Exit(1)
     else:
         Exit(0)

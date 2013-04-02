@@ -1,0 +1,16 @@
+# -*- coding: utf-8 -*-
+
+import build.util
+from build.neoctl import config
+
+env = Environment(
+    CFLAGS=config.cflags,
+    CPPPATH=config.includes,
+)
+
+libs = config.libs
+prog = env.Program(
+    'neoctl',
+    [ Glob('*.c') ],
+    LIBS=libs,
+)

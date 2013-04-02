@@ -4,7 +4,12 @@ import build.util
 
 build.util.info_print()
 
-SConscript("neoagent/SConscript")
+progs = [
+    'neoagent',
+    'neoctl',
+]
+
+[ SConscript( prog + "/SConscript")  for prog in progs ]
 
 if 'debian' in COMMAND_LINE_TARGETS:
     SConscript("debian/SConscript")
