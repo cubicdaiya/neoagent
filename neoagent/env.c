@@ -31,11 +31,11 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 
-#include "ext/mpool.h"
 #include "env.h"
 #include "util.h"
 
@@ -51,23 +51,8 @@ static const int  NA_BUFSIZE_DEFAULT          = 65536;
 static const bool NA_IS_CONNPOOL_ONLY_DEFAULT = false;
 static const int  NA_WORKER_MAX_DEFAULT       = 1;
 
-mpool_t *na_pool_create (int size)
-{
-    return mpool_create(size);
-}
-
-void na_pool_destroy (mpool_t *pool)
-{
-    mpool_destroy(pool);
-}
-
-na_env_t *na_env_add (mpool_t **env_pool)
-{
-    na_env_t *env;
-    env = mpool_alloc(sizeof(*env), *env_pool);
-    memset(env, 0, sizeof(*env));
-    return env;
-}
+// refs to external globals
+extern pthread_rwlock_t LockReconf;
 
 void na_env_setup_default(na_env_t *env, int idx)
 {
@@ -95,6 +80,36 @@ void na_env_setup_default(na_env_t *env, int idx)
     memset(&env->slow_query_sec, 0, sizeof(struct timespec));
     env->slow_query_log_format   = NA_LOG_FORMAT_PLAIN;
     env->slow_query_log_access_mask = NA_ACCESS_MASK_DEFAULT;
+}
+
+void na_env_init(na_env_t *env)
+{
+    env->current_conn      = 0;
+    env->is_refused_active = false;
+    env->is_refused_accept = false;
+    env->is_worker_busy    = calloc(sizeof(bool), env->worker_max);
+    for (int j=0;j<env->worker_max;++j) {
+        env->is_worker_busy[j] = false;
+    }
+    env->error_count      = 0;
+    env->current_conn_max = 0;
+    pthread_mutex_init(&env->lock_connpool,     NULL);
+    pthread_mutex_init(&env->lock_current_conn, NULL);
+    pthread_mutex_init(&env->lock_tid,          NULL);
+    pthread_mutex_init(&env->lock_loop,         NULL);
+    pthread_mutex_init(&env->lock_error_count,  NULL);
+    pthread_rwlock_init(&env->lock_refused,              NULL);
+    pthread_rwlock_init(&env->lock_request_bufsize_max,  NULL);
+    pthread_rwlock_init(&env->lock_response_bufsize_max, NULL);
+    pthread_rwlock_init(&LockReconf,                     NULL);
+    env->lock_worker_busy = calloc(sizeof(pthread_rwlock_t), env->worker_max);
+    for (int j=0;j<env->worker_max;++j) {
+        pthread_rwlock_init(&env->lock_worker_busy[j], NULL);
+    }
+    na_connpool_create(&env->connpool_active, env->connpool_max);
+    if (env->is_use_backup) {
+        na_connpool_create(&env->connpool_backup, env->connpool_max);
+    }
 }
 
 void na_env_clear (na_env_t *env)

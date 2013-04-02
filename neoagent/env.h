@@ -46,7 +46,6 @@
 
 #include <ev.h>
 
-#include "ext/mpool.h"
 #include "socket.h"
 #include "memproto.h"
 
@@ -178,10 +177,8 @@ typedef struct na_client_t {
     struct timespec na_to_client_time_end;
 } na_client_t;
 
-mpool_t *na_pool_create (int size);
-void na_pool_destroy (mpool_t *pool);
-na_env_t *na_env_add (mpool_t **env_pool);
 void na_env_setup_default(na_env_t *env, int idx);
+void na_env_init(na_env_t *env);
 void na_env_clear (na_env_t *env);
 
 void na_connpool_create (na_connpool_t *connpool, int c);

@@ -32,6 +32,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -40,6 +41,7 @@
 
 #include <json/json.h>
 
+#include "ext/fnv.h"
 #include "env.h"
 #include "event.h"
 #include "conf.h"
@@ -48,8 +50,15 @@
 #include "util.h"
 #include "version.h"
 
+typedef struct na_slave_process_t {
+    pid_t     pid;
+    na_env_t *env;
+} na_slave_process_t;
+
 // constants
-static const int NA_ENV_MAX = 1;
+static const int NA_ENV_MAX       = 20;
+static const int NA_PID_MAX       = 32768;
+static const int NA_PROC_NAME_MAX = 512;
 
 // external globals
 extern volatile sig_atomic_t SigExit;
@@ -60,6 +69,7 @@ extern time_t StartTimestamp;
 volatile sig_atomic_t SigReconf;
 pthread_rwlock_t LockReconf;
 const char *ConfFile;
+pid_t MasterPid;
 
 static void na_version(void);
 static void na_usage(void);
@@ -67,6 +77,9 @@ static void na_signal_exit_handler (int sig);
 static void na_signal_clear_handler (int sig);
 static void na_signal_reconf_handler (int sig);
 static void na_setup_signals (void);
+static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name);
+static void na_kill_childs(pid_t *pids, int sig);
+static bool is_master_process(void);
 
 static void na_version(void)
 {
@@ -124,9 +137,9 @@ static void na_setup_signals (void)
         sigaction(SIGHUP,  &sig_exit_handler,   NULL) == -1 ||
         sigaction(SIGUSR1, &sig_clear_handler,  NULL) == -1 ||
         sigaction(SIGUSR2, &sig_reconf_handler, NULL) == -1)
-    {
-        NA_DIE_WITH_ERROR(NA_ERROR_FAILED_SETUP_SIGNAL);
-    }
+        {
+            NA_DIE_WITH_ERROR(NA_ERROR_FAILED_SETUP_SIGNAL);
+        }
 
     if (sigignore(SIGPIPE) == -1) {
         NA_DIE_WITH_ERROR(NA_ERROR_FAILED_IGNORE_SIGNAL);
@@ -138,24 +151,50 @@ static void na_setup_signals (void)
 
 }
 
+static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name)
+{
+    strncpy(orig_proc_name + strlen(orig_proc_name), ": ",          NA_PROC_NAME_MAX);
+    strncpy(orig_proc_name + strlen(orig_proc_name), env_proc_name, NA_PROC_NAME_MAX);
+}
+
+static void na_kill_childs(pid_t *pids, int sig)
+{
+    size_t c = sizeof(pids) / sizeof(pid_t);
+    for (int i=0;i<c;++i) {
+        kill(pids[i], sig);
+    }
+}
+
+static bool is_master_process(void)
+{
+    if (getpid() == MasterPid) {
+        return true;
+    }
+    return false;
+}
+
 int main (int argc, char *argv[])
 {
-    pthread_t           th[NA_ENV_MAX];
-    na_env_t           *env[NA_ENV_MAX];
-    mpool_t            *env_pool;
+    na_env_t            env;              // for child
+    na_env_t            envs[NA_ENV_MAX]; // for master
     int                 c;
+    pthread_t           th;
     int                 env_cnt          = 0;
     bool                is_daemon        = false;
     struct json_object *conf_obj         = NULL;
     struct json_object *environments_obj = NULL;
+    pid_t pids[NA_PID_MAX];
+    int pidx;
+    fnv_ent_t ent_env[NA_PID_MAX];
+    fnv_tbl_t *tbl_env;
 
     while (-1 != (c = getopt(argc, argv,
-           "f:" /* configuration file with JSON */
-           "t:" /* check configuration file */
-           "d"  /* go to background */
-           "v"  /* show version and information */
-           "h"  /* show help */
-    )))
+                             "f:" /* configuration file with JSON */
+                             "t:" /* check configuration file */
+                             "d"  /* go to background */
+                             "v"  /* show version and information */
+                             "h"  /* show help */
+                             )))
     {
         switch (c) {
         case 'd':
@@ -195,60 +234,56 @@ int main (int argc, char *argv[])
 
     StartTimestamp = time(NULL);
     na_setup_signals();
-    na_memproto_bm_skip_init();
 
-    env_pool = mpool_create(0);
-    if (env_cnt == 0) {
-        env_cnt = 1;
-        env[0]  = na_env_add(&env_pool);
-        na_env_setup_default(env[0], 0);
-    } else {
-        for (int i=0;i<env_cnt;++i) {
-            env[i] = na_env_add(&env_pool);
-            na_env_setup_default(env[i], i);
-            na_conf_env_init(environments_obj, env[i], i, false);
+    tbl_env   = fnv_tbl_create(ent_env, NA_PID_MAX);
+    MasterPid = getpid();
+    pidx      = 0;
+    for (int i=0;i<env_cnt;++i) {
+        pidx++;
+        pid_t pid = fork();
+        if (pid == -1) {
+            NA_DIE_WITH_ERROR(NA_ERROR_FAILED_CREATE_PROCESS);
+        } else if (pid == 0) { // child
+            break;
+        } else {
+            pids[i] = pid;
         }
     }
+
+    if (is_master_process()) {
+        na_set_env_proc_name(argv[0], "master");
+        for (int i=0;i<env_cnt;++i) {
+            na_env_setup_default(&envs[i], i);
+            na_conf_env_init(environments_obj, &envs[i], i, false);
+            fnv_put(tbl_env, envs[i].name, &pids[i], strlen(envs[i].name), sizeof(pid_t));
+        }
+        goto MASTER_CYCLE;
+    }
+
+    na_memproto_bm_skip_init();
+
+    memset(&env, 0, sizeof(env));
+    if (env_cnt == 0) {
+        na_env_setup_default(&env, 0);
+    } else {
+        na_env_setup_default(&env, pidx);
+        na_conf_env_init(environments_obj, &env, pidx - 1, false);
+    }
+
+    na_set_env_proc_name(argv[0], env.name);
+    na_env_init(&env);
+    pthread_create(&th, NULL, na_event_loop, &env);
+
+ MASTER_CYCLE:
 
     json_object_put(conf_obj);
 
-    for (int i=0;i<env_cnt;++i) {
-        env[i]->current_conn      = 0;
-        env[i]->is_refused_active = false;
-        env[i]->is_refused_accept = false;
-        env[i]->is_worker_busy    = calloc(sizeof(bool), env[i]->worker_max);
-        for (int j=0;j<env[i]->worker_max;++j) {
-            env[i]->is_worker_busy[j] = false;
-        }
-        env[i]->error_count      = 0;
-        env[i]->current_conn_max = 0;
-        pthread_mutex_init(&env[i]->lock_connpool, NULL);
-        pthread_mutex_init(&env[i]->lock_current_conn, NULL);
-        pthread_mutex_init(&env[i]->lock_tid, NULL);
-        pthread_mutex_init(&env[i]->lock_loop, NULL);
-        pthread_mutex_init(&env[i]->lock_error_count, NULL);
-        pthread_rwlock_init(&env[i]->lock_refused, NULL);
-        pthread_rwlock_init(&env[i]->lock_request_bufsize_max, NULL);
-        pthread_rwlock_init(&env[i]->lock_response_bufsize_max, NULL);
-        pthread_rwlock_init(&LockReconf, NULL);
-        env[i]->lock_worker_busy = calloc(sizeof(pthread_rwlock_t), env[i]->worker_max);
-        for (int j=0;j<env[i]->worker_max;++j) {
-            pthread_rwlock_init(&env[i]->lock_worker_busy[j], NULL);
-        }
-        na_connpool_create(&env[i]->connpool_active, env[i]->connpool_max);
-        if (env[i]->is_use_backup) {
-            na_connpool_create(&env[i]->connpool_backup, env[i]->connpool_max);
-        }
-    }
-
-    for (int i=0;i<env_cnt;++i) {
-        pthread_create(&th[i], NULL, na_event_loop, env[i]);
-    }
-
     // monitoring signal
     while (true) {
-
         if (SigExit == 1) {
+            if (is_master_process()) {
+                na_kill_childs(pids, SIGINT);
+            }
             break;
         }
 
@@ -257,9 +292,7 @@ int main (int argc, char *argv[])
             environments_obj = na_get_environments(conf_obj, &env_cnt);
 
             pthread_rwlock_wrlock(&LockReconf);
-            for (int i=0;i<env_cnt;++i) {
-                na_conf_env_init(environments_obj, env[i], i, true);
-            }
+            na_conf_env_init(environments_obj, &env, pidx - 1, true);
             pthread_rwlock_unlock(&LockReconf);
 
             json_object_put(conf_obj);
@@ -269,29 +302,6 @@ int main (int argc, char *argv[])
         // XXX we should sleep forever and only wake upon a signal
         sleep(1);
     }
-
-    for (int i=0;i<env_cnt;++i) {
-        na_connpool_destroy(&env[i]->connpool_active);
-        if (env[i]->is_use_backup) {
-            na_connpool_destroy(&env[i]->connpool_backup);
-        }
-        pthread_mutex_destroy(&env[i]->lock_connpool);
-        pthread_mutex_destroy(&env[i]->lock_current_conn);
-        pthread_mutex_destroy(&env[i]->lock_tid);
-        pthread_mutex_destroy(&env[i]->lock_error_count);
-        pthread_rwlock_destroy(&env[i]->lock_refused);
-        pthread_rwlock_destroy(&env[i]->lock_request_bufsize_max);
-        pthread_rwlock_destroy(&env[i]->lock_response_bufsize_max);
-        pthread_rwlock_destroy(&LockReconf);
-        for (int j=0;j<env[i]->worker_max;++j) {
-            pthread_rwlock_destroy(&env[i]->lock_worker_busy[j]);
-        }
-        NA_FREE(env[i]->is_worker_busy);
-        NA_FREE(env[i]->lock_worker_busy);
-        pthread_detach(th[i]);
-    }
-
-    mpool_destroy(env_pool);
 
     return 0;
 }
