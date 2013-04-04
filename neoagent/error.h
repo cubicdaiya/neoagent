@@ -63,6 +63,8 @@ typedef enum na_error_t {
     NA_ERROR_TOO_MANY_ENVIRONMENTS,
     NA_ERROR_CANT_OPEN_SLOWLOG,
     NA_ERROR_FAILED_CREATE_PROCESS,
+    NA_ERROR_INVALID_CTL_CMD,
+    NA_ERROR_FAILED_EXECUTE_CTM_CMD,
     NA_ERROR_UNKNOWN,
     NA_ERROR_MAX // Always add new codes to the end before this one
 } na_error_t;

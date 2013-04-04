@@ -46,10 +46,11 @@
 
 #include <ev.h>
 
+#include "ext/fnv.h"
 #include "socket.h"
 #include "memproto.h"
 
-#define NA_NAME_MAX     64
+#define NA_NAME_MAX 64
 #define NA_PATH_MAX 256
 
 typedef enum na_event_state_t {
@@ -88,6 +89,14 @@ typedef struct na_connpool_t {
     int *used_cnt;
     int max;
 } na_connpool_t;
+
+typedef struct na_ctl_env_t {
+    int        fd;
+    char       sockpath[NA_PATH_MAX + 1];
+    mode_t     access_mask;
+    fnv_tbl_t *tbl_env;
+    ev_io      watcher;
+} na_ctl_env_t;
 
 typedef struct na_env_t {
     char name[NA_NAME_MAX + 1];
@@ -177,6 +186,7 @@ typedef struct na_client_t {
     struct timespec na_to_client_time_end;
 } na_client_t;
 
+void na_ctl_env_setup_default(na_ctl_env_t *ctl_env);
 void na_env_setup_default(na_env_t *env, int idx);
 void na_env_init(na_env_t *env);
 void na_env_clear (na_env_t *env);

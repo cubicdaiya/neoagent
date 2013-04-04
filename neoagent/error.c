@@ -60,6 +60,8 @@ const char *na_error_messages[NA_ERROR_MAX] = {
     [NA_ERROR_TOO_MANY_ENVIRONMENTS] = "too many environments",
     [NA_ERROR_CANT_OPEN_SLOWLOG]     = "can't open slow query log file",
     [NA_ERROR_FAILED_CREATE_PROCESS] = "failed to create process",
+    [NA_ERROR_INVALID_CTL_CMD]       = "invalid ctl command",
+    [NA_ERROR_FAILED_EXECUTE_CTM_CMD]= "failed to execute ctl command",
     [NA_ERROR_UNKNOWN]               = "unknown error"
 };
 

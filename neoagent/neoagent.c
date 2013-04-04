@@ -41,19 +41,14 @@
 
 #include <json/json.h>
 
-#include "ext/fnv.h"
 #include "env.h"
 #include "event.h"
 #include "conf.h"
 #include "error.h"
 #include "memproto.h"
+#include "ctl.h"
 #include "util.h"
 #include "version.h"
-
-typedef struct na_slave_process_t {
-    pid_t     pid;
-    na_env_t *env;
-} na_slave_process_t;
 
 // constants
 static const int NA_ENV_MAX       = 20;
@@ -68,7 +63,6 @@ extern time_t StartTimestamp;
 // globals
 volatile sig_atomic_t SigReconf;
 pthread_rwlock_t LockReconf;
-const char *ConfFile;
 pid_t MasterPid;
 
 static void na_version(void);
@@ -175,18 +169,21 @@ static bool is_master_process(void)
 
 int main (int argc, char *argv[])
 {
+    int                 c;
     na_env_t            env;              // for child
     na_env_t            envs[NA_ENV_MAX]; // for master
-    int                 c;
-    pthread_t           th;
+    na_ctl_env_t        env_ctl;
+    pthread_t           event_th, ctl_th;
     int                 env_cnt          = 0;
     bool                is_daemon        = false;
     struct json_object *conf_obj         = NULL;
     struct json_object *environments_obj = NULL;
+    struct json_object *ctl_obj          = NULL;
     pid_t pids[NA_PID_MAX];
     int pidx;
     fnv_ent_t ent_env[NA_PID_MAX];
     fnv_tbl_t *tbl_env;
+    char conf_file[NA_PATH_MAX + 1];
 
     while (-1 != (c = getopt(argc, argv,
                              "f:" /* configuration file with JSON */
@@ -201,7 +198,7 @@ int main (int argc, char *argv[])
             is_daemon = true;
             break;
         case 'f':
-            ConfFile         = optarg;
+            strncpy(conf_file, optarg, NA_PATH_MAX + 1);
             conf_obj         = na_get_conf(optarg);
             environments_obj = na_get_environments(conf_obj, &env_cnt);
             break;
@@ -257,6 +254,10 @@ int main (int argc, char *argv[])
             na_conf_env_init(environments_obj, &envs[i], i, false);
             fnv_put(tbl_env, envs[i].name, &pids[i], strlen(envs[i].name), sizeof(pid_t));
         }
+        ctl_obj = na_get_ctl(conf_obj);
+        na_conf_ctl_init(ctl_obj, &env_ctl);
+        env_ctl.tbl_env = tbl_env;
+        pthread_create(&ctl_th, NULL, na_ctl_loop, &env_ctl);
         goto MASTER_CYCLE;
     }
 
@@ -272,7 +273,7 @@ int main (int argc, char *argv[])
 
     na_set_env_proc_name(argv[0], env.name);
     na_env_init(&env);
-    pthread_create(&th, NULL, na_event_loop, &env);
+    pthread_create(&event_th, NULL, na_event_loop, &env);
 
  MASTER_CYCLE:
 
@@ -280,15 +281,32 @@ int main (int argc, char *argv[])
 
     // monitoring signal
     while (true) {
+
         if (SigExit == 1) {
             if (is_master_process()) {
                 na_kill_childs(pids, SIGINT);
             }
             break;
         }
-
-        if (SigReconf == 1) {
-            conf_obj         = na_get_conf(ConfFile);
+#if 0
+        if (is_master_process()) {
+            lock(env_ctl->lock);
+            if (env_ctl->restart_flg) {
+                pid_t pid = fork();
+                void *th_ret;
+                if (pid == -1) {
+                    NA_DIE_WITH_ERROR(NA_ERROR_FAILED_CREATE_PROCESS);
+                } else if (pid == 0) {
+                    pthread_cancel(&ctl_th);
+                    pthread_join(&ctl_th, &th_ret);
+                }
+                env_ctl->restart_flg = false;
+            }            
+            unlock(env_ctl->lock);
+        }
+#endif
+        if (!is_master_process() && SigReconf == 1) {
+            conf_obj         = na_get_conf(conf_file);
             environments_obj = na_get_environments(conf_obj, &env_cnt);
 
             pthread_rwlock_wrlock(&LockReconf);
@@ -298,7 +316,6 @@ int main (int argc, char *argv[])
             json_object_put(conf_obj);
             SigReconf = 0;
         }
-
         // XXX we should sleep forever and only wake upon a signal
         sleep(1);
     }

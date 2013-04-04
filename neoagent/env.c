@@ -54,6 +54,11 @@ static const int  NA_WORKER_MAX_DEFAULT       = 1;
 // refs to external globals
 extern pthread_rwlock_t LockReconf;
 
+void na_ctl_env_setup_default(na_ctl_env_t *ctl_env)
+{
+    ctl_env->access_mask = NA_ACCESS_MASK_DEFAULT;
+}
+
 void na_env_setup_default(na_env_t *env, int idx)
 {
     char *target_server_s = "127.0.0.1:11211";
@@ -78,6 +83,7 @@ void na_env_setup_default(na_env_t *env, int idx)
     env->response_bufsize        = NA_BUFSIZE_DEFAULT;
     env->response_bufsize_max    = NA_BUFSIZE_DEFAULT;
     memset(&env->slow_query_sec, 0, sizeof(struct timespec));
+    env->slow_query_fp = NULL;
     env->slow_query_log_format   = NA_LOG_FORMAT_PLAIN;
     env->slow_query_log_access_mask = NA_ACCESS_MASK_DEFAULT;
 }

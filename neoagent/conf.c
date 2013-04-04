@@ -55,6 +55,11 @@
 
 static const int NA_JSON_BUF_MAX = 65536;
 
+const char *na_ctl_params[NA_PARAM_MAX] = {
+    [NA_CTL_PARAM_SOCKPATH]    = "sockpath",
+    [NA_CTL_PARAM_ACCESS_MASK] = "access_mask",
+};
+
 const char *na_params[NA_PARAM_MAX]     = {
     [NA_PARAM_NAME]                     = "name",
     [NA_PARAM_PORT]                     = "port",
@@ -95,8 +100,14 @@ static const char *na_log_formats[NA_LOG_FORMAT_MAX] = {
     [NA_LOG_FORMAT_JSON]  = "json"
 };
 
+static const char *na_ctl_param_name (na_ctl_param_t param);
 static const char *na_param_name (na_param_t param);
 static na_event_model_t na_detect_event_model (const char *model_str);
+
+static const char *na_ctl_param_name (na_ctl_param_t param)
+{
+    return na_ctl_params[param];
+}
 
 static const char *na_param_name (na_param_t param)
 {
@@ -177,6 +188,38 @@ struct json_object *na_get_environments(struct json_object *conf_obj, int *env_c
     *env_cnt         = json_object_array_length(environments_obj);
 
     return environments_obj;
+}
+
+struct json_object *na_get_ctl(struct json_object *conf_obj)
+{
+    return json_object_object_get(conf_obj, "ctl");
+}
+
+void na_conf_ctl_init(struct json_object *ctl_obj, na_ctl_env_t *na_ctl_env)
+{
+    char *e;
+    struct json_object *param_obj;
+
+    for (int i=0;i<NA_CTL_PARAM_MAX;++i) {
+        param_obj = json_object_object_get(ctl_obj, na_ctl_param_name(i));
+
+        if (param_obj == NULL) {
+            continue;
+        }
+
+        switch (i) {
+        case NA_CTL_PARAM_SOCKPATH:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            strncpy(na_ctl_env->sockpath, json_object_get_string(param_obj), NA_PATH_MAX);
+            break;
+        case NA_CTL_PARAM_ACCESS_MASK:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            na_ctl_env->access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
+            break;
+ 
+        }
+    }
+
 }
 
 void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
