@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+import os
+import socket
+import argparse
+
+def is_valid_args(args):
+    if args.sock is None or not os.path.exists(args.sock):
+        return False
+    if args.cmd is None or (args.cmd != 'reload' and args.cmd != 'restart'):
+        return False
+    if args.name is None:
+        return False
+    return True
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='A Status Monitor For Neoagent', add_help=False)
+    parser.add_argument('-s', '--sock', action='store',      type=str,      help='unix domain socket path')
+    parser.add_argument('-c', '--cmd',  action='store',      type=str,      help='cntrol command(reload, restart)')
+    parser.add_argument('-n', '--name', action='store',      type=str,      help='environment name')
+    parser.add_argument('--help',       action='store_true', default=False, help='show this help message and exit')
+
+    args = parser.parse_args()
+
+    if args.help == True:
+        parser.print_help()
+        sys.exit(1)
+
+    if is_valid_args(args) is False:
+        parser.print_help()
+        sys.exit(1)
+
+    sockpath = args.sock
+    command  = args.cmd
+    envname  = args.name
+
+    c = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        c.connect(sockpath)
+        c.sendall(command + " " + envname + "\r\n")
+        msg = c.recv(8192)
+    except socket.error, msg:
+        print msg
+        sys.exit(1)
+
+    print msg

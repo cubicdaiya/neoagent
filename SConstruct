@@ -6,7 +6,6 @@ build.util.info_print()
 
 progs = [
     'neoagent',
-    'neoctl',
 ]
 
 [ SConscript( prog + "/SConscript")  for prog in progs ]

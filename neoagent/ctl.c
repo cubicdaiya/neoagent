@@ -184,7 +184,7 @@ static void na_ctl_callback (EV_P_ struct ev_io *w, int revents)
         goto finally;
     }
 
-    strncpy(cwbuf, "cmd executed\r\n", BUFSIZ + 1);
+    snprintf(cwbuf, BUFSIZ + 1, "executed:%s %s", cmd, envname);
 
  finally:
     if (write(cfd, cwbuf, strlen(cwbuf)) == -1) {
