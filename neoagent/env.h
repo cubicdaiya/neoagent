@@ -96,6 +96,9 @@ typedef struct na_ctl_env_t {
     mode_t     access_mask;
     fnv_tbl_t *tbl_env;
     ev_io      watcher;
+    char*      restart_envname;
+    pthread_mutex_t lock_restart;
+    pthread_cond_t cond_restart;
 } na_ctl_env_t;
 
 typedef struct na_env_t {

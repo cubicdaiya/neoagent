@@ -33,6 +33,7 @@
 
 #include <stdbool.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -127,11 +128,10 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
     case NA_CTL_CMD_RESTART:
         kill(pid, SIGINT);
         waitpid(pid, &status, 0);
-#if 0
-        lock(env_ctl->lock);
-        env_ctl->restart_flg = true;
-        unlock(env_ctl->lock);
-#endif
+        pthread_mutex_lock(&env_ctl->lock_restart);
+        env_ctl->restart_envname = envname;
+        pthread_cond_wait(&env_ctl->cond_restart, &env_ctl->lock_restart);
+        pthread_mutex_unlock(&env_ctl->lock_restart);
         break;
     default:
         return false;
@@ -202,8 +202,7 @@ void *na_ctl_loop (void *args)
     env = (na_ctl_env_t *)args;
     
     if (strlen(env->sockpath) > 0) {
-        //env->fd = na_stat_server_unixsock_init(env->sockpath, env->access_mask);
-        env->fd = na_front_server_tcpsock_init(50000, 32);
+        env->fd = na_stat_server_unixsock_init(env->sockpath, env->access_mask);
     } else {
         NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
     }

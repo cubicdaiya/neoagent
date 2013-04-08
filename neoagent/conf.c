@@ -222,6 +222,24 @@ void na_conf_ctl_init(struct json_object *ctl_obj, na_ctl_env_t *na_ctl_env)
 
 }
 
+int na_conf_get_environment_idx(struct json_object *environments_obj, char *envname)
+{
+    struct json_object *environment_obj;
+    struct json_object *param_obj;
+    int l;
+
+    l = json_object_array_length(environments_obj);
+
+    for (int i=0;i<l;++i) {
+        environment_obj = json_object_array_get_idx(environments_obj, i);
+        param_obj       = json_object_object_get(environment_obj, "name");
+        if (strcmp(envname, json_object_get_string(param_obj)) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
                       int idx, bool reconf)
 {

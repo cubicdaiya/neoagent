@@ -77,6 +77,7 @@ struct json_object *na_get_conf(const char *conf_file_json);
 struct json_object *na_get_ctl(struct json_object *conf_obj);
 struct json_object *na_get_environments(struct json_object *conf_obj, int *env_cnt);
 void na_conf_ctl_init(struct json_object *ctl_obj, na_ctl_env_t *na_ctl_env);
+int na_conf_get_environment_idx(struct json_object *environments_obj, char *envname);
 void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
                       int idx, bool reconf);
 

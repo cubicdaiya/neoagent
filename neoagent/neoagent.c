@@ -147,8 +147,8 @@ static void na_setup_signals (void)
 
 static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name)
 {
-    strncpy(orig_proc_name + strlen(orig_proc_name), ": ",          NA_PROC_NAME_MAX);
-    strncpy(orig_proc_name + strlen(orig_proc_name), env_proc_name, NA_PROC_NAME_MAX);
+    strncpy(orig_proc_name + strlen(orig_proc_name), ": ",          NA_PROC_NAME_MAX + 1);
+    strncpy(orig_proc_name + strlen(orig_proc_name), env_proc_name, NA_PROC_NAME_MAX + 1);
 }
 
 static void na_kill_childs(pid_t *pids, int sig)
@@ -257,6 +257,9 @@ int main (int argc, char *argv[])
         ctl_obj = na_get_ctl(conf_obj);
         na_conf_ctl_init(ctl_obj, &env_ctl);
         env_ctl.tbl_env = tbl_env;
+        env_ctl.restart_envname = NULL;
+        pthread_mutex_init(&env_ctl.lock_restart, NULL);
+        pthread_cond_init(&env_ctl.cond_restart, NULL);
         pthread_create(&ctl_th, NULL, na_ctl_loop, &env_ctl);
         goto MASTER_CYCLE;
     }
@@ -288,23 +291,43 @@ int main (int argc, char *argv[])
             }
             break;
         }
-#if 0
+
         if (is_master_process()) {
-            lock(env_ctl->lock);
-            if (env_ctl->restart_flg) {
+
+            pthread_mutex_lock(&env_ctl.lock_restart);
+            if (env_ctl.restart_envname != NULL) {
                 pid_t pid = fork();
                 void *th_ret;
+                int ridx;
+                conf_obj         = na_get_conf(conf_file);
+                environments_obj = na_get_environments(conf_obj, &env_cnt);
+                ridx             = na_conf_get_environment_idx(environments_obj, env_ctl.restart_envname);
                 if (pid == -1) {
+                    pthread_mutex_unlock(&env_ctl.lock_restart);
                     NA_DIE_WITH_ERROR(NA_ERROR_FAILED_CREATE_PROCESS);
-                } else if (pid == 0) {
-                    pthread_cancel(&ctl_th);
-                    pthread_join(&ctl_th, &th_ret);
+                } else if (pid == 0) { // child
+                    pthread_cancel(ctl_th);
+                    pthread_join(ctl_th, &th_ret);
+
+                    na_memproto_bm_skip_init();
+
+                    memset(&env, 0, sizeof(env));
+                    na_env_setup_default(&env, ridx);
+                    na_conf_env_init(environments_obj, &env, ridx, false);
+                    argv[0][strlen(argv[0]) - (sizeof(": master") - 1)] = '\0';
+                    na_set_env_proc_name(argv[0], env.name);
+                    na_env_init(&env);
+                    pthread_create(&event_th, NULL, na_event_loop, &env);
+                    json_object_put(conf_obj);
+                } else { // master
+                    pids[ridx] = pid;
                 }
-                env_ctl->restart_flg = false;
+                pthread_cond_broadcast(&env_ctl.cond_restart);
+                env_ctl.restart_envname = NULL;
             }            
-            unlock(env_ctl->lock);
+            pthread_mutex_unlock(&env_ctl.lock_restart);
         }
-#endif
+
         if (!is_master_process() && SigReconf == 1) {
             conf_obj         = na_get_conf(conf_file);
             environments_obj = na_get_environments(conf_obj, &env_cnt);
