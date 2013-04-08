@@ -1,0 +1,13 @@
+#compdef neoctl
+#
+# neoctl completion
+# Tatsuhiko Kubo <cubicdaiya@gmail.com>
+#
+_neoctl () {
+    _arguments -s \
+	'(-s --sock)'{-s,--sock}'[ctl socket path]:file:_files -g "*.sock"' \
+	'(-c --cmd)'{-c,--cmd}'[command(reload|restart)]' \
+	'(-n --name)'{-n,--name}'[environment name]' \
+}
+
+_neoctl "$@"
