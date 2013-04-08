@@ -219,5 +219,6 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('neoagent', 'neoagent', u'A Yet Another Memcached Protocol Proxy Server', [u'Tatsuhiko Kubo'], 1),
-    ('neostat',  'neostat',  u'A Status Monitor For Neoagent',        [u'Tatsuhiko Kubo'], 1)
+    ('neostat',  'neostat',  u'A Status Monitor For Neoagent',                 [u'Tatsuhiko Kubo'], 1),
+    ('neoctl',   'neoctl',   u'A Process Controller For Neoagent',             [u'Tatsuhiko Kubo'], 1)
 ]
