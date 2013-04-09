@@ -130,7 +130,6 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
         waitpid(pid, &status, 0);
         pthread_mutex_lock(&env_ctl->lock_restart);
         env_ctl->restart_envname = envname;
-        pthread_cond_wait(&env_ctl->cond_restart, &env_ctl->lock_restart);
         pthread_mutex_unlock(&env_ctl->lock_restart);
         break;
     default:
