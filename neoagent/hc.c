@@ -47,9 +47,6 @@
 static const char *na_hc_test_key = "neoagent_test_key";
 static const char *na_hc_test_val = "neoagent_test_val";
 
-// external globals
-volatile sig_atomic_t SigExit;
-
 // refs to external globals
 extern pthread_rwlock_t LockReconf;
 
@@ -132,11 +129,6 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
 
     th_ret = 0;
     env    = (na_env_t *)w->data;
-
-    if (SigExit == 1) {
-        pthread_exit(&th_ret);
-        return;
-    }
 
     pthread_rwlock_rdlock(&LockReconf);
     pthread_mutex_lock(&env->lock_error_count);

@@ -68,7 +68,6 @@ static na_client_t *ClientPool;
 static na_event_queue_t *EventQueue = NULL;
 
 // external globals
-volatile sig_atomic_t SigExit;
 volatile sig_atomic_t SigClear;
 
 // refs to external globals
@@ -521,11 +520,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     tsfd     = -1;
     cur_pool = -1;
     cur_cli  = -1;
-
-    if (SigExit == 1) {
-        pthread_exit(&th_ret);
-        return;
-    }
 
     if (SigClear == 1) {
         na_env_clear(env);
