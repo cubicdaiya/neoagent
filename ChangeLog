@@ -1,3 +1,11 @@
+2013-04-10 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* support multi environments
+
+	* fix uninitialized bug(env->slow_query_fp is not initialized)
+
+	* 0.7.0 released
+
 2013-04-01 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* add parameter 'slow_query_log_access_mask'

@@ -1,3 +1,13 @@
+neoagent (0.7.0-1) precise; urgency=low
+
+  * support multi environments
+
+  * fix uninitialized bug(env->slow_query_fp is not initialized)
+
+  * 0.7.0 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 10 Apr 2013 14:39:47 +0900
+
 neoagent (0.6.4-1) precise; urgency=low
 
   * add parameter 'slow_query_log_access_mask'
