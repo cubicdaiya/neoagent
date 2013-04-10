@@ -10,6 +10,10 @@ Sample configuration
 .. code-block:: javascript
 
  {
+     "ctl" : {
+         "sockpath" : "/var/run/neoagent_ctl.sock",
+         "access_mask" : "0666",
+     },
      "environments" :
      [
          {
@@ -40,6 +44,20 @@ Sample configuration
          }
      ]
  }
+
+ctl
+---
+
+**sockpath**
+
+ unix domain socket path for neoctl
+
+**access_mask**
+
+ access mask of unix domain socket file for neoctl
+
+environment
+-----------
 
 **name**
 
