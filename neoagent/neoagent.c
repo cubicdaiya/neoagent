@@ -72,7 +72,7 @@ static void na_signal_clear_handler (int sig);
 static void na_signal_reconf_handler (int sig);
 static void na_setup_signals (void);
 static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name);
-static void na_kill_childs(pid_t *pids, int sig);
+static void na_kill_childs(pid_t *pids, size_t c, int sig);
 static bool is_master_process(void);
 
 static void na_version(void)
@@ -151,9 +151,8 @@ static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_nam
     strncpy(orig_proc_name + strlen(orig_proc_name), env_proc_name, NA_PROC_NAME_MAX + 1);
 }
 
-static void na_kill_childs(pid_t *pids, int sig)
+static void na_kill_childs(pid_t *pids, size_t c, int sig)
 {
-    size_t c = sizeof(pids) / sizeof(pid_t);
     for (int i=0;i<c;++i) {
         kill(pids[i], sig);
     }
@@ -286,7 +285,7 @@ int main (int argc, char *argv[])
 
         if (SigExit == 1) {
             if (is_master_process()) {
-                na_kill_childs(pids, SIGINT);
+                na_kill_childs(pids, env_cnt, SIGINT);
             }
             break;
         }
