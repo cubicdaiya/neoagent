@@ -243,7 +243,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                     client->srbuf + client->srbufsize,
                     client->response_bufsize - client->srbufsize);
 
-        if (size <= 0) {
+        if (size == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 goto unlock_reconf; // not ready yet
             }
@@ -283,7 +283,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                      client->crbuf + client->swbufsize,
                      client->crbufsize - client->swbufsize);
 
-        if (size < 0) {
+        if (size == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 goto unlock_reconf; // not ready yet
             } else if (client->is_use_connpool) {
@@ -381,7 +381,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
         if (size == 0) {
             na_event_stop(EV_A_ w, client, env);
             goto unlock_reconf; // request success
-        } else if (size < 0) {
+        } else if (size == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 goto unlock_reconf; // not ready yet
             }
@@ -429,7 +429,7 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
                      client->srbuf + client->cwbufsize,
                      client->srbufsize - client->cwbufsize);
 
-        if (size < 0) {
+        if (size == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 goto unlock_reconf; // not ready yet
             }
