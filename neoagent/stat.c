@@ -116,19 +116,12 @@ static void na_env_set_jbuf(char *buf, int bufsize, na_env_t *env)
     json_object_object_add(stat_obj, "backup_port",                  json_object_new_int(env->backup_server.host.port));
     json_object_object_add(stat_obj, "current_target_host",          json_object_new_string(na_active_host_select(env)));
     json_object_object_add(stat_obj, "current_target_port",          json_object_new_int(na_active_port_select(env)));
-    json_object_object_add(stat_obj, "error_count",                  json_object_new_int(env->error_count));
-    json_object_object_add(stat_obj, "error_count_max",              json_object_new_int(env->error_count_max));
     json_object_object_add(stat_obj, "worker_max",                   json_object_new_int(env->worker_max));
     json_object_object_add(stat_obj, "conn_max",                     json_object_new_int(env->conn_max));
     json_object_object_add(stat_obj, "connpool_max",                 json_object_new_int(env->connpool_max));
-    json_object_object_add(stat_obj, "is_connpool_only",             json_object_new_string(na_bool2str(env->is_connpool_only)));
     json_object_object_add(stat_obj, "is_refused_active",            json_object_new_string(na_bool2str(env->is_refused_active)));
     json_object_object_add(stat_obj, "request_bufsize",              json_object_new_int(env->request_bufsize));
-    json_object_object_add(stat_obj, "request_bufsize_max",          json_object_new_int(env->request_bufsize_max));
-    json_object_object_add(stat_obj, "request_bufsize_current_max",  json_object_new_int(env->request_bufsize_current_max));
     json_object_object_add(stat_obj, "response_bufsize",             json_object_new_int(env->response_bufsize));
-    json_object_object_add(stat_obj, "response_bufsize_max",         json_object_new_int(env->response_bufsize_max));
-    json_object_object_add(stat_obj, "response_bufsize_current_max", json_object_new_int(env->response_bufsize_current_max));
     json_object_object_add(stat_obj, "current_conn",                 json_object_new_int(env->current_conn));
     json_object_object_add(stat_obj, "available_conn",               json_object_new_int(na_available_conn(connpool)));
     json_object_object_add(stat_obj, "current_conn_max",             json_object_new_int(env->current_conn_max));
@@ -196,10 +189,6 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     }
 
     pthread_rwlock_rdlock(&LockReconf);
-    if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
-        env->error_count = 0;
-        goto unlock_reconf;
-    }
 
     if ((cfd = na_server_accept(stfd)) < 0) {
         NA_STDERR("accept()");

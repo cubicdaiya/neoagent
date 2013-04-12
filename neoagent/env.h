@@ -114,16 +114,11 @@ typedef struct na_env_t {
     int current_conn;
     int current_conn_max;
     int request_bufsize;
-    int request_bufsize_max;
     int response_bufsize;
-    int response_bufsize_max;
     ev_io fs_watcher;
     bool is_use_backup;
     bool is_refused_active;
     bool is_refused_accept;
-    bool is_connpool_only;
-    bool is_extensible_request_buf;
-    bool is_extensible_response_buf;
     bool *is_worker_busy;
     na_connpool_t connpool_active;
     na_connpool_t connpool_backup;
@@ -131,22 +126,15 @@ typedef struct na_env_t {
     pthread_mutex_t lock_current_conn;
     pthread_mutex_t lock_tid;
     pthread_mutex_t lock_loop;
-    pthread_mutex_t lock_error_count;
     pthread_rwlock_t lock_refused;
     pthread_rwlock_t *lock_worker_busy;
-    pthread_rwlock_t lock_request_bufsize_max;
-    pthread_rwlock_t lock_response_bufsize_max;
     na_event_model_t event_model;
-    int error_count;
     int worker_max;
     int conn_max;
     int connpool_max;
     int connpool_use_max;
     int client_pool_max;
-    int request_bufsize_current_max;
-    int response_bufsize_current_max;
     int loop_max;
-    int error_count_max;
     struct timespec slow_query_sec;
     char slow_query_log_path[NA_PATH_MAX + 1];
     FILE *slow_query_fp;
@@ -195,8 +183,5 @@ void na_env_clear (na_env_t *env);
 
 void na_connpool_create (na_connpool_t *connpool, int c);
 void na_connpool_destroy (na_connpool_t *connpool);
-
-void na_error_count_up (na_env_t *env);
-
 
 #endif // NA_ENV_H

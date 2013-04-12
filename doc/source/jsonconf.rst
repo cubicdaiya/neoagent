@@ -31,12 +31,8 @@ Sample configuration
              "connpool_max": 30,
              "connpool_use_max": 10000,
              "client_pool_max": 30,
-             "error_count_max": 1000,
-             "is_connpool_only": false,
              "request_bufsize":65536,
-             "request_bufsize_max":131072,
              "response_bufsize":65536,
-             "response_bufsize_max":131072,
              "slow_query_sec":0.0,
              "slow_query_log_path":"/var/log/neoagent_slow.log",
              "slow_query_log_format":"json"
@@ -115,29 +111,13 @@ environment
 
  preserved client data size on startup
 
-**error_count_max**
-
- If error count over this number, 'error_count' is initialized
-
-**is_connpool_only**
-
- If this paramenter is true, neoagent don't create connection more than 'connpool_max'.
-
 **request_bufsize**
 
  starting buffer size of each client's request
 
-**request_bufsize_max**
-
- maximum buffer size of each client's request
-
 **reponse_bufsize**
 
  starting buffer size of response from server
-
-**response_bufsize_max**
-
- maximum buffer size of response from server
 
 **slow_query_sec**
 

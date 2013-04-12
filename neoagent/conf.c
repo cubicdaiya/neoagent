@@ -76,12 +76,8 @@ const char *na_params[NA_PARAM_MAX]     = {
     [NA_PARAM_CLIENT_POOL_MAX]          = "client_pool_max",
     [NA_PARAM_LOOP_MAX]                 = "loop_max",
     [NA_PARAM_EVENT_MODEL]              = "event_model",
-    [NA_PARAM_ERROR_COUNT_MAX]          = "error_count_max",
-    [NA_PARAM_IS_CONNPOOL_ONLY]         = "is_connpool_only",
     [NA_PARAM_REQUEST_BUFSIZE]          = "request_bufsize",
-    [NA_PARAM_REQUEST_BUFSIZE_MAX]      = "request_bufsize_max",
     [NA_PARAM_RESPONSE_BUFSIZE]         = "response_bufsize",
-    [NA_PARAM_RESPONSE_BUFSIZE_MAX]     = "response_bufsize_max",
     [NA_PARAM_SLOW_QUERY_SEC]           = "slow_query_sec",
     [NA_PARAM_SLOW_QUERY_LOG_PATH]      = "slow_query_log_path",
     [NA_PARAM_SLOW_QUERY_LOG_FORMAT]    = "slow_query_log_format",
@@ -263,33 +259,18 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
 
         // runtime-reconfigurable parameters
         switch (i) {
-        case NA_PARAM_IS_CONNPOOL_ONLY:
-            NA_PARAM_TYPE_CHECK(param_obj, json_type_boolean);
-            na_env->is_connpool_only = json_object_get_boolean(param_obj) == 1 ? true : false;
             continue;
         case NA_PARAM_REQUEST_BUFSIZE:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->request_bufsize = json_object_get_int(param_obj);
             continue;
-        case NA_PARAM_REQUEST_BUFSIZE_MAX:
-            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
-            na_env->request_bufsize_max = json_object_get_int(param_obj);
-            continue;
         case NA_PARAM_RESPONSE_BUFSIZE:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->response_bufsize = json_object_get_int(param_obj);
             continue;
-        case NA_PARAM_RESPONSE_BUFSIZE_MAX:
-            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
-            na_env->response_bufsize_max = json_object_get_int(param_obj);
-            continue;
         case NA_PARAM_CONN_MAX:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->conn_max = json_object_get_int(param_obj);
-            continue;
-        case NA_PARAM_ERROR_COUNT_MAX:
-            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
-            na_env->error_count_max = json_object_get_int(param_obj);
             continue;
         case NA_PARAM_SLOW_QUERY_SEC:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_double);
@@ -393,9 +374,6 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
             }
         }
     }
-
-    na_env->is_extensible_request_buf  = na_env->request_bufsize  < na_env->request_bufsize_max  ? true : false;
-    na_env->is_extensible_response_buf = na_env->response_bufsize < na_env->response_bufsize_max ? true : false;
 
     // open slow query log, if enabled
     if (((na_env->slow_query_sec.tv_sec  != 0)  ||

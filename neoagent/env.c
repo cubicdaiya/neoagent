@@ -45,10 +45,8 @@ static const int  NA_CONN_MAX_DEFAULT         = 1000;
 static const int  NA_CONNPOOL_MAX_DEFAULT     = 20;
 static const int  NA_CONNPOOL_USE_MAX_DEFAULT = 10000;
 static const int  NA_CLIENT_POOL_MAX_DEFAULT  = 20;
-static const int  NA_ERROR_COUNT_MAX_DEFAULT  = 1000;
 static const int  NA_ACCESS_MASK_DEFAULT      = 0664;
 static const int  NA_BUFSIZE_DEFAULT          = 65536;
-static const bool NA_IS_CONNPOOL_ONLY_DEFAULT = false;
 static const int  NA_WORKER_MAX_DEFAULT       = 1;
 
 // refs to external globals
@@ -75,13 +73,9 @@ void na_env_setup_default(na_env_t *env, int idx)
     env->connpool_max            = NA_CONNPOOL_MAX_DEFAULT;
     env->connpool_use_max        = NA_CONNPOOL_USE_MAX_DEFAULT;
     env->client_pool_max         = NA_CLIENT_POOL_MAX_DEFAULT;
-    env->error_count_max         = NA_ERROR_COUNT_MAX_DEFAULT;
-    env->is_connpool_only        = NA_IS_CONNPOOL_ONLY_DEFAULT;
     env->is_use_backup           = false;
     env->request_bufsize         = NA_BUFSIZE_DEFAULT;
-    env->request_bufsize_max     = NA_BUFSIZE_DEFAULT;
     env->response_bufsize        = NA_BUFSIZE_DEFAULT;
-    env->response_bufsize_max    = NA_BUFSIZE_DEFAULT;
     memset(&env->slow_query_sec, 0, sizeof(struct timespec));
     env->slow_query_fp = NULL;
     env->slow_query_log_format   = NA_LOG_FORMAT_PLAIN;
@@ -97,17 +91,13 @@ void na_env_init(na_env_t *env)
     for (int j=0;j<env->worker_max;++j) {
         env->is_worker_busy[j] = false;
     }
-    env->error_count      = 0;
     env->current_conn_max = 0;
     pthread_mutex_init(&env->lock_connpool,     NULL);
     pthread_mutex_init(&env->lock_current_conn, NULL);
     pthread_mutex_init(&env->lock_tid,          NULL);
     pthread_mutex_init(&env->lock_loop,         NULL);
-    pthread_mutex_init(&env->lock_error_count,  NULL);
-    pthread_rwlock_init(&env->lock_refused,              NULL);
-    pthread_rwlock_init(&env->lock_request_bufsize_max,  NULL);
-    pthread_rwlock_init(&env->lock_response_bufsize_max, NULL);
-    pthread_rwlock_init(&LockReconf,                     NULL);
+    pthread_rwlock_init(&env->lock_refused, NULL);
+    pthread_rwlock_init(&LockReconf,        NULL);
     env->lock_worker_busy = calloc(sizeof(pthread_rwlock_t), env->worker_max);
     for (int j=0;j<env->worker_max;++j) {
         pthread_rwlock_init(&env->lock_worker_busy[j], NULL);
@@ -120,17 +110,5 @@ void na_env_init(na_env_t *env)
 
 void na_env_clear (na_env_t *env)
 {
-    env->error_count                  = 0;
-    env->current_conn_max             = 0;
-    env->request_bufsize_current_max  = 0;
-    env->response_bufsize_current_max = 0;
-}
-
-void na_error_count_up (na_env_t *env)
-{
-    if (env->error_count_max > 0) {
-        pthread_mutex_lock(&env->lock_error_count);
-        env->error_count++;
-        pthread_mutex_unlock(&env->lock_error_count);
-    }
+    env->current_conn_max = 0;
 }

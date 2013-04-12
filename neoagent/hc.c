@@ -131,20 +131,11 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
     env    = (na_env_t *)w->data;
 
     pthread_rwlock_rdlock(&LockReconf);
-    pthread_mutex_lock(&env->lock_error_count);
-    if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
-        na_hc_event_set(EV_A_ w, revents);
-        env->error_count = 0;
-        pthread_mutex_unlock(&env->lock_error_count);
-        goto unlock_reconf;
-    }
-    pthread_mutex_unlock(&env->lock_error_count);
 
     tsfd = na_target_server_tcpsock_init();
 
     if (tsfd <= 0) {
         na_hc_event_set(EV_A_ w, revents);
-        na_error_count_up(env);
         NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
         goto unlock_reconf;
     }

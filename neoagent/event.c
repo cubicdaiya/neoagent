@@ -59,7 +59,6 @@
 
 #define NA_EVENT_FAIL(na_error, loop, w, client, env) do {  \
         na_event_stop(loop, w, client, env);                \
-        na_error_count_up(env);                             \
         NA_STDERR_MESSAGE(na_error);                        \
     } while(false)
 
@@ -229,22 +228,13 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
         if ((client->na_from_ts_time_begin.tv_sec == 0) &&
             (client->na_from_ts_time_begin.tv_nsec == 0))
+        {
             na_slow_query_gettime(env, &client->na_from_ts_time_begin);
+        }
 
-        if (!env->is_extensible_response_buf) {
-            if (client->srbufsize >= client->response_bufsize) {
-                NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
-                goto unlock_reconf; // request fail
-            }
-        } else if (client->response_bufsize > env->response_bufsize_max) {
-            NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
-            goto unlock_reconf; // request fail
-        } else if (client->srbufsize >= client->response_bufsize) {
+        if (client->srbufsize >= client->response_bufsize) {
             size_t es;
             es = (client->response_bufsize - 1) * 2;
-            if (es >= env->response_bufsize_max) {
-                es = env->response_bufsize_max;
-            }
             client->srbuf = (char *)realloc(client->srbuf, es + 1);
             client->response_bufsize = es;
         }
@@ -263,14 +253,6 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
         client->srbufsize                += size;
         client->srbuf[client->srbufsize]  = '\0';
-
-        pthread_rwlock_rdlock(&env->lock_response_bufsize_max);
-        if (client->srbufsize > env->response_bufsize_current_max) {
-            pthread_rwlock_unlock(&env->lock_response_bufsize_max);
-            pthread_rwlock_wrlock(&env->lock_response_bufsize_max);
-            env->response_bufsize_current_max = client->srbufsize;
-        }
-        pthread_rwlock_unlock(&env->lock_response_bufsize_max);
 
         if (client->cmd == NA_MEMPROTO_CMD_GET) {
             client->res_cnt = na_memproto_count_response_get(client->srbuf, client->srbufsize);
@@ -328,7 +310,6 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                 if (!na_server_connect(client->connpool->fd_pool[i], &server->addr)) {
                     if (errno != EINPROGRESS && errno != EALREADY) {
                         pthread_mutex_unlock(&env->lock_connpool);
-                        na_error_count_up(env);
                         NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
                     }
                 }
@@ -386,20 +367,9 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
     if (revents & EV_READ) {
 
-        if (!env->is_extensible_request_buf) {
-            if (client->crbufsize >= client->request_bufsize) {
-                NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
-                goto unlock_reconf; // request fail
-            }
-        } else if (client->request_bufsize >= env->request_bufsize_max) {
-            NA_EVENT_FAIL(NA_ERROR_OUTOF_BUFFER, EV_A, w, client, env);
-            goto unlock_reconf; // request fail
-        } else if (client->crbufsize >= client->request_bufsize) {
+        if (client->crbufsize >= client->request_bufsize) {
             size_t es;
             es = (client->request_bufsize - 1) * 2;
-            if (es >= env->request_bufsize_max) {
-                es = env->request_bufsize_max;
-            }
             client->crbuf = (char *)realloc(client->crbuf, es + 1);
             client->request_bufsize = es;
         }
@@ -421,14 +391,6 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
         client->crbufsize                += size;
         client->crbuf[client->crbufsize]  = '\0';
-
-        pthread_rwlock_rdlock(&env->lock_request_bufsize_max);
-        if (client->crbufsize > env->request_bufsize_current_max) {
-            pthread_rwlock_unlock(&env->lock_request_bufsize_max);
-            pthread_rwlock_wrlock(&env->lock_request_bufsize_max);
-            env->request_bufsize_current_max = client->crbufsize;
-        }
-        pthread_rwlock_unlock(&env->lock_request_bufsize_max);
 
         client->cmd = na_memproto_detect_command(client->crbuf);
 
@@ -534,14 +496,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
     pthread_rwlock_unlock(&env->lock_refused);
 
-    pthread_mutex_lock(&env->lock_error_count);
-    if (env->error_count_max > 0 && (env->error_count > env->error_count_max)) {
-        env->error_count = 0;
-        pthread_mutex_unlock(&env->lock_error_count);
-        goto unlock_reconf;
-    }
-    pthread_mutex_unlock(&env->lock_error_count);
-
     pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn >= env->conn_max) {
         pthread_mutex_unlock(&env->lock_current_conn);
@@ -551,44 +505,28 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
     connpool = na_connpool_select(env);
 
-    if (env->is_connpool_only) {
-        pthread_mutex_lock(&env->lock_current_conn);
-        if (env->current_conn >= connpool->max) {
-            pthread_mutex_unlock(&env->lock_current_conn);
+    if (!na_connpool_assign(env, connpool, &cur_pool, &tsfd)) {
+        na_server_t *server;
+        tsfd = na_target_server_tcpsock_init();
+        if (tsfd < 0) {
+            NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
             goto unlock_reconf;
         }
-        pthread_mutex_unlock(&env->lock_current_conn);
-        if (!na_connpool_assign(env, connpool, &cur_pool, &tsfd)) {
-            na_error_count_up(env);
-            NA_STDERR("failed assign connection from connpool.");
-            goto unlock_reconf;
+        na_target_server_tcpsock_setup(tsfd, true);
+
+        if (env->is_use_backup) {
+            pthread_rwlock_rdlock(&env->lock_refused);
+            server = env->is_refused_active ? &env->backup_server : &env->target_server;
+            pthread_rwlock_unlock(&env->lock_refused);
+        } else {
+            server = &env->target_server;
         }
-    } else {
-        if (!na_connpool_assign(env, connpool, &cur_pool, &tsfd)) {
-            na_server_t *server;
-            tsfd = na_target_server_tcpsock_init();
-            if (tsfd < 0) {
-                na_error_count_up(env);
-                NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
+
+        if (!na_server_connect(tsfd, &server->addr)) {
+            if (errno != EINPROGRESS && errno != EALREADY) {
+                close(tsfd);
+                NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
                 goto unlock_reconf;
-            }
-            na_target_server_tcpsock_setup(tsfd, true);
-
-            if (env->is_use_backup) {
-                pthread_rwlock_rdlock(&env->lock_refused);
-                server = env->is_refused_active ? &env->backup_server : &env->target_server;
-                pthread_rwlock_unlock(&env->lock_refused);
-            } else {
-                server = &env->target_server;
-            }
-
-            if (!na_server_connect(tsfd, &server->addr)) {
-                if (errno != EINPROGRESS && errno != EALREADY) {
-                    close(tsfd);
-                    na_error_count_up(env);
-                    NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
-                    goto unlock_reconf;
-                }
             }
         }
     }
@@ -625,7 +563,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                 connpool->mark[cur_pool] = 0;
                 pthread_mutex_unlock(&env->lock_connpool);
             }
-            na_error_count_up(env);
             NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
             goto unlock_reconf;
         }
@@ -645,7 +582,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                 connpool->mark[cur_pool] = 0;
                 pthread_mutex_unlock(&env->lock_connpool);
             }
-            na_error_count_up(env);
             NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
             goto unlock_reconf;
         }
@@ -691,7 +627,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
     if (!na_is_worker_busy(env)) {
         if (!na_event_queue_push(EventQueue, client)) {
-            na_error_count_up(env);
             NA_STDERR("Too Many Connections!");
             ev_io_init(&client->c_watcher,  na_client_callback,        client->cfd,  EV_READ);
             ev_io_init(&client->ts_watcher, na_target_server_callback, client->tsfd, EV_NONE);
