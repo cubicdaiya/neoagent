@@ -610,12 +610,12 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->loop_cnt          = 0;
     client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
     client->connpool          = na_connpool_select(env);
-    memset(&client->na_from_ts_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_from_ts_time_end, 0, sizeof(struct timespec));
-    memset(&client->na_to_ts_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_to_ts_time_end, 0, sizeof(struct timespec));
+    memset(&client->na_from_ts_time_begin,   0, sizeof(struct timespec));
+    memset(&client->na_from_ts_time_end,     0, sizeof(struct timespec));
+    memset(&client->na_to_ts_time_begin,     0, sizeof(struct timespec));
+    memset(&client->na_to_ts_time_end,       0, sizeof(struct timespec));
     memset(&client->na_to_client_time_begin, 0, sizeof(struct timespec));
-    memset(&client->na_to_client_time_end, 0, sizeof(struct timespec));
+    memset(&client->na_to_client_time_end,   0, sizeof(struct timespec));
 
     pthread_mutex_lock(&env->lock_current_conn);
     ++env->current_conn;
