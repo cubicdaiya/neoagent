@@ -657,7 +657,7 @@ static void *na_event_observer(void *args)
 
         if (client == NULL) {
             pthread_mutex_lock(&EventQueue->lock);
-            if (EventQueue->cnt == 0) {
+            while (EventQueue->cnt == 0) {
                 pthread_cond_wait(&EventQueue->cond, &EventQueue->lock);
             }
             pthread_mutex_unlock(&EventQueue->lock);
