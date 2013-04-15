@@ -697,6 +697,9 @@ void *na_event_loop (void *args)
     pthread_t  th_support;
     pthread_t *th_workers;
 
+    // for assign connection from connpool directional-ramdomly
+    srand(time(NULL));
+
     env = (na_env_t *)args;
 
     if (strlen(env->fssockpath) > 0) {
@@ -734,9 +737,6 @@ void *na_event_loop (void *args)
         env->stfd = na_stat_server_tcpsock_init(env->stport);
     }
     pthread_create(&th_support, NULL, na_support_loop, env);
-
-    // for assign connection from connpool directional-ramdomly
-    srand(time(NULL));
 
     pthread_mutex_lock(&env->lock_loop);
     loop = na_event_loop_create(env->event_model);

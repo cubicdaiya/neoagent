@@ -60,13 +60,17 @@ static bool na_hc_test_request(int tsfd)
     char dcmd[BUFSIZ]; // delete
     char gres[BUFSIZ]; // get response
 
+    useconds_t rt;
+
     cnt_fail = 0;
-    try_max  = 5;
+    try_max  = 3;
     gethostname(hostname, BUFSIZ);
     snprintf(scmd, BUFSIZ, "set %s_%s 0 0 %ld\r\n%s_%s\r\n", na_hc_test_key, hostname, strlen(na_hc_test_val) + 1 + strlen(hostname), na_hc_test_val, hostname);
     snprintf(gcmd, BUFSIZ, "get %s_%s\r\n", na_hc_test_key, hostname);
     snprintf(dcmd, BUFSIZ, "delete %s_%s\r\n", na_hc_test_key, hostname);
     snprintf(gres, BUFSIZ, "VALUE %s_%s 0 %ld\r\n%s_%s\r\nEND\r\n", na_hc_test_key, hostname, strlen(na_hc_test_val) + 1 + strlen(hostname), na_hc_test_val, hostname);
+
+    rt = 0;
 
     for (int i=0;i<try_max;++i) {
 
@@ -81,6 +85,9 @@ static bool na_hc_test_request(int tsfd)
         if (!is_success_command(tsfd, dcmd, "DELETED\r\n")) {
             ++cnt_fail;
         }
+
+        rt = 200000 + (10000 * (rand() % 10));
+        usleep(rt);
     }
 
     if (cnt_fail == (try_max * 3)) {
