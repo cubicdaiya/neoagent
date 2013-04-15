@@ -14,3 +14,4 @@ neoagent_*.deb
 doc/build/
 neoagent/neoagent
 neoctl/neoctl
+.DS_Store

@@ -38,13 +38,6 @@ The generated html document is following.
 
     scons debian
 
-## Todo
-
-  - send update command to backup server
-  - make each environment a process (currently each environment is a thread)
-  - distributed processing
-  - IPv6 support
-
 ## Acknowledgment
 
 Thanks for pixiv Inc and its developers 
