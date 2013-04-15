@@ -1,3 +1,11 @@
+2013-04-15 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* remove unneed parameters
+
+	* fix bug(neoagent could not control processes when there are more than 3 environments)
+
+	* 0.7.1 released
+
 2013-04-10 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* support multi environments

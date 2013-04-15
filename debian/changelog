@@ -1,3 +1,13 @@
+neoagent (0.7.1-1) precise; urgency=low
+
+  * remove unneed parameters
+
+  * fix bug(neoagent could not control processes when there are more than 3 environments)
+
+  * 0.7.1 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 15 Apr 2013 10:10:21 +0900
+
 neoagent (0.7.0-1) precise; urgency=low
 
   * support multi environments
