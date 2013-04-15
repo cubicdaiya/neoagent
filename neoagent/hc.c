@@ -9,14 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <pthread.h>
 
-#include <ev.h>
-
-#include "hc.h"
-#include "error.h"
-#include "connpool.h"
-#include "env.h"
+#include "defines.h"
 
 // constants
 static const char *na_hc_test_key = "neoagent_test_key";

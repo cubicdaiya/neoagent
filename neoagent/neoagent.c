@@ -8,21 +8,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <signal.h>
 #include <assert.h>
 
-#include <json/json.h>
-
-#include "env.h"
-#include "event.h"
-#include "conf.h"
-#include "error.h"
-#include "memproto.h"
-#include "ctl.h"
-#include "util.h"
+#include "defines.h"
 #include "version.h"
 
 // constants

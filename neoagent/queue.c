@@ -8,8 +8,7 @@
 
 #include <stdlib.h>
 
-#include "queue.h"
-#include "util.h"
+#include "defines.h"
 
 na_event_queue_t *na_event_queue_create(int c)
 {

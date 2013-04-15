@@ -14,9 +14,7 @@
 
 #include <ev.h>
 
-#include "ctl.h"
-#include "error.h"
-#include "env.h"
+#include "defines.h"
 #include "ext/fnv.h"
 
 typedef enum na_ctl_cmd_t {

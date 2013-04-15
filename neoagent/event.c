@@ -9,28 +9,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/ioctl.h>
-#include <pthread.h>
 #include <assert.h>
-#include <time.h>
 
-#include <ev.h>
-
-#include "event.h"
-#include "connpool.h"
-#include "env.h"
-#include "socket.h"
-#include "error.h"
-#include "memproto.h"
-#include "stat.h"
-#include "hc.h"
-#include "util.h"
-#include "queue.h"
-#include "slowlog.h"
+#include "defines.h"
 
 #define NA_EVENT_FAIL(na_error, loop, w, client, env) do {  \
         na_event_stop(loop, w, client, env);                \

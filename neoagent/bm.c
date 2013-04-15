@@ -6,9 +6,7 @@
  *
  */
 
-#include "bm.h"
-
-#include <string.h>
+#include "defines.h"
 
 /**
  * The algorithm implemented here is based Boyer-Moore algorithm

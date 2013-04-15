@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "error.h"
+#include "defines.h"
 
 const char *na_error_messages[NA_ERROR_MAX] = {
     [NA_ERROR_INVALID_FD]            = "invalid file descriptor",

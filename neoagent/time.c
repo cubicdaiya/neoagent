@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-#include "time.h"
+#include "defines.h"
 
 void na_ts2dt(time_t time, char *format, char *buf, size_t bufsize)
 {

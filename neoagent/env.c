@@ -9,10 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pthread.h>
 
-#include "env.h"
-#include "util.h"
+#include "defines.h"
 
 static const int  NA_PORT_DEFAULT             = 30001;
 static const int  NA_STPORT_DEFAULT           = 30011;

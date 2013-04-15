@@ -9,18 +9,41 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <assert.h>
 
-#include <json/json.h>
+#include "defines.h"
 
-#include "conf.h"
-#include "env.h"
-#include "socket.h"
-#include "error.h"
-#include "slowlog.h"
+typedef enum na_ctl_param_t {
+    NA_CTL_PARAM_SOCKPATH,
+    NA_CTL_PARAM_ACCESS_MASK,
+    NA_CTL_PARAM_MAX
+} na_ctl_param_t;
+
+typedef enum na_param_t {
+    NA_PARAM_NAME,
+    NA_PARAM_PORT,
+    NA_PARAM_SOCKPATH,
+    NA_PARAM_ACCESS_MASK,
+    NA_PARAM_TARGET_SERVER,
+    NA_PARAM_BACKUP_SERVER,
+    NA_PARAM_STPORT,
+    NA_PARAM_STSOCKPATH,
+    NA_PARAM_WORKER_MAX,
+    NA_PARAM_CONN_MAX,
+    NA_PARAM_CONNPOOL_MAX,
+    NA_PARAM_CONNPOOL_USE_MAX,
+    NA_PARAM_CLIENT_POOL_MAX,
+    NA_PARAM_LOOP_MAX,
+    NA_PARAM_EVENT_MODEL,
+    NA_PARAM_REQUEST_BUFSIZE,
+    NA_PARAM_RESPONSE_BUFSIZE,
+    NA_PARAM_SLOW_QUERY_SEC,
+    NA_PARAM_SLOW_QUERY_LOG_PATH,
+    NA_PARAM_SLOW_QUERY_LOG_FORMAT,
+    NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK,
+    NA_PARAM_MAX // Always add new codes to the end before this one
+} na_param_t;
 
 #define NA_PARAM_TYPE_CHECK(param_obj, expected_type) do {            \
         if (!json_object_is_type(param_obj, expected_type)) {         \

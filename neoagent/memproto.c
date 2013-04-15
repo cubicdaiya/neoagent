@@ -8,8 +8,7 @@
 
 #include <string.h>
 
-#include "memproto.h"
-#include "bm.h"
+#include "defines.h"
 
 typedef enum na_memproto_bm_skip_t {
     NA_MEMPROTO_BM_SKIP_CRLF,

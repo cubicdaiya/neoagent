@@ -7,12 +7,9 @@
  */
 
 #include <unistd.h>
-#include <pthread.h>
 #include <errno.h>
 
-#include "error.h"
-#include "connpool.h"
-#include "util.h"
+#include "defines.h"
 
 // private functions
 static void na_connpool_deactivate (na_connpool_t *connpool);

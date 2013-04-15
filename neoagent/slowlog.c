@@ -10,11 +10,11 @@
 #include <time.h>
 #include <unistd.h>
 #include <limits.h>
-#include <sys/time.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-#include <json/json.h>
-
-#include "slowlog.h"
+#include "defines.h"
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 64

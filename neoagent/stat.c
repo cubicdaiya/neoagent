@@ -7,18 +7,9 @@
  */
 
 #include <string.h>
-#include <stdbool.h>
 #include <unistd.h>
-#include <time.h>
-#include <pthread.h>
 
-#include <ev.h>
-#include <json/json.h>
-
-#include "error.h"
-#include "time.h"
-#include "conf.h"
-#include "stat.h"
+#include "defines.h"
 #include "version.h"
 
 // constants
