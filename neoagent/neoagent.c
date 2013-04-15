@@ -222,6 +222,9 @@ int main (int argc, char *argv[])
     }
 
     if (is_master_process()) {
+        if (conf_obj == NULL) {
+            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_CONFPATH);
+        }
         na_set_env_proc_name(argv[0], "master");
         for (int i=0;i<env_cnt;++i) {
             na_env_setup_default(&envs[i], i);
