@@ -1,3 +1,15 @@
+2013-04-16 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* decrease source files(move *.h -> defines.h)
+
+	* delay helth check request randomly
+
+	* fix SEGV problem(If there are no arguments, neoagent occurs SEGV)
+
+	* fix bug(somtimes infinite-loop occurs)
+
+	* 0.7.2 released
+
 2013-04-15 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* remove unneed parameters

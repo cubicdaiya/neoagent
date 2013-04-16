@@ -1,3 +1,17 @@
+neoagent (0.7.2-1) precise; urgency=low
+
+  * decrease source files(move *.h -> defines.h)
+
+  * delay helth check request randomly
+
+  * fix SEGV problem(If there are no arguments, neoagent occurs SEGV)
+
+  * fix bug(somtimes infinite-loop occurs)
+
+  * 0.7.2 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Tue, 16 Apr 2013 12:43:17 +0900
+
 neoagent (0.7.1-1) precise; urgency=low
 
   * remove unneed parameters
