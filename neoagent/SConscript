@@ -10,9 +10,17 @@ env = Environment(
 
 libs         = config.libs
 use_tcmalloc = ARGUMENTS.get('tcmalloc', 'n');
+conf         = Configure(env)
 
 if use_tcmalloc == 'y' or use_tcmalloc == 'yes':
     libs.append('tcmalloc')
+
+for lib in libs:
+    if build.util.check_pkg(conf, lib):
+        env.ParseConfig('pkg-config --cflags %s' % lib)
+    elif lib == 'ev' and build.util.check_pkg(conf, 'libev'):
+        # for compatibility of libev rhel-package
+        env.ParseConfig('pkg-config --cflags libev')
 
 prog = env.Program(
     'neoagent',
@@ -21,7 +29,7 @@ prog = env.Program(
 )
 
 if 'configure' in COMMAND_LINE_TARGETS:
-    if build.util.configure(Configure(env),
+    if build.util.configure(conf,
                             libs,
                             config.headers,
                             config.funcs) is False:

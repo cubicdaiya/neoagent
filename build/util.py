@@ -7,6 +7,12 @@ def info_print():
     print "Python " + ".".join([ str(i) for i in sys.version_info ])
     print "SCons  " + SCons.__version__
 
+def check_pkg(conf, lib):
+    result = conf.TryAction('pkg-config --exists %s' % lib)[0]
+    if result == 0:
+        return False
+    return True
+
 def configure(conf, libs, headers, funcs):
     if not conf.CheckCC():
         print "c compiler is not installed!"

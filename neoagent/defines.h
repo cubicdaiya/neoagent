@@ -21,7 +21,7 @@
 
 #include <ev.h>
 #include <pthread.h>
-#include <json/json.h>
+#include <json.h>
 
 #include "ext/fnv.h"
 
