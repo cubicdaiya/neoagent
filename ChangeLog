@@ -1,3 +1,9 @@
+2013-04-17 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix problem(error handling leak)
+
+	* 0.7.3 released
+
 2013-04-16 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* decrease source files(move *.h -> defines.h)

@@ -1,3 +1,11 @@
+neoagent (0.7.2-2) precise; urgency=low
+
+  * fix problem(error handling leak)
+
+  * 0.7.3 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 17 Apr 2013 15:34:50 +0900
+
 neoagent (0.7.2-1) precise; urgency=low
 
   * decrease source files(move *.h -> defines.h)
