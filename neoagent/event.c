@@ -201,7 +201,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                     client->srbuf + client->srbufsize,
                     client->response_bufsize - client->srbufsize);
 
-        if (size == -1) {
+        if (size <= 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
                 goto unlock_reconf; // not ready yet
             }
