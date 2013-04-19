@@ -247,18 +247,18 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             } else if (client->is_use_connpool) {
                 int i = client->cur_pool;
                 na_server_t *server;
+                pthread_rwlock_rdlock(&env->lock_refused);
+                if (env->is_use_backup) {
+                    server = env->is_refused_active ? &env->backup_server : &env->target_server;
+                } else {
+                    server = &env->target_server;
+                }
+                pthread_rwlock_unlock(&env->lock_refused);
                 pthread_mutex_lock(&env->lock_connpool);
                 if (client->connpool->fd_pool[i] > 0) {
                     close(client->connpool->fd_pool[i]);
                 }
                 client->connpool->fd_pool[i] = na_target_server_tcpsock_init();
-                if (env->is_use_backup) {
-                    pthread_rwlock_rdlock(&env->lock_refused);
-                    server = env->is_refused_active ? &env->backup_server : &env->target_server;
-                    pthread_rwlock_unlock(&env->lock_refused);
-                } else {
-                    server = &env->target_server;
-                }
                 na_target_server_tcpsock_setup(client->connpool->fd_pool[i], true);
                 if (client->connpool->fd_pool[i] <= 0) {
                     pthread_mutex_unlock(&env->lock_connpool);
@@ -432,6 +432,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     na_env_t *env;
     na_client_t *client;
     na_connpool_t *connpool;
+    na_server_t *server;
 
     th_ret   = 0;
     fsfd     = w->fd;
@@ -461,24 +462,22 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
     pthread_mutex_unlock(&env->lock_current_conn);
 
+    pthread_rwlock_rdlock(&env->lock_refused);
     connpool = na_connpool_select(env);
+    if (env->is_use_backup) {
+        server = env->is_refused_active ? &env->backup_server : &env->target_server;
+    } else {
+        server = &env->target_server;
+    }
+    pthread_rwlock_unlock(&env->lock_refused);
 
-    if (!na_connpool_assign(env, connpool, &cur_pool, &tsfd)) {
-        na_server_t *server;
+    if (!na_connpool_assign(env, connpool, &cur_pool, &tsfd, server)) {
         tsfd = na_target_server_tcpsock_init();
         if (tsfd < 0) {
             NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
             goto unlock_reconf;
         }
         na_target_server_tcpsock_setup(tsfd, true);
-
-        if (env->is_use_backup) {
-            pthread_rwlock_rdlock(&env->lock_refused);
-            server = env->is_refused_active ? &env->backup_server : &env->target_server;
-            pthread_rwlock_unlock(&env->lock_refused);
-        } else {
-            server = &env->target_server;
-        }
 
         if (!na_server_connect(tsfd, &server->addr)) {
             if (errno != EINPROGRESS && errno != EALREADY) {
@@ -567,7 +566,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->res_cnt           = 0;
     client->loop_cnt          = 0;
     client->cmd               = NA_MEMPROTO_CMD_NOT_DETECTED;
-    client->connpool          = na_connpool_select(env);
+    client->connpool          = connpool;
     memset(&client->na_from_ts_time_begin,   0, sizeof(struct timespec));
     memset(&client->na_from_ts_time_end,     0, sizeof(struct timespec));
     memset(&client->na_to_ts_time_begin,     0, sizeof(struct timespec));

@@ -118,6 +118,7 @@ typedef struct na_connpool_t {
     int *fd_pool;
     int *mark;
     int *used_cnt;
+    int *active;
     int max;
 } na_connpool_t;
 
@@ -278,7 +279,7 @@ int na_bm_search (char *haystack, char *pattern, int *skip, int hlen, int plen);
  */
 void na_connpool_create (na_connpool_t *connpool, int c);
 void na_connpool_destroy (na_connpool_t *connpool);
-bool na_connpool_assign (na_env_t *env, na_connpool_t *connpool, int *cur, int *fd);
+bool na_connpool_assign (na_env_t *env, na_connpool_t *connpool, int *cur, int *fd, na_server_t *server);
 void na_connpool_init (na_env_t *env);
 na_connpool_t *na_connpool_select(na_env_t *env);
 void na_connpool_switch (na_env_t *env);
