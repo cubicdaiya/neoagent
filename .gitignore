@@ -11,7 +11,7 @@ config.log
 debian/control
 debian/neoagent
 neoagent_*.deb
-doc/build/
+doc/build/doctrees
+doc/build/html
 neoagent/neoagent
-neoctl/neoctl
 .DS_Store

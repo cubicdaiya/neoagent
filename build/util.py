@@ -36,14 +36,20 @@ def configure(conf, libs, headers, funcs):
     conf.Finish()
     return True
 
-def install(env, prog, prefix, doc_dir):
+def install(env, prog, prefix, doc_dir, misc_dir):
     if not prefix[-1] == '/':
         prefix += '/'
-    if not doc_dir[-1] == '/':
-        doc_dir += '/'
     bin_dir = prefix + 'bin/'
     man_dir = prefix + 'share/man/man1/'
     env.Alias(target="install", source=env.Install(bin_dir, prog))
     env.Install(bin_dir, prog)
+    env.Alias(target="install", source=env.Install(bin_dir, misc_dir + 'neostat/neostat'))
+    env.Install(bin_dir, misc_dir + 'neostat/neostat')
+    env.Alias(target="install", source=env.Install(bin_dir, misc_dir + 'neoctl/neoctl'))
+    env.Install(bin_dir, misc_dir + 'neoctl/neoctl')
     env.Alias(target="install", source=env.Install(man_dir, doc_dir + 'build/man/neoagent.1'))
     env.Install(man_dir, doc_dir + 'build/man/neoagent.1')
+    env.Alias(target="install", source=env.Install(man_dir, doc_dir + 'build/man/neostat.1'))
+    env.Install(man_dir, doc_dir + 'build/man/neostat.1')
+    env.Alias(target="install", source=env.Install(man_dir, doc_dir + 'build/man/neoctl.1'))
+    env.Install(man_dir, doc_dir + 'build/man/neoctl.1')
