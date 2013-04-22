@@ -82,6 +82,7 @@ void na_slow_query_check(na_client_t *client)
                 const size_t bufsz = 128;
                 char querybuf[bufsz];
 
+                snprintf(querybuf, bufsz, "%s", client->crbuf);
                 json = json_object_new_object();
                 json_object_object_add(json, "time",         json_object_new_int(now));
                 json_object_object_add(json, "type",         json_object_new_string(env->name));
@@ -91,7 +92,6 @@ void na_slow_query_check(na_client_t *client)
                 json_object_object_add(json, "na_to_ts",     json_object_new_double(na_to_ts));
                 json_object_object_add(json, "na_from_ts",   json_object_new_double(na_from_ts));
                 json_object_object_add(json, "na_to_client", json_object_new_double(na_to_client));
-                snprintf(querybuf, bufsz, "%s", client->crbuf);
                 json_object_object_add(json, "querytxt",     json_object_new_string(querybuf));
 
                 fprintf(env->slow_query_fp, "%s\n", json_object_to_json_string(json));
