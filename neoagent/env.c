@@ -80,8 +80,3 @@ void na_env_init(na_env_t *env)
         na_connpool_create(&env->connpool_backup, env->connpool_max);
     }
 }
-
-void na_env_clear (na_env_t *env)
-{
-    env->current_conn_max = 0;
-}

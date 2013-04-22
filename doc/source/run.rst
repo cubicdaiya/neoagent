@@ -28,5 +28,3 @@ neoagent handles some signal. If alerted signal is one of following signals, neo
 - SIGINT
 - SIGALRM
 - SIGHUP
-
-If alerted signal is SIGUSR1, neoagent resets values of \`error_count\` and \`current_conn_max\`.

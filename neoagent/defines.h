@@ -211,7 +211,6 @@ typedef struct na_client_t {
 void na_ctl_env_setup_default(na_ctl_env_t *ctl_env);
 void na_env_setup_default(na_env_t *env, int idx);
 void na_env_init(na_env_t *env);
-void na_env_clear (na_env_t *env);
 
 void na_connpool_create (na_connpool_t *connpool, int c);
 void na_connpool_destroy (na_connpool_t *connpool);

@@ -24,9 +24,6 @@
 static na_client_t *ClientPool;
 static na_event_queue_t *EventQueue = NULL;
 
-// external globals
-volatile sig_atomic_t SigClear;
-
 // refs to external globals
 extern pthread_rwlock_t LockReconf;
 
@@ -441,11 +438,6 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     tsfd     = -1;
     cur_pool = -1;
     cur_cli  = -1;
-
-    if (SigClear == 1) {
-        na_env_clear(env);
-        SigClear = 0;
-    }
 
     pthread_rwlock_rdlock(&LockReconf);
     pthread_rwlock_rdlock(&env->lock_refused);

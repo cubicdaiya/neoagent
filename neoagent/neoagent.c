@@ -22,7 +22,6 @@ static const int NA_PROC_NAME_MAX = 64;
 
 // external globals
 extern volatile sig_atomic_t SigExit;
-extern volatile sig_atomic_t SigClear;
 extern time_t StartTimestamp;
 
 // globals
@@ -33,7 +32,6 @@ pid_t MasterPid;
 static void na_version(void);
 static void na_usage(void);
 static void na_signal_exit_handler (int sig);
-static void na_signal_clear_handler (int sig);
 static void na_signal_reconf_handler (int sig);
 static void na_setup_signals (void);
 static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name);
@@ -64,11 +62,6 @@ static void na_signal_exit_handler (int sig)
     SigExit = 1;
 }
 
-static void na_signal_clear_handler (int sig)
-{
-    SigClear = 1;
-}
-
 static void na_signal_reconf_handler (int sig)
 {
     SigReconf = 1;
@@ -77,24 +70,19 @@ static void na_signal_reconf_handler (int sig)
 static void na_setup_signals (void)
 {
     struct sigaction sig_exit_handler;
-    struct sigaction sig_clear_handler;
     struct sigaction sig_reconf_handler;
 
     sigemptyset(&sig_exit_handler.sa_mask);
-    sigemptyset(&sig_clear_handler.sa_mask);
     sigemptyset(&sig_reconf_handler.sa_mask);
     sig_exit_handler.sa_handler   = na_signal_exit_handler;
-    sig_clear_handler.sa_handler  = na_signal_clear_handler;
     sig_reconf_handler.sa_handler = na_signal_reconf_handler;
     sig_exit_handler.sa_flags     = 0;
-    sig_clear_handler.sa_flags    = 0;
     sig_reconf_handler.sa_flags   = 0;
 
     if (sigaction(SIGTERM, &sig_exit_handler,   NULL) == -1 ||
         sigaction(SIGINT,  &sig_exit_handler,   NULL) == -1 ||
         sigaction(SIGALRM, &sig_exit_handler,   NULL) == -1 ||
         sigaction(SIGHUP,  &sig_exit_handler,   NULL) == -1 ||
-        sigaction(SIGUSR1, &sig_clear_handler,  NULL) == -1 ||
         sigaction(SIGUSR2, &sig_reconf_handler, NULL) == -1)
         {
             NA_DIE_WITH_ERROR(NA_ERROR_FAILED_SETUP_SIGNAL);
@@ -105,7 +93,6 @@ static void na_setup_signals (void)
     }
 
     SigExit   = 0;
-    SigClear  = 0;
     SigReconf = 0;
 
 }
