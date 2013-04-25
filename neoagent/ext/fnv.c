@@ -120,7 +120,8 @@ int fnv_out(fnv_tbl_t *tbl, const char *k, size_t ksiz) {
         tail->v = NULL;
         if (tail->next) {
             fnv_ent_t *new_next = tail->next->next;
-            memcpy(tail, tail->next, sizeof(tail));
+            tail->k = tail->next->k;
+            tail->v = tail->next->v;
             FNV_FREE(tail->next);
             tail->next = new_next;
         }
