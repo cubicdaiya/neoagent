@@ -257,7 +257,6 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
 
         // runtime-reconfigurable parameters
         switch (i) {
-            continue;
         case NA_PARAM_REQUEST_BUFSIZE:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->request_bufsize = json_object_get_int(param_obj);
