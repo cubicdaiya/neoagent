@@ -1,6 +1,7 @@
 {
     "ctl" : {
         "sockpath" : "/tmp/neoagent_ctl.sock",
+        "logpath"  : "/tmp/neoagent.log",
         "access_mask" : "0666",
     },
     "environments" :

@@ -17,7 +17,8 @@
 typedef enum na_ctl_param_t {
     NA_CTL_PARAM_SOCKPATH,
     NA_CTL_PARAM_ACCESS_MASK,
-    NA_CTL_PARAM_MAX
+    NA_CTL_PARAM_LOGPATH,
+    NA_CTL_PARAM_MAX // Always add new codes to the end before this one
 } na_ctl_param_t;
 
 typedef enum na_param_t {
@@ -56,6 +57,7 @@ static const int NA_JSON_BUF_MAX = 65536;
 const char *na_ctl_params[NA_PARAM_MAX] = {
     [NA_CTL_PARAM_SOCKPATH]    = "sockpath",
     [NA_CTL_PARAM_ACCESS_MASK] = "access_mask",
+    [NA_CTL_PARAM_LOGPATH]     = "logpath",
 };
 
 const char *na_params[NA_PARAM_MAX]     = {
@@ -210,7 +212,10 @@ void na_conf_ctl_init(struct json_object *ctl_obj, na_ctl_env_t *na_ctl_env)
             NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             na_ctl_env->access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
             break;
- 
+        case NA_CTL_PARAM_LOGPATH:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            strncpy(na_ctl_env->logpath, json_object_get_string(param_obj), NA_PATH_MAX);
+            break;
         }
     }
 

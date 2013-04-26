@@ -125,6 +125,7 @@ typedef struct na_connpool_t {
 typedef struct na_ctl_env_t {
     int        fd;
     char       sockpath[NA_PATH_MAX + 1];
+    char       logpath[NA_PATH_MAX + 1];
     mode_t     access_mask;
     fnv_tbl_t *tbl_env;
     ev_io      watcher;

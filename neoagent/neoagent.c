@@ -208,6 +208,7 @@ int main (int argc, char *argv[])
             na_conf_env_init(environments_obj, &envs[i], i, false);
             fnv_put(tbl_env, envs[i].name, &pids[i], strlen(envs[i].name), sizeof(pid_t));
         }
+        memset(&env_ctl, 0, sizeof(na_ctl_env_t));
         ctl_obj = na_get_ctl(conf_obj);
         na_conf_ctl_init(ctl_obj, &env_ctl);
         env_ctl.tbl_env = tbl_env;
