@@ -131,28 +131,28 @@ static void na_ctl_callback (EV_P_ struct ev_io *w, int revents)
     sfd = w->fd;
 
     if ((cfd = na_server_accept(sfd)) < 0) {
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
+        NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_FD);
         return;
     }
 
     if ((crbufsize = read(cfd, crbuf, BUFSIZ)) == -1) {
-        NA_STDERR_MESSAGE(NA_ERROR_FAILED_READ);
+        NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_FAILED_READ);
         goto finally;
     }
 
     crbuf[crbufsize] = '\0';
     if (!na_ctl_parse(env, crbuf, cmd, envname, BUFSIZ)) {
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_CTL_CMD);
+        NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_CTL_CMD);
         goto finally;
     }
 
     if (!na_is_valid_ctl_cmd(cmd)) {
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_CTL_CMD);
+        NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_CTL_CMD);
         goto finally;
     }
 
     if (!na_ctl_cmd_execute(env, cmd, envname)) {
-        NA_STDERR_MESSAGE(NA_ERROR_FAILED_EXECUTE_CTM_CMD);
+        NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_FAILED_EXECUTE_CTM_CMD);
         goto finally;
     }
 
@@ -160,7 +160,7 @@ static void na_ctl_callback (EV_P_ struct ev_io *w, int revents)
 
  finally:
     if (write(cfd, cwbuf, strlen(cwbuf)) == -1) {
-        NA_STDERR_MESSAGE(NA_ERROR_FAILED_WRITE);
+        NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_FAILED_WRITE);
     }
 
     close(cfd);
@@ -176,11 +176,11 @@ void *na_ctl_loop (void *args)
     if (strlen(env->sockpath) > 0) {
         env->fd = na_stat_server_unixsock_init(env->sockpath, env->access_mask);
     } else {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+        NA_CTL_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
     }
 
     if (env->fd < 0) {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+        NA_CTL_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
     }
 
     env->watcher.data = env;

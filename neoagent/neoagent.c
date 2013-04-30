@@ -85,11 +85,11 @@ static void na_setup_signals (void)
         sigaction(SIGHUP,  &sig_exit_handler,   NULL) == -1 ||
         sigaction(SIGUSR2, &sig_reconf_handler, NULL) == -1)
         {
-            NA_DIE_WITH_ERROR(NA_ERROR_FAILED_SETUP_SIGNAL);
+            NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_SETUP_SIGNAL);
         }
 
     if (sigignore(SIGPIPE) == -1) {
-        NA_DIE_WITH_ERROR(NA_ERROR_FAILED_IGNORE_SIGNAL);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_IGNORE_SIGNAL);
     }
 
     SigExit   = 0;
@@ -173,11 +173,11 @@ int main (int argc, char *argv[])
     }
 
     if (is_daemon && daemon(0, 0) == -1) {
-        NA_DIE_WITH_ERROR(NA_ERROR_FAILED_DAEMONIZE);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_DAEMONIZE);
     }
 
     if (env_cnt > NA_ENV_MAX) {
-        NA_DIE_WITH_ERROR(NA_ERROR_TOO_MANY_ENVIRONMENTS);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_TOO_MANY_ENVIRONMENTS);
     }
 
     StartTimestamp = time(NULL);
@@ -190,7 +190,7 @@ int main (int argc, char *argv[])
         pidx++;
         pid_t pid = fork();
         if (pid == -1) {
-            NA_DIE_WITH_ERROR(NA_ERROR_FAILED_CREATE_PROCESS);
+            NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_CREATE_PROCESS);
         } else if (pid == 0) { // child
             break;
         } else {
@@ -200,7 +200,7 @@ int main (int argc, char *argv[])
 
     if (is_master_process()) {
         if (conf_obj == NULL) {
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_CONFPATH);
+            NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_CONFPATH);
         }
         na_set_env_proc_name(argv[0], "master");
         for (int i=0;i<env_cnt;++i) {
@@ -258,7 +258,7 @@ int main (int argc, char *argv[])
                 ridx             = na_conf_get_environment_idx(environments_obj, env_ctl.restart_envname);
                 if (pid == -1) {
                     pthread_mutex_unlock(&env_ctl.lock_restart);
-                    NA_DIE_WITH_ERROR(NA_ERROR_FAILED_CREATE_PROCESS);
+                    NA_CTL_DIE_WITH_ERROR(&env_ctl, NA_ERROR_FAILED_CREATE_PROCESS);
                 } else if (pid == 0) { // child
                     pthread_cancel(ctl_th);
                     pthread_join(ctl_th, &th_ret);

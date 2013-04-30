@@ -121,7 +121,7 @@ void na_slow_query_open(na_env_t *env)
     env->slow_query_fp = fopen(env->slow_query_log_path, "a");
 
     if (!env->slow_query_fp) {
-        NA_STDERR_MESSAGE(NA_ERROR_CANT_OPEN_SLOWLOG);
+        NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_CANT_OPEN_SLOWLOG);
         // disable slow query log, since we couldn't open the file
         memset(&env->slow_query_sec, 0, sizeof(struct timespec));
     } else {

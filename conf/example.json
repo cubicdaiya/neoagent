@@ -1,8 +1,9 @@
 {
     "ctl" : {
-        "sockpath" : "/tmp/neoagent_ctl.sock",
-        "logpath"  : "/tmp/neoagent.log",
-        "access_mask" : "0666",
+        "sockpath"        : "/tmp/neoagent_ctl.sock",
+        "access_mask"     : "0666",
+        "logpath"         : "/tmp/neoagent_ctl.log",
+        "log_access_mask" : "0644",
     },
     "environments" :
     [
@@ -11,6 +12,8 @@
             "port"                 : 30001,
             "sockpath"             : "/tmp/neoagent.sock",
             "access_mask"          : "0666",
+            "logpath"              : "/tmp/neoagent.log",
+            "log_access_mask"      : "0644",
             "target_server"        : "127.0.0.1:11212",
             "backup_server"        : "127.0.0.1:11213",
             "stport"               : 30011,

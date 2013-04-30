@@ -125,8 +125,10 @@ typedef struct na_connpool_t {
 typedef struct na_ctl_env_t {
     int        fd;
     char       sockpath[NA_PATH_MAX + 1];
-    char       logpath[NA_PATH_MAX + 1];
     mode_t     access_mask;
+    char       logpath[NA_PATH_MAX + 1];
+    FILE      *log_fp;
+    mode_t     log_access_mask;
     fnv_tbl_t *tbl_env;
     ev_io      watcher;
     char*      restart_envname;
@@ -169,6 +171,9 @@ typedef struct na_env_t {
     int client_pool_max;
     int loop_max;
     struct timespec slow_query_sec;
+    char logpath[NA_PATH_MAX + 1];
+    FILE *log_fp;
+    mode_t log_access_mask;
     char slow_query_log_path[NA_PATH_MAX + 1];
     FILE *slow_query_fp;
     na_log_format_t slow_query_log_format;
@@ -253,6 +258,7 @@ typedef enum na_error_t {
     NA_ERROR_FAILED_WRITE,
     NA_ERROR_BROKEN_PIPE,
     NA_ERROR_TOO_MANY_ENVIRONMENTS,
+    NA_ERROR_CANT_OPEN_LOG,
     NA_ERROR_CANT_OPEN_SLOWLOG,
     NA_ERROR_FAILED_CREATE_PROCESS,
     NA_ERROR_INVALID_CTL_CMD,
@@ -261,7 +267,62 @@ typedef enum na_error_t {
     NA_ERROR_MAX // Always add new codes to the end before this one
 } na_error_t;
 
+typedef struct na_error_info_t {
+    const char *file;
+    const char *function;
+    int line;
+} na_error_info_t;
+
 const char *na_error_message (na_error_t error);
+void na_error_output(na_env_t *env, const char *s, na_error_info_t *error_info);
+void na_error_output_message(na_env_t *env, na_error_t na_error, na_error_info_t *error_info);
+void na_die_with_error(na_env_t *env, na_error_t na_error, na_error_info_t *error_info);
+void na_ctl_error_output(na_ctl_env_t *env, const char *s, na_error_info_t *error_info);
+void na_ctl_error_output_message(na_ctl_env_t *env, na_error_t na_error, na_error_info_t *error_info);
+void na_ctl_die_with_error(na_ctl_env_t *env, na_error_t na_error, na_error_info_t *error_info);
+
+#define NA_ERROR_INFO_INIT                          \
+    na_error_info_t info = {                        \
+        .file = __FILE__,                           \
+        .function = __FUNCTION__,                   \
+        .line = __LINE__                            \
+    }                                               \
+
+#define NA_ERROR_OUTPUT(env, na_error)                  \
+    do {                                                \
+        NA_ERROR_INFO_INIT;                             \
+        na_error_output(env, na_error, &info);          \
+    } while(false)
+
+#define NA_CTL_ERROR_OUTPUT(env, na_error)                  \
+    do {                                                    \
+        NA_ERROR_INFO_INIT;                                 \
+        na_ctl_error_output(env, na_error, &info);          \
+    } while(false)
+
+#define NA_ERROR_OUTPUT_MESSAGE(env, na_error)          \
+    do {                                                \
+        NA_ERROR_INFO_INIT;                             \
+        na_error_output_message(env, na_error, &info);  \
+    } while(false)
+
+#define NA_CTL_ERROR_OUTPUT_MESSAGE(env, na_error)          \
+    do {                                                    \
+        NA_ERROR_INFO_INIT;                                 \
+        na_ctl_error_output_message(env, na_error, &info);  \
+    } while(false)
+
+#define NA_DIE_WITH_ERROR(env, na_error)                    \
+    do {                                                    \
+        NA_ERROR_INFO_INIT;                                 \
+        na_die_with_error(env, na_error, &info);            \
+    } while(false)
+
+#define NA_CTL_DIE_WITH_ERROR(env, na_error)                    \
+    do {                                                        \
+        NA_ERROR_INFO_INIT;                                     \
+        na_ctl_die_with_error(env, na_error, &info);            \
+    } while(false)
 
 /**
  * event
@@ -313,6 +374,12 @@ void *na_ctl_loop (void *args);
 void na_hc_callback (EV_P_ ev_timer *w, int revents);
 
 /**
+ * log
+ */
+void na_log_open(na_env_t *env);
+void na_ctl_log_open(na_ctl_env_t *env);
+
+/**
  * slowlog
  */
 void na_slow_query_gettime(na_env_t *env, struct timespec *time);
@@ -334,28 +401,5 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents);
             (p) = NULL;                                 \
         }                                               \
     } while(false)
-
-#define NA_STDERR(s) do {                                               \
-        char buf_dt[NA_DATETIME_BUF_MAX];                               \
-        time_t cts = time(NULL);                                        \
-        na_ts2dt(cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX); \
-        fprintf(stderr, "%s, %s: %s %d\n", buf_dt, s, __FILE__, __LINE__); \
-    } while (false)
-
-#define NA_STDERR_MESSAGE(na_error) do {                                \
-        char buf_dt[NA_DATETIME_BUF_MAX];                               \
-        time_t cts = time(NULL);                                        \
-        na_ts2dt(cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX); \
-        fprintf(stderr, "%s %s: %s %d\n", buf_dt, na_error_message(na_error), __FILE__, __LINE__); \
-    } while (false)
-
-#define NA_DIE_WITH_ERROR(na_error)                                     \
-    do {                                                                \
-        char buf_dt[NA_DATETIME_BUF_MAX];                               \
-        time_t cts = time(NULL);                                        \
-        na_ts2dt(cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX); \
-        fprintf(stderr, "%s %s: %s, %s %d\n", buf_dt, na_error_message(na_error), __FILE__, __FUNCTION__, __LINE__); \
-        exit(1);                                                        \
-    } while (false)
 
 #endif // NA_DEFINES_H

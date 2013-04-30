@@ -51,12 +51,12 @@ void na_connpool_reconnect (na_env_t *env, na_connpool_t *connpool, int i, na_se
     connpool->fd_pool[i] = na_target_server_tcpsock_init();
     na_target_server_tcpsock_setup(connpool->fd_pool[i], true);
     if (connpool->fd_pool[i] <= 0) {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+        NA_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
     }
 
     if (!na_server_connect(connpool->fd_pool[i], &server->addr)) {
         if (errno != EINPROGRESS && errno != EALREADY) {
-            NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
+            NA_DIE_WITH_ERROR(env, NA_ERROR_CONNECTION_FAILED);
         }
     }
 }
@@ -67,7 +67,7 @@ void na_connpool_assign_internal (na_env_t *env, na_connpool_t *connpool, int i,
         connpool->active[i] = 1;
         if (!na_server_connect(connpool->fd_pool[i], &server->addr)) {
             if (errno != EINPROGRESS && errno != EALREADY) {
-                NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
+                NA_DIE_WITH_ERROR(env, NA_ERROR_CONNECTION_FAILED);
             }
         }
     }
@@ -124,7 +124,7 @@ void na_connpool_init (na_env_t *env)
         env->connpool_active.fd_pool[i] = na_target_server_tcpsock_init();
         na_target_server_tcpsock_setup(env->connpool_active.fd_pool[i], true);
         if (env->connpool_active.fd_pool[i] <= 0) {
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+            NA_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
         }
     }
 }
@@ -155,7 +155,7 @@ void na_connpool_switch (na_env_t *env)
         connpool->fd_pool[i] = na_target_server_tcpsock_init();
         na_target_server_tcpsock_setup(connpool->fd_pool[i], true);
         if (connpool->fd_pool[i] <= 0) {
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+            NA_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
         }
     }
 }

@@ -40,6 +40,66 @@ const char *na_error_messages[NA_ERROR_MAX] = {
     [NA_ERROR_UNKNOWN]               = "unknown error"
 };
 
+#define NA_ERROR_OUTPUT_INTERNAL(env, message, info)                    \
+    do {                                                                \
+        char buf_dt[NA_DATETIME_BUF_MAX];                               \
+        time_t cts = time(NULL);                                        \
+        FILE *fp;                                                       \
+        na_ts2dt(cts, "%Y-%m-%d %H:%M:%S", buf_dt, NA_DATETIME_BUF_MAX); \
+        if (env == NULL) {                                              \
+            fp = stderr;                                                \
+        } else {                                                        \
+            fp = env->log_fp ? env->log_fp : stderr;                    \
+        }                                                               \
+        fprintf(fp, "%s %s: %s, %s %d\n", buf_dt, message, info->file, info->function, info->line); \
+        fflush(fp);                                                     \
+    } while(false)
+
+static void na_error_output_internal(na_env_t *env, const char *message, na_error_info_t *error_info);
+static void na_ctl_error_output_internal(na_ctl_env_t *env, const char *message, na_error_info_t *error_info);
+
+static void na_error_output_internal(na_env_t *env, const char *message, na_error_info_t *error_info)
+{
+    NA_ERROR_OUTPUT_INTERNAL(env, message, error_info);
+}
+
+static void na_ctl_error_output_internal(na_ctl_env_t *env, const char *message, na_error_info_t *error_info)
+{
+    NA_ERROR_OUTPUT_INTERNAL(env, message, error_info);
+}
+
+void na_error_output(na_env_t *env, const char *message, na_error_info_t *error_info)
+{
+    na_error_output_internal(env, message, error_info);
+}
+
+void na_error_output_message(na_env_t *env, na_error_t na_error, na_error_info_t *error_info)
+{
+    na_error_output_internal(env, na_error_message(na_error), error_info);
+}
+
+void na_die_with_error(na_env_t *env, na_error_t na_error, na_error_info_t *error_info)
+{
+    na_error_output_internal(env, na_error_message(na_error), error_info);
+    exit(1);
+}
+
+void na_ctl_error_output(na_ctl_env_t *env, const char *message, na_error_info_t *error_info)
+{
+    na_ctl_error_output_internal(env, message, error_info);
+}
+
+void na_ctl_error_output_message(na_ctl_env_t *env, na_error_t na_error, na_error_info_t *error_info)
+{
+    na_ctl_error_output_internal(env, na_error_message(na_error), error_info);
+}
+
+void na_ctl_die_with_error(na_ctl_env_t *env, na_error_t na_error, na_error_info_t *error_info)
+{
+    na_ctl_error_output_internal(env, na_error_message(na_error), error_info);
+    exit(1);
+}
+
 const char *na_error_message (na_error_t error)
 {
     if (error >= NA_ERROR_MAX) {

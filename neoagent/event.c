@@ -17,7 +17,7 @@
 
 #define NA_EVENT_FAIL(na_error, loop, w, client, env) do {  \
         na_event_stop(loop, w, client, env);                \
-        NA_STDERR_MESSAGE(na_error);                        \
+        NA_ERROR_OUTPUT_MESSAGE(env, na_error);                   \
     } while(false)
 
 // globals
@@ -259,13 +259,13 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                 na_target_server_tcpsock_setup(client->connpool->fd_pool[i], true);
                 if (client->connpool->fd_pool[i] <= 0) {
                     pthread_mutex_unlock(&env->lock_connpool);
-                    NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+                    NA_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
                 }
 
                 if (!na_server_connect(client->connpool->fd_pool[i], &server->addr)) {
                     if (errno != EINPROGRESS && errno != EALREADY) {
                         pthread_mutex_unlock(&env->lock_connpool);
-                        NA_DIE_WITH_ERROR(NA_ERROR_CONNECTION_FAILED);
+                        NA_DIE_WITH_ERROR(env, NA_ERROR_CONNECTION_FAILED);
                     }
                 }
                 pthread_mutex_unlock(&env->lock_connpool);
@@ -466,7 +466,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     if (!na_connpool_assign(env, connpool, &cur_pool, &tsfd, server)) {
         tsfd = na_target_server_tcpsock_init();
         if (tsfd < 0) {
-            NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
+            NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_FD);
             goto unlock_reconf;
         }
         na_target_server_tcpsock_setup(tsfd, true);
@@ -474,7 +474,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         if (!na_server_connect(tsfd, &server->addr)) {
             if (errno != EINPROGRESS && errno != EALREADY) {
                 close(tsfd);
-                NA_STDERR_MESSAGE(NA_ERROR_CONNECTION_FAILED);
+                NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_CONNECTION_FAILED);
                 goto unlock_reconf;
             }
         }
@@ -488,7 +488,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             connpool->mark[cur_pool] = 0;
             pthread_mutex_unlock(&env->lock_connpool);
         }
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
+        NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_FD);
         goto unlock_reconf;
     }
 
@@ -512,7 +512,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                 connpool->mark[cur_pool] = 0;
                 pthread_mutex_unlock(&env->lock_connpool);
             }
-            NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
+            NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_OUTOF_MEMORY);
             goto unlock_reconf;
         }
         memset(client, 0, sizeof(*client));
@@ -531,7 +531,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                 connpool->mark[cur_pool] = 0;
                 pthread_mutex_unlock(&env->lock_connpool);
             }
-            NA_STDERR_MESSAGE(NA_ERROR_OUTOF_MEMORY);
+            NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_OUTOF_MEMORY);
             goto unlock_reconf;
         }
     }
@@ -576,7 +576,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 
     if (!na_is_worker_busy(env)) {
         if (!na_event_queue_push(EventQueue, client)) {
-            NA_STDERR("Too Many Connections!");
+            NA_ERROR_OUTPUT(env, "Too Many Connections!");
             ev_io_init(&client->c_watcher,  na_client_callback,        client->cfd,  EV_READ);
             ev_io_init(&client->ts_watcher, na_target_server_callback, client->tsfd, EV_NONE);
             ev_io_start(EV_A_ &client->c_watcher);
@@ -700,7 +700,7 @@ void *na_event_loop (void *args)
     }
 
     if (env->fsfd < 0) {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+        NA_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
     }
 
     na_connpool_init(env);

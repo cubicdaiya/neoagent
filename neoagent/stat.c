@@ -157,7 +157,7 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents)
     pthread_rwlock_rdlock(&LockReconf);
 
     if ((cfd = na_server_accept(stfd)) < 0) {
-        NA_STDERR("accept()");
+        NA_ERROR_OUTPUT(env, "accept()");
         goto unlock_reconf;
     }
 
@@ -165,7 +165,7 @@ void na_stat_callback (EV_P_ struct ev_io *w, int revents)
 
     // send statictics of environment to client
     if ((size = write(cfd, buf, strlen(buf))) < 0) {
-        NA_STDERR("failed to return stat response");
+        NA_ERROR_OUTPUT(env, "failed to return stat response");
         close(cfd);
         goto unlock_reconf;
     }

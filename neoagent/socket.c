@@ -33,7 +33,7 @@ inline static bool na_is_ipaddr (const char *ipaddr)
 static void na_set_sockopt(int fd, int optname)
 {
     if (fd <= 0) {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_FD);
     }
 
     switch (optname) {
@@ -62,7 +62,7 @@ void na_set_nonblock (int fd)
     if (fd > 0) {
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL)|O_NONBLOCK);
     } else {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_FD);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_FD);
     }
 }
 
@@ -90,7 +90,7 @@ int na_target_server_tcpsock_init (void)
 {
     int tsfd;
     if ((tsfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        NA_STDERR("socket()");
+        NA_ERROR_OUTPUT(NULL, "socket()");
         return -1;
     }
     return tsfd;
@@ -131,7 +131,7 @@ na_host_t na_create_host(char *host)
     }
 
     if (p == NULL || hostname_len <= 0 || hostname_len > NA_HOSTNAME_MAX) {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_HOSTNAME);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_HOSTNAME);
     }
 
     strncpy(host_info.ipaddr, host, hostname_len);
@@ -142,7 +142,7 @@ na_host_t na_create_host(char *host)
     port = atoi(p);
 
     if (port <= 0) {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_PORT);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_PORT);
     }
 
     host_info.port = port;
@@ -169,8 +169,8 @@ void na_set_sockaddr (na_host_t *host, struct sockaddr_in *addr)
         snprintf(port_buf, sizeof(port_buf), "%d", host->port);
 
         if ((ai_res = getaddrinfo(host->ipaddr, port_buf, &hints, &ais)) != 0) {
-            NA_STDERR(gai_strerror(ai_res));
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_HOSTNAME);
+            NA_ERROR_OUTPUT(NULL, gai_strerror(ai_res));
+            NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_HOSTNAME);
         }
 
         for (ai=ais;ai!=NULL;ai=ai->ai_next) {
@@ -197,7 +197,7 @@ void na_set_sockaddr (na_host_t *host, struct sockaddr_in *addr)
         }
 
         if (ai == NULL) {
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_HOSTNAME);
+            NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_HOSTNAME);
         }
 
         freeaddrinfo(ais);
@@ -210,7 +210,7 @@ int na_front_server_tcpsock_init (uint16_t port, int conn_max)
     struct sockaddr_in iaddr;
 
     if ((fsfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        NA_STDERR("socket()");
+        NA_ERROR_OUTPUT(NULL, "socket()");
         return -1;
     }
 
@@ -226,18 +226,18 @@ int na_front_server_tcpsock_init (uint16_t port, int conn_max)
         iaddr.sin_port        = htons(port);
     } else {
         close(fsfd);
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_PORT);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_PORT);
     }
 
     if (bind(fsfd, (struct sockaddr *)&iaddr, sizeof(iaddr)) < 0) {
         close(fsfd);
-        NA_STDERR("bind()");
+        NA_ERROR_OUTPUT(NULL, "bind()");
         return -1;
     }
 
     if (listen(fsfd, conn_max) == -1) {
         close(fsfd);
-        NA_STDERR("listen()");
+        NA_ERROR_OUTPUT(NULL, "listen()");
         return -1;
     }
 
@@ -252,7 +252,7 @@ int na_front_server_unixsock_init (char *sockpath, mode_t mask, int conn_max)
     struct sockaddr_un uaddr;
 
     if ((fsfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-        NA_STDERR("socket()");
+        NA_ERROR_OUTPUT(NULL, "socket()");
         return -1;
     }
 
@@ -274,7 +274,7 @@ int na_front_server_unixsock_init (char *sockpath, mode_t mask, int conn_max)
         strncpy(uaddr.sun_path, sockpath, sizeof(uaddr.sun_path) - 1);
     }  else {
         close(fsfd);
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_SOCKPATH);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_SOCKPATH);
     }
 
     old_umask = umask(~(mask & 0777));
@@ -282,7 +282,7 @@ int na_front_server_unixsock_init (char *sockpath, mode_t mask, int conn_max)
     if (bind(fsfd, (struct sockaddr *)&uaddr, sizeof(uaddr)) < 0) {
         close(fsfd);
         umask(old_umask);
-        NA_STDERR("bind()");
+        NA_ERROR_OUTPUT(NULL, "bind()");
         return -1;
     }
 
@@ -290,7 +290,7 @@ int na_front_server_unixsock_init (char *sockpath, mode_t mask, int conn_max)
 
     if (listen(fsfd, conn_max) == -1) {
         close(fsfd);
-        NA_STDERR("listen()");
+        NA_ERROR_OUTPUT(NULL, "listen()");
         return -1;
     }
 
@@ -305,7 +305,7 @@ int na_stat_server_unixsock_init (char *sockpath, mode_t mask)
     struct sockaddr_un uaddr;
 
     if ((stfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-        NA_STDERR("socket()");
+        NA_ERROR_OUTPUT(NULL, "socket()");
         return -1;
     }
 
@@ -326,7 +326,7 @@ int na_stat_server_unixsock_init (char *sockpath, mode_t mask)
         strncpy(uaddr.sun_path, sockpath, sizeof(uaddr.sun_path) - 1);
     }  else {
         close(stfd);
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_SOCKPATH);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_SOCKPATH);
     }
 
     old_umask = umask(~(mask & 0777));
@@ -334,7 +334,7 @@ int na_stat_server_unixsock_init (char *sockpath, mode_t mask)
     if (bind(stfd, (struct sockaddr *)&uaddr, sizeof(uaddr)) < 0) {
         close(stfd);
         umask(old_umask);
-        NA_STDERR("bind()");
+        NA_ERROR_OUTPUT(NULL, "bind()");
         return -1;
     }
 
@@ -342,7 +342,7 @@ int na_stat_server_unixsock_init (char *sockpath, mode_t mask)
 
     if (listen(stfd, NA_STAT_BACKLOG_MAX) == -1) {
         close(stfd);
-        NA_STDERR("listen()");
+        NA_ERROR_OUTPUT(NULL, "listen()");
         return -1;
     }
 
@@ -355,7 +355,7 @@ int na_stat_server_tcpsock_init (uint16_t port)
     struct sockaddr_in iaddr;
 
     if ((stfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        NA_STDERR("socket()");
+        NA_ERROR_OUTPUT(NULL, "socket()");
         return -1;
     }
 
@@ -369,18 +369,18 @@ int na_stat_server_tcpsock_init (uint16_t port)
         iaddr.sin_port        = htons(port);
     } else {
         close(stfd);
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_PORT);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_PORT);
     }
 
     if (bind(stfd, (struct sockaddr *)&iaddr, sizeof(iaddr)) < 0) {
         close(stfd);
-        NA_STDERR("bind()");
+        NA_ERROR_OUTPUT(NULL, "bind()");
         return -1;
     }
 
     if (listen(stfd, NA_STAT_BACKLOG_MAX) == -1) {
         close(stfd);
-        NA_STDERR("listen()");
+        NA_ERROR_OUTPUT(NULL, "listen()");
         return -1;
     }
 

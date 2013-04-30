@@ -112,7 +112,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
 
     if (tsfd <= 0) {
         na_hc_event_set(EV_A_ w, revents);
-        NA_STDERR_MESSAGE(NA_ERROR_INVALID_FD);
+        NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_FD);
         goto unlock_reconf;
     }
 
@@ -133,7 +133,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
                 pthread_mutex_unlock(&env->lock_current_conn);
                 env->is_refused_accept = false;
                 pthread_rwlock_unlock(&env->lock_refused);
-                NA_STDERR("switch backup server");
+                NA_ERROR_OUTPUT(env, "switch backup server");
             }
         }
     } else {
@@ -149,7 +149,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
             pthread_mutex_unlock(&env->lock_current_conn);
             env->is_refused_accept = false;
             pthread_rwlock_unlock(&env->lock_refused);
-            NA_STDERR("switch target server");
+            NA_ERROR_OUTPUT(env, "switch target server");
         } else {
             if (!env->is_refused_active && !na_hc_test_request(tsfd)) {
                 pthread_rwlock_wrlock(&env->lock_refused);
@@ -163,7 +163,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
                 pthread_mutex_unlock(&env->lock_current_conn);
                 env->is_refused_accept = false;
                 pthread_rwlock_unlock(&env->lock_refused);
-                NA_STDERR("switch backup server");
+                NA_ERROR_OUTPUT(env, "switch backup server");
             }
         }
     }

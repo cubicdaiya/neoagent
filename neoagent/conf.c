@@ -18,6 +18,7 @@ typedef enum na_ctl_param_t {
     NA_CTL_PARAM_SOCKPATH,
     NA_CTL_PARAM_ACCESS_MASK,
     NA_CTL_PARAM_LOGPATH,
+    NA_CTL_PARAM_LOG_ACCESS_MASK,
     NA_CTL_PARAM_MAX // Always add new codes to the end before this one
 } na_ctl_param_t;
 
@@ -26,6 +27,8 @@ typedef enum na_param_t {
     NA_PARAM_PORT,
     NA_PARAM_SOCKPATH,
     NA_PARAM_ACCESS_MASK,
+    NA_PARAM_LOGPATH,
+    NA_PARAM_LOG_ACCESS_MASK,
     NA_PARAM_TARGET_SERVER,
     NA_PARAM_BACKUP_SERVER,
     NA_PARAM_STPORT,
@@ -48,16 +51,17 @@ typedef enum na_param_t {
 
 #define NA_PARAM_TYPE_CHECK(param_obj, expected_type) do {            \
         if (!json_object_is_type(param_obj, expected_type)) {         \
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);          \
+            NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_JSON_CONFIG);    \
         }                                                             \
     } while(false)
 
 static const int NA_JSON_BUF_MAX = 65536;
 
 const char *na_ctl_params[NA_PARAM_MAX] = {
-    [NA_CTL_PARAM_SOCKPATH]    = "sockpath",
-    [NA_CTL_PARAM_ACCESS_MASK] = "access_mask",
-    [NA_CTL_PARAM_LOGPATH]     = "logpath",
+    [NA_CTL_PARAM_SOCKPATH]        = "sockpath",
+    [NA_CTL_PARAM_ACCESS_MASK]     = "access_mask",
+    [NA_CTL_PARAM_LOGPATH]         = "logpath",
+    [NA_CTL_PARAM_LOG_ACCESS_MASK] = "access_mask",
 };
 
 const char *na_params[NA_PARAM_MAX]     = {
@@ -65,6 +69,8 @@ const char *na_params[NA_PARAM_MAX]     = {
     [NA_PARAM_PORT]                     = "port",
     [NA_PARAM_SOCKPATH]                 = "sockpath",
     [NA_PARAM_ACCESS_MASK]              = "access_mask",
+    [NA_PARAM_LOGPATH]                  = "logpath",
+    [NA_PARAM_LOG_ACCESS_MASK]          = "log_access_mask",
     [NA_PARAM_TARGET_SERVER]            = "target_server",
     [NA_PARAM_BACKUP_SERVER]            = "backup_server",
     [NA_PARAM_STPORT]                   = "stport",
@@ -158,17 +164,17 @@ struct json_object *na_get_conf (const char *conf_file_json)
     int json_fd, size;
 
     if ((json_fd = open(conf_file_json, O_RDONLY)) < 0) {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_CONFPATH);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_CONFPATH);
     }
 
     memset(json_buf, 0, NA_JSON_BUF_MAX + 1);
     if ((size = read(json_fd, json_buf, NA_JSON_BUF_MAX)) < 0) {
-        NA_DIE_WITH_ERROR(NA_ERROR_INVALID_CONFPATH);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_CONFPATH);
     }
 
     conf_obj = json_tokener_parse(json_buf);
     if (is_error(conf_obj)) {
-        NA_DIE_WITH_ERROR(NA_ERROR_PARSE_JSON_CONFIG);
+        NA_DIE_WITH_ERROR(NULL, NA_ERROR_PARSE_JSON_CONFIG);
     }
 
     close(json_fd);
@@ -195,6 +201,9 @@ void na_conf_ctl_init(struct json_object *ctl_obj, na_ctl_env_t *na_ctl_env)
 {
     char *e;
     struct json_object *param_obj;
+    bool have_log_path_opt;
+
+    have_log_path_opt = false;
 
     for (int i=0;i<NA_CTL_PARAM_MAX;++i) {
         param_obj = json_object_object_get(ctl_obj, na_ctl_param_name(i));
@@ -215,8 +224,18 @@ void na_conf_ctl_init(struct json_object *ctl_obj, na_ctl_env_t *na_ctl_env)
         case NA_CTL_PARAM_LOGPATH:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             strncpy(na_ctl_env->logpath, json_object_get_string(param_obj), NA_PATH_MAX);
+            have_log_path_opt = true;
+            continue;
+        case NA_CTL_PARAM_LOG_ACCESS_MASK:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            na_ctl_env->log_access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
             break;
         }
+    }
+
+    // open log, if enabled
+    if (have_log_path_opt) {
+        na_ctl_log_open(na_ctl_env);
     }
 
 }
@@ -247,7 +266,11 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
     na_host_t host;
     struct json_object *environment_obj;
     struct json_object *param_obj;
-    bool have_slow_query_log_path_opt = false;
+    bool have_log_path_opt;
+    bool have_slow_query_log_path_opt;
+
+    have_log_path_opt            = false;
+    have_slow_query_log_path_opt = false;
 
     environment_obj = json_object_array_get_idx(environments_obj, idx);
 
@@ -274,6 +297,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
             NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
             na_env->conn_max = json_object_get_int(param_obj);
             continue;
+        case NA_PARAM_LOG_ACCESS_MASK:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            na_env->log_access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
+            continue;
         case NA_PARAM_SLOW_QUERY_SEC:
             NA_PARAM_TYPE_CHECK(param_obj, json_type_double);
             slow_query_sec = json_object_get_double(param_obj);
@@ -284,6 +311,15 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
             NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
             strncpy(na_env->slow_query_log_path, json_object_get_string(param_obj), NA_PATH_MAX);
             have_slow_query_log_path_opt = true;
+            continue;
+        case NA_PARAM_LOGPATH:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            strncpy(na_env->logpath, json_object_get_string(param_obj), NA_PATH_MAX);
+            have_log_path_opt = true;
+            continue;
+        case NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
+            na_env->slow_query_log_access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
             continue;
         default:
             break;
@@ -355,19 +391,15 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
                 NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
                 na_env->event_model = na_detect_event_model(json_object_get_string(param_obj));
                 if (na_env->event_model == NA_EVENT_MODEL_UNKNOWN) {
-                    NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+                    NA_DIE_WITH_ERROR(na_env, NA_ERROR_INVALID_JSON_CONFIG);
                 }
                 break;
             case NA_PARAM_SLOW_QUERY_LOG_FORMAT:
                 NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
                 na_env->slow_query_log_format = na_detect_log_format(json_object_get_string(param_obj));
                 if (na_env->slow_query_log_format == NA_LOG_FORMAT_UNKNOWN) {
-                    NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+                    NA_DIE_WITH_ERROR(na_env, NA_ERROR_INVALID_JSON_CONFIG);
                 }
-                break;
-            case NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK:
-                NA_PARAM_TYPE_CHECK(param_obj, json_type_string);
-                na_env->slow_query_log_access_mask = (mode_t)strtol(json_object_get_string(param_obj), &e, 8);
                 break;
             default:
                 // no through
@@ -377,11 +409,16 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
         }
     }
 
+    // open log, if enabled
+    if (have_log_path_opt) {
+        na_log_open(na_env);
+    }
+
     // open slow query log, if enabled
     if (((na_env->slow_query_sec.tv_sec  != 0)  ||
          (na_env->slow_query_sec.tv_nsec != 0))) {
         if (!have_slow_query_log_path_opt) {
-            NA_DIE_WITH_ERROR(NA_ERROR_INVALID_JSON_CONFIG);
+            NA_DIE_WITH_ERROR(na_env, NA_ERROR_INVALID_JSON_CONFIG);
         } else {
             na_slow_query_open(na_env);
         }
