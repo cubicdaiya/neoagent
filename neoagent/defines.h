@@ -133,6 +133,7 @@ typedef struct na_ctl_env_t {
     ev_io      watcher;
     char*      restart_envname;
     pthread_mutex_t lock_restart;
+    pthread_mutex_t lock_error; // dummy
 } na_ctl_env_t;
 
 typedef struct na_env_t {
@@ -178,6 +179,7 @@ typedef struct na_env_t {
     FILE *slow_query_fp;
     na_log_format_t slow_query_log_format;
     mode_t slow_query_log_access_mask;
+    pthread_mutex_t lock_error;
 } na_env_t;
 
 typedef struct na_client_t {

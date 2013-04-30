@@ -42,6 +42,7 @@ const char *na_error_messages[NA_ERROR_MAX] = {
 
 #define NA_ERROR_OUTPUT_INTERNAL(env, message, info)                    \
     do {                                                                \
+        pthread_mutex_lock(&env->lock_error);                           \
         char buf_dt[NA_DATETIME_BUF_MAX];                               \
         time_t cts = time(NULL);                                        \
         FILE *fp;                                                       \
@@ -53,6 +54,7 @@ const char *na_error_messages[NA_ERROR_MAX] = {
         }                                                               \
         fprintf(fp, "%s %s: %s, %s %d\n", buf_dt, message, info->file, info->function, info->line); \
         fflush(fp);                                                     \
+        pthread_mutex_unlock(&env->lock_error);                         \
     } while(false)
 
 static void na_error_output_internal(na_env_t *env, const char *message, na_error_info_t *error_info);

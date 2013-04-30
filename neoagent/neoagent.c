@@ -214,6 +214,7 @@ int main (int argc, char *argv[])
         env_ctl.tbl_env = tbl_env;
         env_ctl.restart_envname = NULL;
         pthread_mutex_init(&env_ctl.lock_restart, NULL);
+        pthread_mutex_init(&env_ctl.lock_error,   NULL);
         pthread_create(&ctl_th, NULL, na_ctl_loop, &env_ctl);
         goto MASTER_CYCLE;
     }

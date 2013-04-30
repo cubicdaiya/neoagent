@@ -71,6 +71,7 @@ void na_env_init(na_env_t *env)
     pthread_mutex_init(&env->lock_current_conn, NULL);
     pthread_mutex_init(&env->lock_tid,          NULL);
     pthread_mutex_init(&env->lock_loop,         NULL);
+    pthread_mutex_init(&env->lock_error,        NULL);
     pthread_rwlock_init(&env->lock_refused, NULL);
     pthread_rwlock_init(&LockReconf,        NULL);
     env->lock_worker_busy = calloc(sizeof(pthread_rwlock_t), env->worker_max);
