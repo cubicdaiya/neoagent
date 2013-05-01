@@ -140,15 +140,12 @@ na_connpool_t *na_connpool_select(na_env_t *env)
 void na_connpool_switch (na_env_t *env)
 {
     na_connpool_t *connpool;
-    na_server_t   *server;
     if (env->is_refused_active) {
         na_connpool_deactivate(&env->connpool_active);
         connpool = &env->connpool_backup;
-        server   = &env->backup_server;
     } else {
         na_connpool_deactivate(&env->connpool_backup);
         connpool = &env->connpool_active;
-        server   = &env->target_server;
     }
 
     for (int i=0;i<env->connpool_max;++i) {

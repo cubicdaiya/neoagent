@@ -100,10 +100,8 @@ static bool na_hc_test_request(int tsfd)
 void na_hc_callback (EV_P_ ev_timer *w, int revents)
 {
     int tsfd;
-    int th_ret;
     na_env_t *env;
 
-    th_ret = 0;
     env    = (na_env_t *)w->data;
 
     pthread_rwlock_rdlock(&LockReconf);

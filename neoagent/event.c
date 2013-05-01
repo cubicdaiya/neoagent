@@ -425,13 +425,11 @@ unlock_reconf:
 void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
 {
     int fsfd, cfd, tsfd, cur_pool, cur_cli;
-    int th_ret;
     na_env_t *env;
     na_client_t *client;
     na_connpool_t *connpool;
     na_server_t *server;
 
-    th_ret   = 0;
     fsfd     = w->fd;
     env      = (na_env_t *)w->data;
     cfd      = -1;
