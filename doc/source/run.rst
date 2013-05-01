@@ -22,9 +22,11 @@ you may see :ref:`sample-conf`
 Signal Handling
 ====================
 
-neoagent handles some signal. If alerted signal is one of following signals, neoagent exits.
+neoagent handles some signals. If alerted signal is one of following signals, neoagent exits.
 
 - SIGTERM
 - SIGINT
 - SIGALRM
 - SIGHUP
+
+And If neoagent receives SIGUSR2, neoagent reloads the self-configuration.

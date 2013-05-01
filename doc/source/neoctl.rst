@@ -17,7 +17,7 @@ OPTIONS
 
 **\-c, --cmd**
 
- command
+ command(restart or reload)
 
 **\-n, --name**
 
