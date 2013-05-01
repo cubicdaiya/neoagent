@@ -543,7 +543,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     client->is_refused_active  = env->is_refused_active;
     pthread_rwlock_unlock(&env->lock_refused);
     client->is_use_connpool    = cur_pool != -1 ? true : false;
-    client->is_use_client_pool = cur_cli != -1 ? true : false;
+    client->is_use_client_pool = cur_cli  != -1 ? true : false;
     client->cur_pool           = cur_pool;
     client->crbufsize          = 0;
     client->cwbufsize          = 0;
