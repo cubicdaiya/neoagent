@@ -22,6 +22,7 @@ static const int NA_PROC_NAME_MAX = 64;
 
 // external globals
 extern volatile sig_atomic_t SigExit;
+extern volatile sig_atomic_t SigRestart; // for worker prcess
 extern time_t StartTimestamp;
 
 // globals
@@ -33,6 +34,7 @@ static void na_version(void);
 static void na_usage(void);
 static void na_signal_exit_handler (int sig);
 static void na_signal_reconf_handler (int sig);
+static void na_signal_restart_handler (int sig);
 static void na_setup_signals (void);
 static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name);
 static void na_kill_childs(pid_t *pids, size_t c, int sig);
@@ -67,23 +69,32 @@ static void na_signal_reconf_handler (int sig)
     SigReconf = 1;
 }
 
+static void na_signal_restart_handler (int sig)
+{
+    SigRestart = NA_RESTART_PHASE_ENABLED;
+}
+
 static void na_setup_signals (void)
 {
     struct sigaction sig_exit_handler;
     struct sigaction sig_reconf_handler;
+    struct sigaction sig_restart_handler;
 
     sigemptyset(&sig_exit_handler.sa_mask);
     sigemptyset(&sig_reconf_handler.sa_mask);
-    sig_exit_handler.sa_handler   = na_signal_exit_handler;
-    sig_reconf_handler.sa_handler = na_signal_reconf_handler;
-    sig_exit_handler.sa_flags     = 0;
-    sig_reconf_handler.sa_flags   = 0;
+    sigemptyset(&sig_restart_handler.sa_mask);
+    sig_exit_handler.sa_handler    = na_signal_exit_handler;
+    sig_reconf_handler.sa_handler  = na_signal_reconf_handler;
+    sig_restart_handler.sa_handler = na_signal_restart_handler;
+    sig_exit_handler.sa_flags      = 0;
+    sig_reconf_handler.sa_flags    = 0;
+    sig_restart_handler.sa_flags   = 0;
 
-    if (sigaction(SIGTERM, &sig_exit_handler,   NULL) == -1 ||
-        sigaction(SIGINT,  &sig_exit_handler,   NULL) == -1 ||
-        sigaction(SIGALRM, &sig_exit_handler,   NULL) == -1 ||
-        sigaction(SIGHUP,  &sig_exit_handler,   NULL) == -1 ||
-        sigaction(SIGUSR2, &sig_reconf_handler, NULL) == -1)
+    if (sigaction(SIGTERM, &sig_exit_handler,    NULL) == -1 ||
+        sigaction(SIGINT,  &sig_exit_handler,    NULL) == -1 ||
+        sigaction(SIGALRM, &sig_exit_handler,    NULL) == -1 ||
+        sigaction(SIGHUP,  &sig_restart_handler, NULL) == -1 ||
+        sigaction(SIGUSR2, &sig_reconf_handler,  NULL) == -1)
         {
             NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_SETUP_SIGNAL);
         }
@@ -92,9 +103,9 @@ static void na_setup_signals (void)
         NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_IGNORE_SIGNAL);
     }
 
-    SigExit   = 0;
-    SigReconf = 0;
-
+    SigExit    = 0;
+    SigReconf  = 0;
+    SigRestart = NA_RESTART_PHASE_DISABLED;
 }
 
 static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name)
@@ -292,6 +303,16 @@ int main (int argc, char *argv[])
             json_object_put(conf_obj);
             SigReconf = 0;
         }
+
+        if (!is_master_process() && SigRestart >= NA_RESTART_PHASE_ENABLED) {
+            pthread_mutex_lock(&env.lock_current_conn);
+            if (env.current_conn == 0) {
+                pthread_mutex_unlock(&env.lock_current_conn);
+                return 0;
+            }
+            pthread_mutex_unlock(&env.lock_current_conn);
+        }
+
         // XXX we should sleep forever and only wake upon a signal
         sleep(1);
     }

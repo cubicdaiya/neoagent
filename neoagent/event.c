@@ -26,6 +26,7 @@ static na_event_queue_t *EventQueue = NULL;
 
 // refs to external globals
 extern pthread_rwlock_t LockReconf;
+volatile sig_atomic_t SigRestart;
 
 // private functions
 inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env);
@@ -150,6 +151,9 @@ static void na_client_close (EV_P_ na_client_t *client, na_env_t *env)
     pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn > 0) {
         --env->current_conn;
+        if (SigRestart == NA_RESTART_PHASE_STOP_ACCEPT && env->current_conn == 0) {
+            SigRestart = NA_RESTART_PHASE_COMPLETED;
+        }
     }
     pthread_mutex_unlock(&env->lock_current_conn);
 }
@@ -586,7 +590,16 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     }
 
 unlock_reconf:
+
     pthread_rwlock_unlock(&LockReconf);
+
+    pthread_mutex_lock(&env->lock_current_conn);
+    if (SigRestart == NA_RESTART_PHASE_ENABLED) {
+        ev_io_set(&env->fs_watcher, fsfd, EV_NONE);
+        SigRestart = NA_RESTART_PHASE_STOP_ACCEPT;
+    }
+    pthread_mutex_unlock(&env->lock_current_conn);
+
 }
 
 static bool na_is_worker_busy(na_env_t *env)

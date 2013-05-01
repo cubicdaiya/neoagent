@@ -99,11 +99,11 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
         kill(pid, SIGUSR2);
         break;
     case NA_CTL_CMD_RESTART:
-        kill(pid, SIGINT);
-        waitpid(pid, &status, 0);
         pthread_mutex_lock(&env_ctl->lock_restart);
         env_ctl->restart_envname = envname;
         pthread_mutex_unlock(&env_ctl->lock_restart);
+        kill(pid, SIGHUP);
+        waitpid(pid, &status, 0);
         break;
     default:
         return false;

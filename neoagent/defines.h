@@ -392,6 +392,16 @@ void na_slow_query_open(na_env_t *env);
 void na_stat_callback (EV_P_ struct ev_io *w, int revents);
 
 /**
+ * phase for restart
+ */
+typedef enum na_restart_phase_t {
+    NA_RESTART_PHASE_DISABLED,
+    NA_RESTART_PHASE_ENABLED,
+    NA_RESTART_PHASE_STOP_ACCEPT,
+    NA_RESTART_PHASE_COMPLETED
+} na_restart_phase_t;
+
+/**
  * util
  */
 #define NA_FREE(p)                                      \
