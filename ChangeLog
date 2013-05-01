@@ -1,3 +1,15 @@
+2013-05-01 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* make creating connpool delayed
+
+	* use pkg-config for searching libev and json-c path
+
+	* include man file by default
+
+	* remove function(clear parameters with SIGUSR1)
+
+	* 0.7.4 released
+
 2013-04-17 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fix problem(error handling leak)

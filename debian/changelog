@@ -1,4 +1,18 @@
-neoagent (0.7.2-2) precise; urgency=low
+neoagent (0.7.4-1) precise; urgency=low
+
+  * make creating connpool delayed
+
+  * use pkg-config for searching libev and json-c path
+
+  * include man file by default
+
+  * remove function(clear parameters with SIGUSR1)
+
+  * 0.7.4 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 01 May 2013 11:39:16 +0900
+
+neoagent (0.7.3-1) precise; urgency=low
 
   * fix problem(error handling leak)
 
