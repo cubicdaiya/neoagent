@@ -18,7 +18,7 @@
 // constants
 static const int NA_ENV_MAX       = 20;
 static const int NA_PID_MAX       = 32768;
-static const int NA_PROC_NAME_MAX = 32;
+static const int NA_PROC_NAME_MAX = 64;
 
 // external globals
 extern volatile sig_atomic_t SigExit;
