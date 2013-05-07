@@ -1,3 +1,9 @@
+2013-05-07 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix problem(Each process name becomes strange when there are too many environments)
+
+	* 0.7.5 released
+
 2013-05-01 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* make creating connpool delayed
