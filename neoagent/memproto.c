@@ -23,8 +23,8 @@ static int na_bm_skip[NA_MEMPROTO_BM_SKIP_MAX][NA_BM_SKIP_SIZE] = {
 
 void na_memproto_bm_skip_init (void)
 {
-    na_bm_create_table("\r\n",    na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF]);
-    na_bm_create_table("END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF]);
+    na_bm_create_table("\r\n",    na_bm_skip[NA_MEMPROTO_BM_SKIP_CRLF],    NA_BM_SKIP_SIZE);
+    na_bm_create_table("END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF], NA_BM_SKIP_SIZE);
 }
 
 na_memproto_cmd_t na_memproto_detect_command (char *buf)

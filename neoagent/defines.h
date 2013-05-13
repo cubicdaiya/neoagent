@@ -332,7 +332,7 @@ void *na_event_loop (void *args);
 /**
  * bm
  */
-void na_bm_create_table (char *pattern, int *skip);
+void na_bm_create_table (char *pattern, int *skip, size_t skip_size);
 int na_bm_search (char *haystack, char *pattern, int *skip, int hlen, int plen);
 
 /**

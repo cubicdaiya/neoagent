@@ -12,11 +12,9 @@
  * The algorithm implemented here is based Boyer-Moore algorithm
  */
 
-void na_bm_create_table (char *pattern, int *skip)
+void na_bm_create_table (char *pattern, int *skip, size_t skip_size)
 {
-    int skip_size, len;
-
-    skip_size = sizeof(skip) / sizeof(int);
+    int len;
 
     for (int i=0;i<skip_size;++i) {
         skip[i] = 0;
