@@ -1,3 +1,16 @@
+neoagent (0.8.0~rc1-1) precise; urgency=low
+
+  * fix bug(skip table size is incorrect)
+    + taking array size with sizeof and pointer of array is invalid way.
+
+  * add graceful restart implementation
+
+  * add parameter 'logpath' and 'log_access_mask'
+
+  * 0.8.0~rc1 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 13 May 2013 13:15:02 +0900
+
 neoagent (0.7.5-1) precise; urgency=low
 
   * fix problem(Each process name becomes strange when there are too many environments)

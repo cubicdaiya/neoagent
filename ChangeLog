@@ -1,3 +1,13 @@
+2013-05-13 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix bug(skip table size is incorrect)
+
+	* add graceful restart implementation
+
+	* add parameter 'logpath' and 'log_access_mask'
+
+	* 0.8.0~rc1 released
+
 2013-05-07 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fix problem(Each process name becomes strange when there are too many environments)
