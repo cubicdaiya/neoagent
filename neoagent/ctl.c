@@ -103,7 +103,6 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
         env_ctl->restart_envname = envname;
         pthread_mutex_unlock(&env_ctl->lock_restart);
         kill(pid, SIGHUP);
-        waitpid(pid, &status, 0);
         break;
     default:
         return false;
@@ -156,7 +155,7 @@ static void na_ctl_callback (EV_P_ struct ev_io *w, int revents)
         goto finally;
     }
 
-    snprintf(cwbuf, BUFSIZ + 1, "executed:%s %s", cmd, envname);
+    snprintf(cwbuf, BUFSIZ + 1, "kicked:%s %s", cmd, envname);
 
  finally:
     if (write(cfd, cwbuf, strlen(cwbuf)) == -1) {

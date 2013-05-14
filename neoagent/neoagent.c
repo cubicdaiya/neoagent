@@ -71,6 +71,7 @@ static void na_signal_reconf_handler (int sig)
 
 static void na_signal_restart_handler (int sig)
 {
+    sleep(5);
     SigRestart = NA_RESTART_PHASE_ENABLED;
 }
 
@@ -285,10 +286,12 @@ int main (int argc, char *argv[])
                     pthread_create(&event_th, NULL, na_event_loop, &env);
                     json_object_put(conf_obj);
                 } else { // master
+                    int status;
+                    waitpid(pids[ridx], &status, 0);
                     pids[ridx] = pid;
                 }
                 env_ctl.restart_envname = NULL;
-            }            
+            }
             pthread_mutex_unlock(&env_ctl.lock_restart);
         }
 
