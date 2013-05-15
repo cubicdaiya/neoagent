@@ -6,10 +6,17 @@ import os
 import socket
 import argparse
 
+def is_valid_cmd(cmd):
+    cmds = ["reload", "restart", "graceful"]
+    for cmd_ in cmds:
+        if cmd_ == cmd:
+            return True
+    return False
+
 def is_valid_args(args):
     if args.sock is None or not os.path.exists(args.sock):
         return False
-    if args.cmd is None or (args.cmd != 'reload' and args.cmd != 'restart'):
+    if args.cmd is None or is_valid_cmd(args.cmd) is False:
         return False
     if args.name is None:
         return False
@@ -18,7 +25,7 @@ def is_valid_args(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='A Status Monitor For Neoagent', add_help=False)
     parser.add_argument('-s', '--sock', action='store',      type=str,      help='unix domain socket path')
-    parser.add_argument('-c', '--cmd',  action='store',      type=str,      help='cntrol command(reload, restart)')
+    parser.add_argument('-c', '--cmd',  action='store',      type=str,      help='cntrol command(reload, restart, graceful)')
     parser.add_argument('-n', '--name', action='store',      type=str,      help='environment name')
     parser.add_argument('--help',       action='store_true', default=False, help='show this help message and exit')
 
