@@ -52,8 +52,10 @@ ctl
 
  access mask of unix domain socket file for neoctl
 
-environment
------------
+environments
+------------
+
+neoagent creates worker processes coresponding to each environment.
 
 **name**
 

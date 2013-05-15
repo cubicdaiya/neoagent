@@ -1,6 +1,25 @@
 Utility
 ====================
 
+.. _neoctl:
+
+==================
+neoctl
+==================
+
+neoctl is a process controller for neoagent.
+neoctl provides the following functions.
+
+- reload worker process
+- restart worker process
+- restart worker process gracefully
+
+.. code-block:: sh
+
+ neoctl -s /var/run/neoagent_ctl.sock -c reload   -n envname # reload worker process
+ neoctl -s /var/run/neoagent_ctl.sock -c restart  -n envname # restart worker process
+ neoctl -s /var/run/neoagent_ctl.sock -c graceful -n envname # restart worker process gracefully
+
 ==================
 neostat
 ==================
@@ -33,19 +52,12 @@ neostat is a status monitor for neoagent.
  backup_port: 11213
  current_target_host: 127.0.0.1
  current_target_port: 11212
- error_count: 0
- error_count_max: 1000
  worker_max: 3
  conn_max: 1000
  connpool_max: 20
- is_connpool_only: false
  is_refused_active: false
  request_bufsize: 1024
- request_bufsize_max: 1048576
- request_bufsize_current_max: 54305
  response_bufsize: 1024
- response_bufsize_max: 1048576
- response_bufsize_current_max: 31900
  current_conn: 0
  available_conn: 20
  current_conn_max: 1
@@ -124,14 +136,6 @@ The meaning of Each entry is following.
 
  hostname of current target memcached server
 
-**\error_count**
-
- count of error
-
-**\error_count_max**
-
- when 'error_count' is over this value, neoagent is shutdown
-
 **\worker_max**
 
  max count of event worker
@@ -144,10 +148,6 @@ The meaning of Each entry is following.
 
  size of connection-pool
 
-**\is_connpool_only**
-
- if this parameter is true, neoagent use only connection-pool.
-
 **\is_refused_active**
 
  if this parameter is true, neoagent switches over connection-pool.
@@ -156,25 +156,9 @@ The meaning of Each entry is following.
 
  starting buffer size of each client's request
 
-**\request_bufsize_max**
-
- maximum buffer size of each client's request
-
-**\request_bufsize_current_max**
-
- recorded maximum buffer size of each client's request
-
 **\reponse_bufsize**
 
  starting buffer size of response from server
-
-**\response_bufsize_max**
-
- maximum buffer size of response from server
-
-**\response_bufsize_current_max**
-
- recoreded maximum buffer size of response from server
 
 **\current_conn**
 
