@@ -1,3 +1,11 @@
+2013-05-15 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* distingish restart and graceful clearly
+
+	* fix bug(neoagent losts remaing contexts when executing graceful restart)
+
+	* 0.8.0~rc2 released
+
 2013-05-13 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fix bug(skip table size is incorrect)

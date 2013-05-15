@@ -1,3 +1,13 @@
+neoagent (0.8.0~rc2-1) precise; urgency=low
+
+  * distingish restart and graceful clearly
+
+  * fix bug(neoagent losts remaing contexts when executing graceful restart)
+
+  * 0.8.0~rc2 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 15 May 2013 15:59:51 +0900
+
 neoagent (0.8.0~rc1-1) precise; urgency=low
 
   * fix bug(skip table size is incorrect)
