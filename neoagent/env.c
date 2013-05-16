@@ -27,6 +27,8 @@ extern pthread_rwlock_t LockReconf;
 
 void na_ctl_env_setup_default(na_ctl_env_t *ctl_env)
 {
+    char *binpath = "/usr/bin/neoagent";
+    strncpy(ctl_env->binpath, binpath, NA_PATH_MAX);
     ctl_env->access_mask = NA_ACCESS_MASK_DEFAULT;
 }
 

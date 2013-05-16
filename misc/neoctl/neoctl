@@ -7,7 +7,7 @@ import socket
 import argparse
 
 def is_valid_cmd(cmd):
-    cmds = ["reload", "restart", "graceful"]
+    cmds = ["reload", "restart", "graceful", "update"]
     for cmd_ in cmds:
         if cmd_ == cmd:
             return True
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='A Status Monitor For Neoagent', add_help=False)
     parser.add_argument('-s', '--sock', action='store',      type=str,      help='unix domain socket path')
     parser.add_argument('-c', '--cmd',  action='store',      type=str,      help='cntrol command(reload, restart, graceful)')
-    parser.add_argument('-n', '--name', action='store',      type=str,      help='environment name')
+    parser.add_argument('-n', '--name', action='store',      default=False, type=str,      help='environment name')
     parser.add_argument('--help',       action='store_true', default=False, help='show this help message and exit')
 
     args = parser.parse_args()
@@ -43,10 +43,17 @@ if __name__ == '__main__':
     command  = args.cmd
     envname  = args.name
 
+    if command != "update" and envname is False:
+        parser.print_help()
+        sys.exit(1)
+
     c = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     try:
         c.connect(sockpath)
-        c.sendall(command + " " + envname + "\r\n")
+        if command == "update":
+            c.sendall(command + " all\r\n")
+        else:
+            c.sendall(command + " " + envname + "\r\n")
         msg = c.recv(8192)
     except socket.error, msg:
         print msg
