@@ -90,7 +90,6 @@ static pid_t na_envname2pid(fnv_tbl_t *tbl, char *envname)
 static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
 {
     pid_t pid;
-    int status;
     pid = na_envname2pid(env_ctl->tbl_env, envname);
     if (pid == -1) {
         return false;
