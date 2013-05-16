@@ -6,7 +6,14 @@
  *
  */
 
+// In Mac OS X 10.5 and later, 'daemon' is deprecated.
+// This hack is for eliminating the warning message about it.
+#if __APPLE__
+#define daemon na_fake_daemon
+#endif
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
@@ -16,6 +23,11 @@
 
 #include "defines.h"
 #include "version.h"
+
+#if __APPLE__
+#undef daemon
+extern int daemon(int, int);
+#endif
 
 // constants
 static const int NA_ENV_MAX       = 20;
