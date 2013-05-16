@@ -20,6 +20,8 @@ neoctl provides the following functions.
  neoctl -s /var/run/neoagent_ctl.sock -c restart  -n envname # restart worker process
  neoctl -s /var/run/neoagent_ctl.sock -c graceful -n envname # restart worker process gracefully
 
+Graceful-restart of neoagent works only when worker process binds an unix domain socket.
+
 ==================
 neostat
 ==================
