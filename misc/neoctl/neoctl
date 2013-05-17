@@ -7,7 +7,7 @@ import socket
 import argparse
 
 def is_valid_cmd(cmd):
-    cmds = ["reload", "restart", "graceful", "update"]
+    cmds = ["reload", "restart", "graceful", "update", "add"]
     for cmd_ in cmds:
         if cmd_ == cmd:
             return True
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     command  = args.cmd
     envname  = args.name
 
-    if command != "update" and envname is False:
+    if command != "update" and command != "add" and envname is False:
         parser.print_help()
         sys.exit(1)
 
@@ -52,6 +52,8 @@ if __name__ == '__main__':
         c.connect(sockpath)
         if command == "update":
             c.sendall(command + " all\r\n")
+        elif command == "add":
+            c.sendall(command + " environment\r\n")
         else:
             c.sendall(command + " " + envname + "\r\n")
         msg = c.recv(8192)
