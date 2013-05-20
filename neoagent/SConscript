@@ -19,8 +19,8 @@ for lib in libs:
     if build.util.check_pkg(conf, lib):
         env.ParseConfig('pkg-config --cflags %s' % lib)
     elif lib == 'ev' and build.util.check_pkg(conf, 'libev'):
-        # for compatibility of libev rhel-package
         env.ParseConfig('pkg-config --cflags libev')
+        env.ParseConfig('pkg-config --cflags json')
 
 prog = env.Program(
     'neoagent',
