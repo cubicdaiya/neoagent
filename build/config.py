@@ -9,7 +9,8 @@ cflags = [
     '-O2',
 #    '-fno-strict-aliasing',
     '-D_GNU_SOURCE',
-    '-Wimplicit-function-declaration'
+    '-Wimplicit-function-declaration',
+    '-Wunused-variable',
 ]
 
 libs = [
