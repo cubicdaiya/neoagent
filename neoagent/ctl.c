@@ -94,10 +94,11 @@ static pid_t na_envname2pid(fnv_tbl_t *tbl, char *envname)
 static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
 {
     pid_t pid;
-    int status;
+
+    pid = getpid();
 
     if (strcmp(cmd, na_ctl_cmds[NA_CTL_CMD_UPDATE]) != 0 &&
-        strcmp(cmd, na_ctl_cmds[NA_CTL_CMD_ADD]))
+        strcmp(cmd, na_ctl_cmds[NA_CTL_CMD_ADD])    != 0)
     {
         pid = na_envname2pid(env_ctl->tbl_env, envname);
         if (pid == -1) {
@@ -122,10 +123,10 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
         kill(pid, SIGHUP);
         break;
     case NA_CTL_CMD_UPDATE:
-        kill(getpid(), SIGUSR1);
+        kill(pid, SIGUSR1);
         break;
     case NA_CTL_CMD_ADD:
-        kill(getpid(), SIGWINCH);
+        kill(pid, SIGWINCH);
         break;
     default:
         return false;
