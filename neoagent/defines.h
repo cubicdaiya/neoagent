@@ -123,6 +123,7 @@ typedef struct na_connpool_t {
 } na_connpool_t;
 
 typedef struct na_ctl_env_t {
+    char       binpath[NA_PATH_MAX + 1];
     int        fd;
     char       sockpath[NA_PATH_MAX + 1];
     mode_t     access_mask;

@@ -21,13 +21,17 @@ typedef enum na_ctl_cmd_t {
     NA_CTL_CMD_RELOAD = 0,
     NA_CTL_CMD_RESTART,
     NA_CTL_CMD_GRACEFUL,
+    NA_CTL_CMD_UPDATE,
+    NA_CTL_CMD_ADD,
     NA_CTL_CMD_MAX
 } na_ctl_cmd_t; 
 
 const char *na_ctl_cmds[NA_CTL_CMD_MAX] = {
     [NA_CTL_CMD_RELOAD]   = "reload",
     [NA_CTL_CMD_RESTART]  = "restart",
-    [NA_CTL_CMD_GRACEFUL] = "graceful"
+    [NA_CTL_CMD_GRACEFUL] = "graceful",
+    [NA_CTL_CMD_UPDATE]   = "update",
+    [NA_CTL_CMD_ADD]      = "add"
 };
 
 static void na_ctl_callback (EV_P_ struct ev_io *w, int revents);
@@ -90,9 +94,15 @@ static pid_t na_envname2pid(fnv_tbl_t *tbl, char *envname)
 static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
 {
     pid_t pid;
-    pid = na_envname2pid(env_ctl->tbl_env, envname);
-    if (pid == -1) {
-        return false;
+    int status;
+
+    if (strcmp(cmd, na_ctl_cmds[NA_CTL_CMD_UPDATE]) != 0 &&
+        strcmp(cmd, na_ctl_cmds[NA_CTL_CMD_ADD]))
+    {
+        pid = na_envname2pid(env_ctl->tbl_env, envname);
+        if (pid == -1) {
+            return false;
+        }
     }
 
     switch (na_ctl_cmd(cmd)) {
@@ -110,6 +120,12 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
         env_ctl->restart_envname = envname;
         pthread_mutex_unlock(&env_ctl->lock_restart);
         kill(pid, SIGHUP);
+        break;
+    case NA_CTL_CMD_UPDATE:
+        kill(getpid(), SIGUSR1);
+        break;
+    case NA_CTL_CMD_ADD:
+        kill(getpid(), SIGWINCH);
         break;
     default:
         return false;
