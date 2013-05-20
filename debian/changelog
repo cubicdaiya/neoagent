@@ -1,3 +1,9 @@
+neoagent (0.8.0-1) precise; urgency=low
+
+  * 0.8.0 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 20 May 2013 11:35:06 +0900
+
 neoagent (0.8.0~rc2-1) precise; urgency=low
 
   * distingish restart and graceful clearly
