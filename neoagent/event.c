@@ -23,10 +23,10 @@
 // globals
 static na_client_t *ClientPool;
 static na_event_queue_t *EventQueue = NULL;
+extern pthread_rwlock_t LockReconf;
 
 // refs to external globals
-extern pthread_rwlock_t LockReconf;
-volatile sig_atomic_t SigGraceful;
+na_graceful_phase_t  GracefulPhase;
 
 // private functions
 inline static void na_event_stop (EV_P_ struct ev_io *w, na_client_t *client, na_env_t *env);
@@ -151,8 +151,8 @@ static void na_client_close (EV_P_ na_client_t *client, na_env_t *env)
     pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn > 0) {
         --env->current_conn;
-        if (SigGraceful == NA_GRACEFUL_PHASE_STOP_ACCEPT && env->current_conn == 0) {
-            SigGraceful = NA_GRACEFUL_PHASE_COMPLETED;
+        if (GracefulPhase == NA_GRACEFUL_PHASE_STOP_ACCEPT && env->current_conn == 0) {
+            GracefulPhase = NA_GRACEFUL_PHASE_COMPLETED;
         }
     }
     pthread_mutex_unlock(&env->lock_current_conn);
@@ -594,9 +594,9 @@ unlock_reconf:
     pthread_rwlock_unlock(&LockReconf);
 
     pthread_mutex_lock(&env->lock_current_conn);
-    if (SigGraceful == NA_GRACEFUL_PHASE_ENABLED) {
+    if (GracefulPhase == NA_GRACEFUL_PHASE_ENABLED) {
         ev_io_set(&env->fs_watcher, fsfd, EV_NONE);
-        SigGraceful = NA_GRACEFUL_PHASE_STOP_ACCEPT;
+        GracefulPhase = NA_GRACEFUL_PHASE_STOP_ACCEPT;
     }
     pthread_mutex_unlock(&env->lock_current_conn);
 

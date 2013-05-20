@@ -403,6 +403,15 @@ typedef enum na_graceful_phase_t {
 } na_graceful_phase_t;
 
 /**
+ * process
+ */
+void na_kill_childs(pid_t *pids, size_t c, int sig);
+void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name);
+bool na_is_master_process(void);
+void na_process_shutdown(pid_t *pids, int env_cnt);
+void na_on_the_fly_update(na_ctl_env_t *ctl_env, char *conf_file, pid_t *pids, int env_cnt);
+
+/**
  * util
  */
 #define NA_FREE(p)                                      \

@@ -30,33 +30,20 @@ extern int daemon(int, int);
 #endif
 
 // constants
-static const int NA_ENV_MAX       = 20;
-static const int NA_PID_MAX       = 32768;
-static const int NA_PROC_NAME_MAX = 64;
+static const int NA_ENV_MAX = 20;
+static const int NA_PID_MAX = 32768;
 
 // external globals
-extern volatile sig_atomic_t SigExit;
-extern volatile sig_atomic_t SigGraceful; // for worker prcess
+extern na_graceful_phase_t GracefulPhase; // for worker prcess
 extern time_t StartTimestamp;
+extern pid_t MasterPid;
 
 // globals
-volatile sig_atomic_t SigReconf;
-volatile sig_atomic_t SigUpdate;
-volatile sig_atomic_t SigAdd;
 pthread_rwlock_t LockReconf;
-pid_t MasterPid;
 
 static void na_version(void);
 static void na_usage(void);
-static void na_signal_exit_handler (int sig);
-static void na_signal_reconf_handler (int sig);
-static void na_signal_graceful_handler (int sig);
-static void na_signal_update_handler (int sig);
-static void na_signal_add_handler (int sig);
 static void na_setup_signals (void);
-static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name);
-static void na_kill_childs(pid_t *pids, size_t c, int sig);
-static bool is_master_process(void);
 
 static void na_version(void)
 {
@@ -77,99 +64,11 @@ static void na_usage(void)
     printf("%s\n", s);
 }
 
-static void na_signal_exit_handler (int sig)
-{
-    SigExit = 1;
-}
-
-static void na_signal_reconf_handler (int sig)
-{
-    SigReconf = 1;
-}
-
-static void na_signal_graceful_handler (int sig)
-{
-    sleep(5);
-    SigGraceful = NA_GRACEFUL_PHASE_ENABLED;
-}
-
-static void na_signal_update_handler (int sig)
-{
-    SigUpdate = 1;
-}
-
-static void na_signal_add_handler (int sig)
-{
-    SigAdd = 1;
-}
-
 static void na_setup_signals (void)
 {
-    struct sigaction sig_exit_handler;
-    struct sigaction sig_reconf_handler;
-    struct sigaction sig_graceful_handler;
-    struct sigaction sig_update_handler;
-    struct sigaction sig_add_handler;
-
-    sigemptyset(&sig_exit_handler.sa_mask);
-    sigemptyset(&sig_reconf_handler.sa_mask);
-    sigemptyset(&sig_graceful_handler.sa_mask);
-    sigemptyset(&sig_update_handler.sa_mask);
-    sigemptyset(&sig_add_handler.sa_mask);
-
-    sig_exit_handler.sa_handler     = na_signal_exit_handler;
-    sig_reconf_handler.sa_handler   = na_signal_reconf_handler;
-    sig_graceful_handler.sa_handler = na_signal_graceful_handler;
-    sig_update_handler.sa_handler   = na_signal_update_handler;
-    sig_add_handler.sa_handler      = na_signal_add_handler;
-
-    sig_exit_handler.sa_flags     = 0;
-    sig_reconf_handler.sa_flags   = 0;
-    sig_graceful_handler.sa_flags = 0;
-    sig_update_handler.sa_flags = 0;
-    sig_add_handler.sa_flags = 0;
-
-    if (sigaction(SIGTERM, &sig_exit_handler,     NULL) == -1 ||
-        sigaction(SIGINT,  &sig_exit_handler,     NULL) == -1 ||
-        sigaction(SIGALRM, &sig_exit_handler,     NULL) == -1 ||
-        sigaction(SIGHUP,  &sig_graceful_handler, NULL) == -1 ||
-        sigaction(SIGWINCH,&sig_add_handler,      NULL) == -1 ||
-        sigaction(SIGUSR1, &sig_update_handler,   NULL) == -1 ||
-        sigaction(SIGUSR2, &sig_reconf_handler,   NULL) == -1)
-        {
-            NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_SETUP_SIGNAL);
-        }
-
     if (sigignore(SIGPIPE) == -1) {
         NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_IGNORE_SIGNAL);
     }
-
-    SigExit     = 0;
-    SigReconf   = 0;
-    SigGraceful = NA_GRACEFUL_PHASE_DISABLED;
-    SigUpdate   = 0;
-    SigAdd      = 0;
-}
-
-static void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name)
-{
-    strncpy(orig_proc_name + strlen(orig_proc_name), ": ",          NA_PROC_NAME_MAX + 1);
-    strncpy(orig_proc_name + strlen(orig_proc_name), env_proc_name, NA_PROC_NAME_MAX + 1);
-}
-
-static void na_kill_childs(pid_t *pids, size_t c, int sig)
-{
-    for (int i=0;i<c;++i) {
-        kill(pids[i], sig);
-    }
-}
-
-static bool is_master_process(void)
-{
-    if (getpid() == MasterPid) {
-        return true;
-    }
-    return false;
 }
 
 int main (int argc, char *argv[])
@@ -189,6 +88,9 @@ int main (int argc, char *argv[])
     fnv_ent_t ent_env[NA_PID_MAX];
     fnv_tbl_t *tbl_env;
     char conf_file[NA_PATH_MAX + 1];
+    sigset_t ss;
+    int sig;
+
 
     while (-1 != (c = getopt(argc, argv,
                              "f:" /* configuration file with JSON */
@@ -252,7 +154,7 @@ int main (int argc, char *argv[])
         }
     }
 
-    if (is_master_process()) {
+    if (na_is_master_process()) {
         if (conf_obj == NULL) {
             NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_CONFPATH);
         }
@@ -291,19 +193,76 @@ int main (int argc, char *argv[])
 
     json_object_put(conf_obj);
 
+    sigemptyset(&ss);
+    sigaddset(&ss, SIGTERM);
+    sigaddset(&ss, SIGINT);
+    sigaddset(&ss, SIGALRM);
+    if (na_is_master_process()) {
+        sigaddset(&ss, SIGCONT);
+        sigaddset(&ss, SIGWINCH);
+        sigaddset(&ss, SIGUSR1);
+    } else {
+        sigaddset(&ss, SIGHUP);
+        sigaddset(&ss, SIGUSR2);
+    }
+    sigprocmask(SIG_BLOCK, &ss, NULL);
+
     // monitoring signal
     while (true) {
 
-        if (SigExit == 1) {
-            if (is_master_process()) {
-                na_kill_childs(pids, env_cnt, SIGINT);
+        if (!na_is_master_process()) {
+            if (sigwait(&ss, &sig) != 0) {
+                continue;
             }
-            break;
+            switch (sig) {
+            case SIGTERM:
+            case SIGINT:
+            case SIGALRM:
+                goto exit;
+            case SIGHUP:
+                if (GracefulPhase == NA_GRACEFUL_PHASE_DISABLED) {
+                    sleep(5);
+                    GracefulPhase = NA_GRACEFUL_PHASE_ENABLED;
+                }
+                // wait until available connection becomes zero
+                while (true) {
+                    pthread_mutex_lock(&env.lock_current_conn);
+                    if (env.current_conn == 0) {
+                        pthread_mutex_unlock(&env.lock_current_conn);
+                        goto exit;
+                    }
+                    pthread_mutex_unlock(&env.lock_current_conn);
+                    sleep(1);
+                }
+                break;
+            case SIGUSR2:
+                conf_obj         = na_get_conf(conf_file);
+                environments_obj = na_get_environments(conf_obj, &env_cnt);
+
+                pthread_rwlock_wrlock(&LockReconf);
+                na_conf_env_init(environments_obj, &env, pidx - 1, true);
+                pthread_rwlock_unlock(&LockReconf);
+
+                json_object_put(conf_obj);
+                break;
+            default:
+                break;
+            }
+            continue;
         }
 
-        if (is_master_process()) {
+        // for master process
+        if (sigwait(&ss, &sig) != 0) {
+            continue;
+        }
 
-            pthread_mutex_lock(&env_ctl.lock_restart);
+        switch (sig) {
+        case SIGTERM:
+        case SIGINT:
+        case SIGALRM:
+            na_process_shutdown(pids, env_cnt);
+            goto exit;
+        case SIGCONT:
             if (env_ctl.restart_envname != NULL) {
                 pid_t pid = fork();
                 void *th_ret;
@@ -317,9 +276,9 @@ int main (int argc, char *argv[])
                 } else if (pid == 0) { // child
                     pthread_cancel(ctl_th);
                     pthread_join(ctl_th, &th_ret);
-
+                    
                     na_memproto_bm_skip_init();
-
+                    
                     memset(&env, 0, sizeof(env));
                     na_env_setup_default(&env, ridx);
                     na_conf_env_init(environments_obj, &env, ridx, false);
@@ -335,42 +294,11 @@ int main (int argc, char *argv[])
                 }
                 env_ctl.restart_envname = NULL;
             }
-            pthread_mutex_unlock(&env_ctl.lock_restart);
-        }
-
-        if (!is_master_process() && SigReconf == 1) {
-            conf_obj         = na_get_conf(conf_file);
-            environments_obj = na_get_environments(conf_obj, &env_cnt);
-
-            pthread_rwlock_wrlock(&LockReconf);
-            na_conf_env_init(environments_obj, &env, pidx - 1, true);
-            pthread_rwlock_unlock(&LockReconf);
-
-            json_object_put(conf_obj);
-            SigReconf = 0;
-        }
-
-        if (!is_master_process() && SigGraceful >= NA_GRACEFUL_PHASE_ENABLED) {
-            pthread_mutex_lock(&env.lock_current_conn);
-            if (env.current_conn == 0) {
-                pthread_mutex_unlock(&env.lock_current_conn);
-                return 0;
+            break;
+        case SIGWINCH:
+            if (env_cnt >= NA_ENV_MAX) {
+                continue;
             }
-            pthread_mutex_unlock(&env.lock_current_conn);
-        }
-
-        if (is_master_process() && SigUpdate == 1) {
-            pid_t pid = fork();
-            if (pid == -1) {
-                NA_CTL_DIE_WITH_ERROR(&env_ctl, NA_ERROR_FAILED_CREATE_PROCESS);
-            } else if (pid == 0) { // child
-                execl(env_ctl.binpath, env_ctl.binpath, "-f", conf_file, NULL);
-            }
-            na_kill_childs(pids, env_cnt, SIGHUP);
-            return 0;
-        }
-
-        if (is_master_process() && env_cnt < NA_ENV_MAX && SigAdd == 1) {
             pid_t pid = fork();
             int env_cnt_prev;
             int status;
@@ -400,12 +328,18 @@ int main (int argc, char *argv[])
                     pids[env_cnt - 1] = pid;
                 }
             }
-            SigAdd = 0;
+            break;
+        case SIGUSR1:
+            na_on_the_fly_update(&env_ctl, conf_file, pids, env_cnt);
+            goto exit;
+        default:
+            assert(false);
+            break;
         }
 
-        // XXX we should sleep forever and only wake upon a signal
-        sleep(1);
     }
+
+ exit:
 
     return 0;
 }
