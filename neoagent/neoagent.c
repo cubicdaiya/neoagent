@@ -196,7 +196,6 @@ int main (int argc, char *argv[])
     sigemptyset(&ss);
     sigaddset(&ss, SIGTERM);
     sigaddset(&ss, SIGINT);
-    sigaddset(&ss, SIGALRM);
     if (na_is_master_process()) {
         sigaddset(&ss, SIGCONT);
         sigaddset(&ss, SIGWINCH);
@@ -217,7 +216,6 @@ int main (int argc, char *argv[])
             switch (sig) {
             case SIGTERM:
             case SIGINT:
-            case SIGALRM:
                 goto exit;
             case SIGHUP:
                 if (GracefulPhase == NA_GRACEFUL_PHASE_DISABLED) {
@@ -259,7 +257,6 @@ int main (int argc, char *argv[])
         switch (sig) {
         case SIGTERM:
         case SIGINT:
-        case SIGALRM:
             na_process_shutdown(pids, env_cnt);
             goto exit;
         case SIGCONT:
