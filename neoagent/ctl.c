@@ -112,12 +112,12 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
         break;
     case NA_CTL_CMD_RESTART:
         env_ctl->restart_envname = envname;
-        kill(getpid(), SIGCONT);
+        raise(SIGCONT);
         kill(pid, SIGTERM);
         break;
     case NA_CTL_CMD_GRACEFUL:
         env_ctl->restart_envname = envname;
-        kill(getpid(), SIGCONT);
+        raise(SIGCONT);
         kill(pid, SIGHUP);
         break;
     case NA_CTL_CMD_UPDATE:
