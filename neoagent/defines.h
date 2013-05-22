@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/types.h>
@@ -232,8 +233,8 @@ struct json_object *na_get_ctl(struct json_object *conf_obj);
 struct json_object *na_get_environments(struct json_object *conf_obj, int *env_cnt);
 void na_conf_ctl_init(struct json_object *ctl_obj, na_ctl_env_t *na_ctl_env);
 int na_conf_get_environment_idx(struct json_object *environments_obj, char *envname);
-void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env,
-                      int idx, bool reconf);
+char *na_conf_get_environment_name(struct json_object *environments_obj, int idx);
+void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, int idx);
 
 /**
  * error
@@ -410,6 +411,13 @@ void na_set_env_proc_name (char *orig_proc_name, const char *env_proc_name);
 bool na_is_master_process(void);
 void na_process_shutdown(pid_t *pids, int env_cnt);
 void na_on_the_fly_update(na_ctl_env_t *ctl_env, char *conf_file, pid_t *pids, int env_cnt);
+
+/**
+ * signal
+ */
+void na_setup_ignore_signals (void);
+void na_setup_signals_for_master(sigset_t *ss);
+void na_setup_signals_for_worker(sigset_t *ss);
 
 /**
  * util

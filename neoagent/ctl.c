@@ -18,8 +18,7 @@
 #include "ext/fnv.h"
 
 typedef enum na_ctl_cmd_t {
-    NA_CTL_CMD_RELOAD = 0,
-    NA_CTL_CMD_RESTART,
+    NA_CTL_CMD_RESTART = 0,
     NA_CTL_CMD_GRACEFUL,
     NA_CTL_CMD_UPDATE,
     NA_CTL_CMD_ADD,
@@ -27,7 +26,6 @@ typedef enum na_ctl_cmd_t {
 } na_ctl_cmd_t; 
 
 const char *na_ctl_cmds[NA_CTL_CMD_MAX] = {
-    [NA_CTL_CMD_RELOAD]   = "reload",
     [NA_CTL_CMD_RESTART]  = "restart",
     [NA_CTL_CMD_GRACEFUL] = "graceful",
     [NA_CTL_CMD_UPDATE]   = "update",
@@ -107,21 +105,18 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
     }
 
     switch (na_ctl_cmd(cmd)) {
-    case NA_CTL_CMD_RELOAD:
-        kill(pid, SIGUSR2);
-        break;
     case NA_CTL_CMD_RESTART:
         env_ctl->restart_envname = envname;
-        raise(SIGCONT);
+        kill(getpid(), SIGCONT);
         kill(pid, SIGTERM);
-        break;
-    case NA_CTL_CMD_GRACEFUL:
-        env_ctl->restart_envname = envname;
-        raise(SIGCONT);
-        kill(pid, SIGHUP);
         break;
     case NA_CTL_CMD_UPDATE:
         kill(pid, SIGUSR1);
+        break;
+    case NA_CTL_CMD_GRACEFUL:
+        env_ctl->restart_envname = envname;
+        kill(getpid(), SIGCONT);
+        kill(pid, SIGUSR2);
         break;
     case NA_CTL_CMD_ADD:
         kill(pid, SIGWINCH);
@@ -158,22 +153,26 @@ static void na_ctl_callback (EV_P_ struct ev_io *w, int revents)
 
     if ((crbufsize = read(cfd, crbuf, BUFSIZ)) == -1) {
         NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_FAILED_READ);
+        snprintf(cwbuf, BUFSIZ + 1, "recv data failed\n");
         goto finally;
     }
 
     crbuf[crbufsize] = '\0';
     if (!na_ctl_parse(env, crbuf, cmd, envname, BUFSIZ)) {
         NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_CTL_CMD);
+        snprintf(cwbuf, BUFSIZ + 1, "parse data failed\n");
         goto finally;
     }
 
     if (!na_is_valid_ctl_cmd(cmd)) {
         NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_CTL_CMD);
+        snprintf(cwbuf, BUFSIZ + 1, "invalid ctl command\n");
         goto finally;
     }
 
     if (!na_ctl_cmd_execute(env, cmd, envname)) {
         NA_CTL_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_FAILED_EXECUTE_CTM_CMD);
+        snprintf(cwbuf, BUFSIZ + 1, "execute command failed\n");
         goto finally;
     }
 

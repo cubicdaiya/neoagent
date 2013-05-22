@@ -10,13 +10,11 @@ neoctl
 neoctl is a process controller for neoagent.
 neoctl provides the following functions.
 
-- reload worker process
 - restart worker process
 - restart worker process gracefully
 
 .. code-block:: sh
 
- neoctl -s /var/run/neoagent_ctl.sock -c reload   -n envname # reload worker process
  neoctl -s /var/run/neoagent_ctl.sock -c restart  -n envname # restart worker process
  neoctl -s /var/run/neoagent_ctl.sock -c graceful -n envname # restart worker process gracefully
 

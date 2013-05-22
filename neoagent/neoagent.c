@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
@@ -40,7 +39,6 @@ extern pid_t MasterPid;
 
 static void na_version(void);
 static void na_usage(void);
-static void na_setup_signals (void);
 
 static void na_version(void)
 {
@@ -59,13 +57,6 @@ static void na_usage(void)
         "-t check configuration file with JSON\n"
         "-v show version and information";
     printf("%s\n", s);
-}
-
-static void na_setup_signals (void)
-{
-    if (sigignore(SIGPIPE) == -1) {
-        NA_DIE_WITH_ERROR(NULL, NA_ERROR_FAILED_IGNORE_SIGNAL);
-    }
 }
 
 int main (int argc, char *argv[])
@@ -88,6 +79,7 @@ int main (int argc, char *argv[])
     sigset_t ss;
     int sig;
 
+    GracefulPhase = NA_GRACEFUL_PHASE_DISABLED;
 
     while (-1 != (c = getopt(argc, argv,
                              "f:" /* configuration file with JSON */
@@ -134,7 +126,7 @@ int main (int argc, char *argv[])
     }
 
     StartTimestamp = time(NULL);
-    na_setup_signals();
+    na_setup_ignore_signals();
 
     tbl_env   = fnv_tbl_create(ent_env, NA_PID_MAX);
     MasterPid = getpid();
@@ -158,7 +150,7 @@ int main (int argc, char *argv[])
         na_set_env_proc_name(argv[0], "master");
         for (int i=0;i<env_cnt;++i) {
             na_env_setup_default(&envs[i], i);
-            na_conf_env_init(environments_obj, &envs[i], i, false);
+            na_conf_env_init(environments_obj, &envs[i], i);
             fnv_put(tbl_env, envs[i].name, &pids[i], strlen(envs[i].name), sizeof(pid_t));
         }
         memset(&env_ctl, 0, sizeof(na_ctl_env_t));
@@ -179,7 +171,7 @@ int main (int argc, char *argv[])
         na_env_setup_default(&env, 0);
     } else {
         na_env_setup_default(&env, pidx);
-        na_conf_env_init(environments_obj, &env, pidx - 1, false);
+        na_conf_env_init(environments_obj, &env, pidx - 1);
     }
 
     na_set_env_proc_name(argv[0], env.name);
@@ -190,18 +182,11 @@ int main (int argc, char *argv[])
 
     json_object_put(conf_obj);
 
-    sigemptyset(&ss);
-    sigaddset(&ss, SIGTERM);
-    sigaddset(&ss, SIGINT);
     if (na_is_master_process()) {
-        sigaddset(&ss, SIGCONT);
-        sigaddset(&ss, SIGWINCH);
-        sigaddset(&ss, SIGUSR1);
+        na_setup_signals_for_master(&ss);
     } else {
-        sigaddset(&ss, SIGHUP);
-        sigaddset(&ss, SIGUSR2);
+        na_setup_signals_for_worker(&ss);
     }
-    sigprocmask(SIG_BLOCK, &ss, NULL);
 
     // monitoring signal
     while (true) {
@@ -213,8 +198,9 @@ int main (int argc, char *argv[])
             switch (sig) {
             case SIGTERM:
             case SIGINT:
-                goto exit;
             case SIGHUP:
+                goto exit;
+            case SIGUSR2:
                 if (GracefulPhase == NA_GRACEFUL_PHASE_DISABLED) {
                     sleep(5);
                     GracefulPhase = NA_GRACEFUL_PHASE_ENABLED;
@@ -230,14 +216,6 @@ int main (int argc, char *argv[])
                     sleep(1);
                 }
                 break;
-            case SIGUSR2:
-                conf_obj         = na_get_conf(conf_file);
-                environments_obj = na_get_environments(conf_obj, &env_cnt);
-
-                na_conf_env_init(environments_obj, &env, pidx - 1, true);
-
-                json_object_put(conf_obj);
-                break;
             default:
                 break;
             }
@@ -252,6 +230,7 @@ int main (int argc, char *argv[])
         switch (sig) {
         case SIGTERM:
         case SIGINT:
+        case SIGHUP:
             na_process_shutdown(pids, env_cnt);
             goto exit;
         case SIGCONT:
@@ -268,12 +247,14 @@ int main (int argc, char *argv[])
                 } else if (pid == 0) { // child
                     pthread_cancel(ctl_th);
                     pthread_join(ctl_th, &th_ret);
+
+                    na_setup_signals_for_worker(&ss);
                     
                     na_memproto_bm_skip_init();
                     
                     memset(&env, 0, sizeof(env));
                     na_env_setup_default(&env, ridx);
-                    na_conf_env_init(environments_obj, &env, ridx, false);
+                    na_conf_env_init(environments_obj, &env, ridx);
                     argv[0][strlen(argv[0]) - (sizeof(": master") - 1)] = '\0';
                     na_set_env_proc_name(argv[0], env.name);
                     na_env_init(&env);
@@ -307,17 +288,21 @@ int main (int argc, char *argv[])
                 if (pid == -1) {
                     NA_CTL_DIE_WITH_ERROR(&env_ctl, NA_ERROR_FAILED_CREATE_PROCESS);
                 } else if (pid == 0) { // child
+                    na_setup_signals_for_worker(&ss);
                     na_memproto_bm_skip_init();
                     memset(&env, 0, sizeof(env));
                     na_env_setup_default(&env, env_cnt - 1);
-                    na_conf_env_init(environments_obj, &env, env_cnt - 1, false);
+                    na_conf_env_init(environments_obj, &env, env_cnt - 1);
                     argv[0][strlen(argv[0]) - (sizeof(": master") - 1)] = '\0';
                     na_set_env_proc_name(argv[0], env.name);
                     na_env_init(&env);
                     pthread_create(&event_th, NULL, na_event_loop, &env);
                     json_object_put(conf_obj);
                 } else { // master
+                    char *envname;
+                    envname = na_conf_get_environment_name(environments_obj, env_cnt - 1);
                     pids[env_cnt - 1] = pid;
+                    fnv_put(tbl_env, envname, &pids[env_cnt - 1], strlen(envname), sizeof(pid_t));
                 }
             }
             break;
