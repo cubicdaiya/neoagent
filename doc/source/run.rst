@@ -33,7 +33,6 @@ neoagent handles some signals. If an alerted signal to a master process is one o
 
 - SIGTERM
 - SIGINT
-- SIGALRM
 
 Alerting a signal directly with the kill command to some worker process is discouraged.
 Worker processes should be controlled by :ref:`neoctl`.
