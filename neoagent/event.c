@@ -23,7 +23,6 @@
 // globals
 static na_client_t *ClientPool;
 static na_event_queue_t *EventQueue = NULL;
-extern pthread_rwlock_t LockReconf;
 
 // refs to external globals
 na_graceful_phase_t  GracefulPhase;
@@ -169,18 +168,17 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
     env    = client->env;
     cfd    = client->cfd;
 
-    pthread_rwlock_rdlock(&LockReconf);
     pthread_rwlock_rdlock(&env->lock_refused);
     if ((client->is_refused_active != env->is_refused_active) || env->is_refused_accept) {
         pthread_rwlock_unlock(&env->lock_refused);
         NA_EVENT_FAIL(NA_ERROR_INVALID_CONNPOOL, EV_A, w, client, env);
-        goto unlock_reconf; // request fail
+        goto finally; // request fail
     }
     pthread_rwlock_unlock(&env->lock_refused);
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
         NA_EVENT_FAIL(NA_ERROR_OUTOF_LOOP, EV_A, w, client, env);
-        goto unlock_reconf; // request fail
+        goto finally; // request fail
     }
 
     if (revents & EV_READ) {
@@ -204,10 +202,10 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
         if (size <= 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-                goto unlock_reconf; // not ready yet
+                goto finally; // not ready yet
             }
             NA_EVENT_FAIL(NA_ERROR_FAILED_READ, EV_A, w, client, env);
-            goto unlock_reconf; // request fail
+            goto finally; // request fail
         }
 
         client->srbufsize                += size;
@@ -219,7 +217,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
                 client->event_state = NA_EVENT_STATE_CLIENT_WRITE;
                 na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
                 na_slow_query_gettime(env, &client->na_from_ts_time_end);
-                goto unlock_reconf;
+                goto finally;
             }
         } else if (client->srbufsize > 2 &&
                    client->srbuf[client->srbufsize - 2] == '\r' &&
@@ -244,7 +242,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
 
         if (size == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-                goto unlock_reconf; // not ready yet
+                goto finally; // not ready yet
             } else if (client->is_use_connpool) {
                 int i = client->cur_pool;
                 na_server_t *server;
@@ -280,7 +278,7 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             } else {
                 NA_EVENT_FAIL(NA_ERROR_FAILED_WRITE, EV_A, w, client, env);
             }
-            goto unlock_reconf; // request fail
+            goto finally; // request fail
         }
 
         client->swbufsize += size;
@@ -292,11 +290,11 @@ static void na_target_server_callback (EV_P_ struct ev_io *w, int revents)
             na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_READ);
             na_slow_query_gettime(env, &client->na_to_ts_time_end);
         }
-        goto unlock_reconf;
+        goto finally;
     }
 
-unlock_reconf:
-    pthread_rwlock_unlock(&LockReconf);
+ finally:
+    ; // do nothing
 }
 
 static void na_client_callback(EV_P_ struct ev_io *w, int revents)
@@ -310,18 +308,17 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
     env    = client->env;
     tsfd   = client->tsfd;
 
-    pthread_rwlock_rdlock(&LockReconf);
     pthread_rwlock_rdlock(&env->lock_refused);
     if ((client->is_refused_active != env->is_refused_active) || env->is_refused_accept) {
         pthread_rwlock_unlock(&env->lock_refused);
         NA_EVENT_FAIL(NA_ERROR_INVALID_CONNPOOL, EV_A, w, client, env);
-        goto unlock_reconf; // request fail
+        goto finally; // request fail
     }
     pthread_rwlock_unlock(&env->lock_refused);
 
     if (env->loop_max > 0 && client->loop_cnt++ > env->loop_max) {
         NA_EVENT_FAIL(NA_ERROR_OUTOF_LOOP, EV_A, w, client, env);
-        goto unlock_reconf; // request fail
+        goto finally; // request fail
     }
 
     if (revents & EV_READ) {
@@ -339,13 +336,13 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
         if (size == 0) {
             na_event_stop(EV_A_ w, client, env);
-            goto unlock_reconf; // request success
+            goto finally; // request success
         } else if (size == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-                goto unlock_reconf; // not ready yet
+                goto finally; // not ready yet
             }
             NA_EVENT_FAIL(NA_ERROR_FAILED_READ, EV_A, w, client, env);
-            goto unlock_reconf; // request fail
+            goto finally; // request fail
         }
 
         client->crbufsize                += size;
@@ -355,25 +352,25 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
         if (client->cmd == NA_MEMPROTO_CMD_QUIT) {
             na_event_stop(EV_A_ w, client, env);
-            goto unlock_reconf; // request success
+            goto finally; // request success
         } else if (client->cmd == NA_MEMPROTO_CMD_GET || client->cmd == NA_MEMPROTO_CMD_SET) {
             client->req_cnt = na_memproto_count_request_get(client->crbuf, client->crbufsize);
         }
 
         if (client->crbufsize < 2) {
-            goto unlock_reconf; // not ready yet
+            goto finally; // not ready yet
         } else if (client->crbuf[client->crbufsize - 2] == '\r' &&
                    client->crbuf[client->crbufsize - 1] == '\n')
         {
             if (client->cmd == NA_MEMPROTO_CMD_UNKNOWN) {
                 na_event_stop(EV_A_ w, client, env);
-                goto unlock_reconf; // request fail
+                goto finally; // request fail
             } else if (client->cmd == NA_MEMPROTO_CMD_SET && client->req_cnt < 2) {
-                goto unlock_reconf; // not ready yet
+                goto finally; // not ready yet
             }
             client->event_state = NA_EVENT_STATE_TARGET_WRITE;
             na_event_switch(EV_A_ w, &client->ts_watcher, tsfd, EV_WRITE);
-            goto unlock_reconf;
+            goto finally;
         }
 
     } else if (revents & EV_WRITE) {
@@ -390,20 +387,20 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
 
         if (size == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-                goto unlock_reconf; // not ready yet
+                goto finally; // not ready yet
             }
             if (errno == EPIPE) {
                 NA_EVENT_FAIL(NA_ERROR_BROKEN_PIPE, EV_A, w, client, env);
             } else {
                 NA_EVENT_FAIL(NA_ERROR_FAILED_WRITE, EV_A, w, client, env);
             }
-            goto unlock_reconf; // request fail
+            goto finally; // request fail
         }
 
         client->cwbufsize += size;
         if (client->cwbufsize < client->srbufsize) {
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_WRITE);
-            goto unlock_reconf;
+            goto finally;
         } else {
             na_slow_query_gettime(env, &client->na_to_client_time_end);
             na_slow_query_check(client);
@@ -418,12 +415,12 @@ static void na_client_callback(EV_P_ struct ev_io *w, int revents)
             client->req_cnt          = 0;
             client->res_cnt          = 0;
             na_event_switch(EV_A_ w, &client->c_watcher, cfd, EV_READ);
-            goto unlock_reconf;
+            goto finally;
         }
     }
 
-unlock_reconf:
-    pthread_rwlock_unlock(&LockReconf);
+finally:
+    ; // do nothing
 }
 
 void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
@@ -441,18 +438,17 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
     cur_pool = -1;
     cur_cli  = -1;
 
-    pthread_rwlock_rdlock(&LockReconf);
     pthread_rwlock_rdlock(&env->lock_refused);
     if (env->is_refused_accept) {
         pthread_rwlock_unlock(&env->lock_refused);
-        goto unlock_reconf;
+        goto finally;
     }
     pthread_rwlock_unlock(&env->lock_refused);
 
     pthread_mutex_lock(&env->lock_current_conn);
     if (env->current_conn >= env->conn_max) {
         pthread_mutex_unlock(&env->lock_current_conn);
-        goto unlock_reconf;
+        goto finally;
     }
     pthread_mutex_unlock(&env->lock_current_conn);
 
@@ -469,7 +465,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         tsfd = na_target_server_tcpsock_init();
         if (tsfd < 0) {
             NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_FD);
-            goto unlock_reconf;
+            goto finally;
         }
         na_target_server_tcpsock_setup(tsfd, true);
 
@@ -477,7 +473,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             if (errno != EINPROGRESS && errno != EALREADY) {
                 close(tsfd);
                 NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_CONNECTION_FAILED);
-                goto unlock_reconf;
+                goto finally;
             }
         }
     }
@@ -491,7 +487,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
             pthread_mutex_unlock(&env->lock_connpool);
         }
         NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_FD);
-        goto unlock_reconf;
+        goto finally;
     }
 
     na_set_nonblock(cfd);
@@ -515,7 +511,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                 pthread_mutex_unlock(&env->lock_connpool);
             }
             NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_OUTOF_MEMORY);
-            goto unlock_reconf;
+            goto finally;
         }
         memset(client, 0, sizeof(*client));
         client->crbuf = (char *)malloc(env->request_bufsize + 1);
@@ -534,7 +530,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
                 pthread_mutex_unlock(&env->lock_connpool);
             }
             NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_OUTOF_MEMORY);
-            goto unlock_reconf;
+            goto finally;
         }
     }
 
@@ -589,10 +585,7 @@ void na_front_server_callback (EV_P_ struct ev_io *w, int revents)
         ev_io_start(EV_A_ &client->c_watcher);
     }
 
-unlock_reconf:
-
-    pthread_rwlock_unlock(&LockReconf);
-
+finally:
     pthread_mutex_lock(&env->lock_current_conn);
     if (GracefulPhase == NA_GRACEFUL_PHASE_ENABLED) {
         ev_io_set(&env->fs_watcher, fsfd, EV_NONE);

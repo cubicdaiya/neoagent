@@ -38,9 +38,6 @@ extern na_graceful_phase_t GracefulPhase; // for worker prcess
 extern time_t StartTimestamp;
 extern pid_t MasterPid;
 
-// globals
-pthread_rwlock_t LockReconf;
-
 static void na_version(void);
 static void na_usage(void);
 static void na_setup_signals (void);
@@ -237,9 +234,7 @@ int main (int argc, char *argv[])
                 conf_obj         = na_get_conf(conf_file);
                 environments_obj = na_get_environments(conf_obj, &env_cnt);
 
-                pthread_rwlock_wrlock(&LockReconf);
                 na_conf_env_init(environments_obj, &env, pidx - 1, true);
-                pthread_rwlock_unlock(&LockReconf);
 
                 json_object_put(conf_obj);
                 break;

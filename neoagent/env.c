@@ -22,9 +22,6 @@ static const int  NA_ACCESS_MASK_DEFAULT      = 0664;
 static const int  NA_BUFSIZE_DEFAULT          = 65536;
 static const int  NA_WORKER_MAX_DEFAULT       = 1;
 
-// refs to external globals
-extern pthread_rwlock_t LockReconf;
-
 void na_ctl_env_setup_default(na_ctl_env_t *ctl_env)
 {
     char *binpath = "/usr/bin/neoagent";
@@ -74,7 +71,6 @@ void na_env_init(na_env_t *env)
     pthread_mutex_init(&env->lock_tid,          NULL);
     pthread_mutex_init(&env->lock_loop,         NULL);
     pthread_rwlock_init(&env->lock_refused, NULL);
-    pthread_rwlock_init(&LockReconf,        NULL);
     env->lock_worker_busy = calloc(sizeof(pthread_rwlock_t), env->worker_max);
     for (int j=0;j<env->worker_max;++j) {
         pthread_rwlock_init(&env->lock_worker_busy[j], NULL);

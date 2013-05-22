@@ -16,9 +16,6 @@
 static const char *na_hc_test_key = "neoagent_test_key";
 static const char *na_hc_test_val = "neoagent_test_val";
 
-// refs to external globals
-extern pthread_rwlock_t LockReconf;
-
 static void na_hc_event_set(EV_P_ ev_timer * w, int revents);
 static bool na_hc_test_request(int tsfd);
 
@@ -104,14 +101,12 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
 
     env    = (na_env_t *)w->data;
 
-    pthread_rwlock_rdlock(&LockReconf);
-
     tsfd = na_target_server_tcpsock_init();
 
     if (tsfd <= 0) {
         na_hc_event_set(EV_A_ w, revents);
         NA_ERROR_OUTPUT_MESSAGE(env, NA_ERROR_INVALID_FD);
-        goto unlock_reconf;
+        return;
     }
 
     na_target_server_hcsock_setup(tsfd);
@@ -169,6 +164,4 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
     close(tsfd);
 
     na_hc_event_set(EV_A_ w, revents);
-unlock_reconf:
-    pthread_rwlock_unlock(&LockReconf);
 }
