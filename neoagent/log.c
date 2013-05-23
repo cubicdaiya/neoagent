@@ -12,10 +12,6 @@
 
 void na_log_open(na_env_t *env)
 {
-    // close and reopen log file, to permit rotation
-    if (env->log_fp) {
-        fclose(env->log_fp);
-    }
     env->log_fp = fopen(env->logpath, "a");
 
     if (!env->log_fp) {
@@ -27,10 +23,6 @@ void na_log_open(na_env_t *env)
 
 void na_ctl_log_open(na_ctl_env_t *env)
 {
-    // close and reopen log file, to permit rotation
-    if (env->log_fp) {
-        fclose(env->log_fp);
-    }
     env->log_fp = fopen(env->logpath, "a");
 
     if (!env->log_fp) {
