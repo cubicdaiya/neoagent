@@ -299,8 +299,7 @@ int main (int argc, char *argv[])
                     pthread_create(&event_th, NULL, na_event_loop, &env);
                     json_object_put(conf_obj);
                 } else { // master
-                    char *envname;
-                    envname = na_conf_get_environment_name(environments_obj, env_cnt - 1);
+                    char *envname = na_conf_get_environment_name(environments_obj, env_cnt - 1);
                     pids[env_cnt - 1] = pid;
                     fnv_put(tbl_env, envname, &pids[env_cnt - 1], strlen(envname), sizeof(pid_t));
                 }

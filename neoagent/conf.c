@@ -283,7 +283,7 @@ char *na_conf_get_environment_name(struct json_object *environments_obj, int idx
 
     environment_obj = json_object_array_get_idx(environments_obj, idx);
     param_obj       = json_object_object_get(environment_obj, "name");
-    return json_object_get_string(param_obj);
+    return (char *)json_object_get_string(param_obj);
 }
 
 void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, int idx)
