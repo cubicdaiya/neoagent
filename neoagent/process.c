@@ -53,5 +53,5 @@ void na_on_the_fly_update(na_ctl_env_t *env_ctl, char *conf_file, pid_t *pids, i
     } else if (pid == 0) { // child
         execl(env_ctl->binpath, env_ctl->binpath, "-f", conf_file, NULL);
     }
-    na_kill_childs(pids, env_cnt, SIGHUP);
+    na_kill_childs(pids, env_cnt, SIGUSR2);
 }
