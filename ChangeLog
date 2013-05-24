@@ -1,3 +1,17 @@
+2013-05-24 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* new function: on-the-fly-update, add-environment online
+
+	* neoctl's reload is obsolete
+
+	* make neoagent ignoring SIGALRM
+
+	* use sigwait instead of sigaction and signal handler
+
+	* fix some warnings
+
+	* 0.8.1~rc1 released
+
 2013-05-20 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* 0.8.0 released
