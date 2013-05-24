@@ -12,13 +12,17 @@ neoctl provides the following functions.
 
 - restart worker process
 - restart worker process gracefully
+- update neoagent on the fly
+- add new environment
 
 .. code-block:: sh
 
  neoctl -s /var/run/neoagent_ctl.sock -c restart  -n envname # restart worker process
  neoctl -s /var/run/neoagent_ctl.sock -c graceful -n envname # restart worker process gracefully
+ neoctl -s /var/run/neoagent_ctl.sock -c update              # update neoagent on-the-fly
+ neoctl -s /var/run/neoagent_ctl.sock -c add                 # add new environment online
 
-Graceful-restart of neoagent works only when worker process binds an unix domain socket.
+Graceful-restart and Update of neoagent works only when worker process binds an unix domain socket.
 
 ==================
 neostat
