@@ -133,7 +133,7 @@ typedef struct na_ctl_env_t {
     mode_t     log_access_mask;
     fnv_tbl_t *tbl_env;
     ev_io      watcher;
-    char*      restart_envname;
+    char       restart_envname[NA_NAME_MAX + 1];
     pthread_mutex_t lock_restart;
 } na_ctl_env_t;
 

@@ -106,7 +106,7 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
 
     switch (na_ctl_cmd(cmd)) {
     case NA_CTL_CMD_RESTART:
-        env_ctl->restart_envname = envname;
+        strcpy(env_ctl->restart_envname, envname);
         kill(getpid(), SIGCONT);
         kill(pid, SIGTERM);
         break;
@@ -114,7 +114,7 @@ static bool na_ctl_cmd_execute(na_ctl_env_t *env_ctl, char *cmd, char *envname)
         kill(pid, SIGUSR1);
         break;
     case NA_CTL_CMD_GRACEFUL:
-        env_ctl->restart_envname = envname;
+        strcpy(env_ctl->restart_envname, envname);
         kill(getpid(), SIGCONT);
         kill(pid, SIGUSR2);
         break;

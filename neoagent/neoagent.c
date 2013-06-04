@@ -158,7 +158,6 @@ int main (int argc, char *argv[])
         ctl_obj = na_get_ctl(conf_obj);
         na_conf_ctl_init(ctl_obj, &env_ctl);
         env_ctl.tbl_env = tbl_env;
-        env_ctl.restart_envname = NULL;
         pthread_mutex_init(&env_ctl.lock_restart, NULL);
         pthread_create(&ctl_th, NULL, na_ctl_loop, &env_ctl);
         goto MASTER_CYCLE;
@@ -234,7 +233,7 @@ int main (int argc, char *argv[])
             na_process_shutdown(pids, env_cnt);
             goto exit;
         case SIGCONT:
-            if (env_ctl.restart_envname != NULL) {
+            if (strlen(env_ctl.restart_envname) > 0) {
                 pid_t pid = fork();
                 void *th_ret;
                 int ridx;
@@ -265,7 +264,7 @@ int main (int argc, char *argv[])
                     waitpid(pids[ridx], &status, 0);
                     pids[ridx] = pid;
                 }
-                env_ctl.restart_envname = NULL;
+                env_ctl.restart_envname[0] = '\0';
             }
             break;
         case SIGWINCH:
