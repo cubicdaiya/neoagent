@@ -1,3 +1,9 @@
+2013-06-07 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix bug(access to already possible freed memory region when graceful-restarting)
+
+	* 0.8.2 released
+
 2013-05-30 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* 0.8.1 released
