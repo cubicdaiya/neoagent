@@ -31,6 +31,7 @@ void na_setup_ignore_signals (void)
 void na_setup_signals_for_master(sigset_t *ss)
 {
     na_setup_signals_common(ss);
+    sigaddset(ss, SIGCHLD);
     sigaddset(ss, SIGCONT);
     sigaddset(ss, SIGWINCH);
     sigaddset(ss, SIGUSR1);

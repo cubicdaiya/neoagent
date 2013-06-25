@@ -307,6 +307,44 @@ int main (int argc, char *argv[])
         case SIGUSR1:
             na_on_the_fly_update(&env_ctl, conf_file, pids, env_cnt);
             goto exit;
+        case SIGCHLD:
+            {
+                int status;
+                pid_t pid = wait(&status);
+                int idx = -1;
+                if (status == 0) {
+                    continue;
+                }
+                for (int i=0;i<env_cnt;i++) {
+                    if (pid == pids[i]) {
+                        idx = i;
+                        break;
+                    }
+                }
+                if (idx == -1) {
+                    NA_CTL_DIE_WITH_ERROR(&env_ctl, NA_ERROR_UNKNOWN);
+                }
+                pid = fork();
+                conf_obj         = na_get_conf(conf_file);
+                environments_obj = na_get_environments(conf_obj, &env_cnt);
+                if (pid == -1) {
+                    NA_CTL_DIE_WITH_ERROR(&env_ctl, NA_ERROR_FAILED_CREATE_PROCESS);
+                } else if (pid == 0) {
+                    na_setup_signals_for_worker(&ss);
+                    na_memproto_bm_skip_init();
+                    memset(&env, 0, sizeof(env));
+                    na_env_setup_default(&env, idx);
+                    na_conf_env_init(environments_obj, &env, idx);
+                    argv[0][strlen(argv[0]) - (sizeof(": master") - 1)] = '\0';
+                    na_set_env_proc_name(argv[0], env.name);
+                    na_env_init(&env);
+                    pthread_create(&event_th, NULL, na_event_loop, &env);
+                    json_object_put(conf_obj);
+                } else {
+                    pids[idx] = pid;
+                }
+            }
+            break;
         default:
             assert(false);
             break;
