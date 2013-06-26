@@ -1,3 +1,11 @@
+neoagent (0.8.3-1) UNRELEASED; urgency=low
+
+  * add feature(worker watcher with SIGCHLD)
+
+  * 0.8.3 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 26 Jun 2013 17:43:43 +0900
+
 neoagent (0.8.2-1) UNRELEASED; urgency=low
 
   * fix bug(access to already possible freed memory region when graceful-restarting)

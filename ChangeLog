@@ -1,3 +1,9 @@
+2013-06-26 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* add feature(worker watcher with SIGCHLD)
+
+	* 0.8.3 released
+
 2013-06-07 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* fix bug(access to already possible freed memory region when graceful-restarting)
