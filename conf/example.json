@@ -22,7 +22,6 @@
             "worker_max"           : 4,
             "conn_max"             : 1000,
             "connpool_max"         : 20,
-            "connpool_use_max"     : 10000,
             "client_pool_max"      : 100,
             "request_bufsize"      : 1024,
             "response_bufsize"     : 1024,

@@ -29,7 +29,6 @@ Sample configuration
              "worker_max":4
              "conn_max":1000,
              "connpool_max": 30,
-             "connpool_use_max": 10000,
              "client_pool_max": 30,
              "request_bufsize":65536,
              "response_bufsize":65536,
@@ -104,10 +103,6 @@ neoagent creates worker processes coresponding to each environment.
 **connpool_max**
 
  connection pool size
-
-**connpool_use_max**
-
- if a connection in connection pool is over this number, neoagent reconnect target server
 
 **client_pool_max**
 

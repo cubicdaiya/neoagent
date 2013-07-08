@@ -118,7 +118,6 @@ typedef struct na_server_t {
 typedef struct na_connpool_t {
     int *fd_pool;
     int *mark;
-    int *used_cnt;
     int *active;
     int max;
 } na_connpool_t;
@@ -169,7 +168,6 @@ typedef struct na_env_t {
     int worker_max;
     int conn_max;
     int connpool_max;
-    int connpool_use_max;
     int client_pool_max;
     int loop_max;
     struct timespec slow_query_sec;
