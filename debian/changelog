@@ -1,3 +1,11 @@
+neoagent (0.8.4-1) UNRELEASED; urgency=low
+
+  * connpool_use_max is deprecated
+
+  * 0.8.4 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 22 Jul 2013 11:50:14 +0900
+
 neoagent (0.8.3-1) UNRELEASED; urgency=low
 
   * add feature(worker watcher with SIGCHLD)
