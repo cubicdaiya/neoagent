@@ -20,7 +20,8 @@ A Yet Another Memcached Protocol Proxy Server written by C with C99 style.
     scons 
     scons install
 
-[SCons](http://www.scons.org/) is a powerful and flexible build tool.
+[SCons](http://www.scons.org/) is a powerful and flexible build tool. In some environments, it requires 'pkg-config' also.
+
 
 ## Generating Documents
 

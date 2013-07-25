@@ -13,6 +13,12 @@ If OS is Debian Squeeze, you may install them with following command.
 
  sudo aptitude install libev-dev libjson0-dev scons
 
+In some environments, neoagent requires 'pkg-config' also.
+
+.. code-block:: sh
+
+ sudo aptitude install pkg-config
+
 ====================================
 Building Neoagent
 ====================================
