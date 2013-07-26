@@ -170,6 +170,7 @@ typedef struct na_env_t {
     int connpool_max;
     int client_pool_max;
     int loop_max;
+    int try_max;
     struct timespec slow_query_sec;
     char logpath[NA_PATH_MAX + 1];
     FILE *log_fp;

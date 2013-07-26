@@ -17,7 +17,7 @@ static const char *na_hc_test_key = "neoagent_test_key";
 static const char *na_hc_test_val = "neoagent_test_val";
 
 static void na_hc_event_set(EV_P_ ev_timer * w, int revents);
-static bool na_hc_test_request(int tsfd);
+static bool na_hc_test_request(int tsfd, int try_max);
 
 static void na_hc_event_set(EV_P_ ev_timer * w, int revents)
 {
@@ -47,9 +47,9 @@ static bool is_success_command(int tsfd, char *command, const char *expected)
     return true;
 }
 
-static bool na_hc_test_request(int tsfd)
+static bool na_hc_test_request(int tsfd, int try_max)
 {
-    int  cnt_fail, try_max;
+    int  cnt_fail;
     char hostname[BUFSIZ];
 
     char scmd[BUFSIZ]; // set
@@ -60,7 +60,6 @@ static bool na_hc_test_request(int tsfd)
     useconds_t rt;
 
     cnt_fail = 0;
-    try_max  = 3;
     gethostname(hostname, BUFSIZ);
     snprintf(scmd, BUFSIZ, "set %s_%s 0 0 %ld\r\n%s_%s\r\n", na_hc_test_key, hostname, strlen(na_hc_test_val) + 1 + strlen(hostname), na_hc_test_val, hostname);
     snprintf(gcmd, BUFSIZ, "get %s_%s\r\n", na_hc_test_key, hostname);
@@ -130,7 +129,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
             }
         }
     } else {
-        if (env->is_refused_active && na_hc_test_request(tsfd)) {
+        if (env->is_refused_active && na_hc_test_request(tsfd, env->try_max)) {
             pthread_rwlock_wrlock(&env->lock_refused);
             env->is_refused_accept = true;
             env->is_refused_active = false;
@@ -144,7 +143,7 @@ void na_hc_callback (EV_P_ ev_timer *w, int revents)
             pthread_rwlock_unlock(&env->lock_refused);
             NA_ERROR_OUTPUT(env, "switch target server");
         } else {
-            if (!env->is_refused_active && !na_hc_test_request(tsfd)) {
+            if (!env->is_refused_active && !na_hc_test_request(tsfd, env->try_max)) {
                 pthread_rwlock_wrlock(&env->lock_refused);
                 env->is_refused_accept = true;
                 env->is_refused_active = true;

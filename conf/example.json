@@ -26,6 +26,7 @@
             "request_bufsize"      : 1024,
             "response_bufsize"     : 1024,
             "slow_query_sec"       : 0.0,
+            "try_max"              : 3,
         },
     ],
 }

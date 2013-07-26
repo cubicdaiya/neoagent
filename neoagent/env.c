@@ -20,6 +20,7 @@ static const int  NA_CLIENT_POOL_MAX_DEFAULT  = 20;
 static const int  NA_ACCESS_MASK_DEFAULT      = 0664;
 static const int  NA_BUFSIZE_DEFAULT          = 65536;
 static const int  NA_WORKER_MAX_DEFAULT       = 1;
+static const int  NA_TRY_MAX_DEFAULT          = 3;
 
 void na_ctl_env_setup_default(na_ctl_env_t *ctl_env)
 {
@@ -43,6 +44,7 @@ void na_env_setup_default(na_env_t *env, int idx)
     env->conn_max                = NA_CONN_MAX_DEFAULT;
     env->connpool_max            = NA_CONNPOOL_MAX_DEFAULT;
     env->client_pool_max         = NA_CLIENT_POOL_MAX_DEFAULT;
+    env->try_max                 = NA_TRY_MAX_DEFAULT;
     env->is_use_backup           = false;
     env->request_bufsize         = NA_BUFSIZE_DEFAULT;
     env->response_bufsize        = NA_BUFSIZE_DEFAULT;

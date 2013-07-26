@@ -46,6 +46,7 @@ typedef enum na_param_t {
     NA_PARAM_SLOW_QUERY_LOG_PATH,
     NA_PARAM_SLOW_QUERY_LOG_FORMAT,
     NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK,
+    NA_PARAM_TRY_MAX,
     NA_PARAM_MAX // Always add new codes to the end before this one
 } na_param_t;
 
@@ -87,7 +88,8 @@ const char *na_params[NA_PARAM_MAX]     = {
     [NA_PARAM_SLOW_QUERY_SEC]           = "slow_query_sec",
     [NA_PARAM_SLOW_QUERY_LOG_PATH]      = "slow_query_log_path",
     [NA_PARAM_SLOW_QUERY_LOG_FORMAT]    = "slow_query_log_format",
-    [NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK] = "slow_query_log_access_mask"
+    [NA_PARAM_SLOW_QUERY_LOG_ACCESS_MASK] = "slow_query_log_access_mask",
+    [NA_PARAM_TRY_MAX]                  = "try_max"
 };
 
 static const char *na_event_models[NA_EVENT_MODEL_MAX] = {
@@ -414,6 +416,10 @@ void na_conf_env_init(struct json_object *environments_obj, na_env_t *na_env, in
             if (na_env->slow_query_log_format == NA_LOG_FORMAT_UNKNOWN) {
                 NA_DIE_WITH_ERROR(na_env, NA_ERROR_INVALID_JSON_CONFIG);
             }
+            break;
+        case NA_PARAM_TRY_MAX:
+            NA_PARAM_TYPE_CHECK(param_obj, json_type_int);
+            na_env->try_max = json_object_get_int(param_obj);
             break;
         default:
             // no through
