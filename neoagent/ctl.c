@@ -23,7 +23,7 @@ typedef enum na_ctl_cmd_t {
     NA_CTL_CMD_UPDATE,
     NA_CTL_CMD_ADD,
     NA_CTL_CMD_MAX
-} na_ctl_cmd_t; 
+} na_ctl_cmd_t;
 
 const char *na_ctl_cmds[NA_CTL_CMD_MAX] = {
     [NA_CTL_CMD_RESTART]  = "restart",
@@ -192,7 +192,7 @@ void *na_ctl_loop (void *args)
     na_ctl_env_t   *env;
 
     env = (na_ctl_env_t *)args;
-    
+
     if (strlen(env->sockpath) > 0) {
         env->fd = na_stat_server_unixsock_init(env->sockpath, env->access_mask);
     } else {
