@@ -84,15 +84,15 @@ void na_slow_query_check(na_client_t *client)
 
                 snprintf(querybuf, bufsz, "%s", client->crbuf);
                 json = json_object_new_object();
-                json_object_object_add(json, "time",         json_object_new_int(now));
-                json_object_object_add(json, "type",         json_object_new_string(env->name));
-                json_object_object_add(json, "host",         json_object_new_string(host));
-                json_object_object_add(json, "clientaddr",   json_object_new_string(clientaddr));
-                json_object_object_add(json, "clientport",   json_object_new_int(clientport));
-                json_object_object_add(json, "na_to_ts",     json_object_new_double(na_to_ts));
-                json_object_object_add(json, "na_from_ts",   json_object_new_double(na_from_ts));
-                json_object_object_add(json, "na_to_client", json_object_new_double(na_to_client));
-                json_object_object_add(json, "querytxt",     json_object_new_string(querybuf));
+                json_object_object_add(json, "time",             json_object_new_int(now));
+                json_object_object_add(json, "type",             json_object_new_string(env->name));
+                json_object_object_add(json, "host",             json_object_new_string(host));
+                json_object_object_add(json, "clientaddr",       json_object_new_string(clientaddr));
+                json_object_object_add(json, "clientport",       json_object_new_int(clientport));
+                json_object_object_add(json, "na_to_ts",         json_object_new_double(na_to_ts));
+                json_object_object_add(json, "na_from_ts",       json_object_new_double(na_from_ts));
+                json_object_object_add(json, "na_to_client",     json_object_new_double(na_to_client));
+                json_object_object_add(json, "querytxt",         json_object_new_string(querybuf));
                 json_object_object_add(json, "request_bufsize",  json_object_new_int(client->crbufsize));
                 json_object_object_add(json, "response_bufsize", json_object_new_int(client->cwbufsize));
 
