@@ -46,8 +46,7 @@ void na_slow_query_gettime(na_env_t *env, struct timespec *time)
 void na_slow_query_check(na_client_t *client)
 {
     na_env_t *env = client->env;
-    struct timespec na_to_ts_time, na_from_ts_time, na_to_client_time,
-      total_query_time;
+    struct timespec na_to_ts_time, na_from_ts_time, na_to_client_time, total_query_time;
 
     na_difftime(&na_to_ts_time, &client->na_to_ts_time_begin,
                 &client->na_to_ts_time_end);
