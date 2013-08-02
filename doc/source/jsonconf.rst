@@ -36,6 +36,7 @@ Sample configuration
              "slow_query_log_path":"/var/log/neoagent_slow.log",
              "slow_query_log_format":"json"
              "slow_query_log_access_mask":"0666",
+             "try_max":3,
          }
      ]
  }
@@ -131,3 +132,7 @@ neoagent creates worker processes coresponding to each environment.
 **slow_query_log_access_mask**
 
  access mask for slow query log file
+
+**try_max**
+
+ number of trials in health checking
