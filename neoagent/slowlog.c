@@ -93,13 +93,19 @@ void na_slow_query_check(na_client_t *client)
                 json_object_object_add(json, "na_from_ts",   json_object_new_double(na_from_ts));
                 json_object_object_add(json, "na_to_client", json_object_new_double(na_to_client));
                 json_object_object_add(json, "querytxt",     json_object_new_string(querybuf));
+                json_object_object_add(json, "request_bufsize",  json_object_new_int(client->crbufsize));
+                json_object_object_add(json, "response_bufsize", json_object_new_int(client->cwbufsize));
 
                 fprintf(env->slow_query_fp, "%s\n", json_object_to_json_string(json));
                 json_object_put(json);
             } else { // plain text format
                 fprintf(env->slow_query_fp,
-                        "SLOWQUERY: time %lu type %s host %s client %s:%hu na->ts %g na<-ts %g na->c %g querytxt \"%.128s\"\n",
-                        now, env->name, host, clientaddr, clientport, na_to_ts, na_from_ts, na_to_client, client->crbuf);
+                        "SLOWQUERY: time %lu type %s host %s client %s:%hu "
+                        "na->ts %g na<-ts %g na->c %g querytxt \"%.128s\" "
+                        "request_bufsize %d, response_bufsize %d\n",
+                        now, env->name, host, clientaddr, clientport, 
+                        na_to_ts, na_from_ts, na_to_client, client->crbuf, 
+                        client->crbufsize, client->cwbufsize);
             }
         }
     }
