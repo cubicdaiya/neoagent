@@ -32,17 +32,17 @@ void na_elapsed_time(time_t time, char *buf, size_t bufsize)
 void na_difftime(struct timespec *ret, struct timespec *start, struct timespec *end)
 {
     if ((end->tv_nsec - start->tv_nsec) < 0) {
-        ret->tv_sec = end->tv_sec - start->tv_sec - 1;
+        ret->tv_sec  = end->tv_sec - start->tv_sec - 1;
         ret->tv_nsec = 1000000000L + end->tv_nsec - start->tv_nsec;
     } else {
-        ret->tv_sec = end->tv_sec - start->tv_sec;
+        ret->tv_sec  = end->tv_sec - start->tv_sec;
         ret->tv_nsec = end->tv_nsec - start->tv_nsec;
     }
 }
 
 void na_addtime(struct timespec *ret, struct timespec *t1, struct timespec *t2)
 {
-    ret->tv_sec = t1->tv_sec + t2->tv_sec;
+    ret->tv_sec  = t1->tv_sec + t2->tv_sec;
     ret->tv_nsec = t1->tv_nsec + t2->tv_nsec;
 
     if (ret->tv_nsec >= 1000000000L) {
