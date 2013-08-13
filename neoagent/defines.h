@@ -142,6 +142,7 @@ typedef struct na_env_t {
     uint16_t fsport;
     int stfd;
     uint16_t stport;
+    int tsfd;
     char fssockpath[NA_PATH_MAX + 1];
     char stsockpath[NA_PATH_MAX + 1];
     mode_t access_mask;

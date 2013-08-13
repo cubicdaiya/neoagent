@@ -108,6 +108,7 @@ void na_target_server_tcpsock_setup (int tsfd, bool is_keepalive)
 
 void na_target_server_hcsock_setup (int tsfd)
 {
+    na_set_sockopt(tsfd, SO_KEEPALIVE);
     na_set_sockopt(tsfd, SO_REUSEADDR);
     na_set_sockopt(tsfd, SO_LINGER);
 }

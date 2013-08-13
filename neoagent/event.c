@@ -707,6 +707,15 @@ void *na_event_loop (void *args)
         NA_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
     }
 
+    env->tsfd = na_target_server_tcpsock_init();
+    if (env->tsfd < 0) {
+        NA_DIE_WITH_ERROR(env, NA_ERROR_INVALID_FD);
+    }
+    if (!na_server_connect(env->tsfd, &env->target_server.addr)) {
+        NA_DIE_WITH_ERROR(env, NA_ERROR_CONNECTION_FAILED);
+    }
+    na_target_server_hcsock_setup(env->tsfd);
+
     na_connpool_init(env);
 
     ClientPool = calloc(sizeof(na_client_t), env->client_pool_max);
