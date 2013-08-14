@@ -13,6 +13,7 @@ A Yet Another Memcached Protocol Proxy Server written by C with C99 style.
 
   - [libev](http://software.schmorp.de/pkg/libev.html)
   - [json-c](http://oss.metaparadigm.com/json-c/)
+  - pkg-config
 
 ## Build
 
