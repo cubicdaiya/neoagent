@@ -10,6 +10,6 @@
 #define NA_VERSION_H
 
 #define NA_NAME    "neoagent"
-#define NA_VERSION "0.8.4"
+#define NA_VERSION "0.8.5"
 
 #endif // NA_VERSION_H

@@ -1,3 +1,15 @@
+neoagent (0.8.5-1) UNRELEASED; urgency=low
+
+  * make the socket of health check persistent
+
+  * add 'request_bufsize' and 'response_bufsize' to log
+
+  * add parameter 'try_max'
+
+  * 0.8.5 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Thu, 15 Aug 2013 11:38:29 +0900
+
 neoagent (0.8.4-1) UNRELEASED; urgency=low
 
   * connpool_use_max is deprecated
