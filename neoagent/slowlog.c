@@ -34,6 +34,24 @@ static int clock_gettime(int dummy, struct timespec *ts)
 } 
 #endif
 
+static void na_copy_querytxt(char *dst, char *src, size_t size, size_t reqsize, na_memproto_cmd_t cmd);
+static void na_copy_querytxt(char *dst, char *src, size_t size, size_t reqsize, na_memproto_cmd_t cmd)
+{
+    if (cmd == NA_MEMPROTO_CMD_SET) {
+        char *p;
+        p = src + sizeof("set ") - 1;
+        p = strstr(p, " ");
+        if (p == NULL) {
+            snprintf(dst, reqsize, "%s", src);
+        } else {
+            size_t l = p - src + 1;
+            snprintf(dst, l, "%s", src);
+        }
+    }  else {
+        snprintf(dst, size, "%s", src);
+    }
+}
+
 void na_slow_query_gettime(na_env_t *env, struct timespec *time)
 {
     if ((env->slow_query_sec.tv_sec != 0) ||
@@ -59,7 +77,8 @@ void na_slow_query_check(na_client_t *client)
 
     if ((env->slow_query_sec.tv_sec < total_query_time.tv_sec) ||
         ((env->slow_query_sec.tv_sec == total_query_time.tv_sec) &&
-         (env->slow_query_sec.tv_nsec < total_query_time.tv_nsec))) {
+         (env->slow_query_sec.tv_nsec < total_query_time.tv_nsec)))
+    {
         struct sockaddr_in caddr;
         memset(&caddr, 0, sizeof(caddr));
         socklen_t clen = sizeof(caddr);
@@ -82,7 +101,7 @@ void na_slow_query_check(na_client_t *client)
                 const size_t bufsz = 128;
                 char querybuf[bufsz];
 
-                snprintf(querybuf, bufsz, "%s", client->crbuf);
+                na_copy_querytxt(querybuf, client->crbuf, bufsz, client->crbufsize, client->cmd);
                 json = json_object_new_object();
                 json_object_object_add(json, "time",             json_object_new_int(now));
                 json_object_object_add(json, "type",             json_object_new_string(env->name));
