@@ -41,6 +41,9 @@ Sample configuration
      ]
  }
 
+Parameters
+==========
+
 ctl
 ---
 

@@ -25,6 +25,8 @@ Index
    
    install
    run
-   neoagent
    jsonconf
    utility
+   neoagent
+   neoctl
+   neostat

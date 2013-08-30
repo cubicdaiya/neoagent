@@ -1,5 +1,5 @@
-Utility
-====================
+Controlling and Monitoring
+==========================
 
 .. _neoctl:
 
