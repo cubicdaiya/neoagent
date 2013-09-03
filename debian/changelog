@@ -1,3 +1,9 @@
+neoagent (0.8.6-1) UNRELEASED; urgency=low
+
+  * remove request body of set request in slowlog(Some request could includes invalid UTF-8 sequence.)
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 02 Sep 2013 11:48:13 +0900
+
 neoagent (0.8.5-1) UNRELEASED; urgency=low
 
   * make the socket of health check persistent

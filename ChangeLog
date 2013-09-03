@@ -1,3 +1,9 @@
+2013-09-03 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* remove request body of set request in slowlog(Some request could includes invalid UTF-8 sequence.)
+
+	* 0.8.6 released
+
 2013-08-15 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* make the socket of health check persistent
