@@ -228,7 +228,7 @@ void na_connpool_destroy (na_connpool_t *connpool);
  */
 const char *na_event_model_name (na_event_model_t model);
 const char *na_log_format_name (na_log_format_t format);
-struct json_object *na_get_conf(const char *conf_file_json);
+struct json_object *na_get_conf (na_ctl_env_t *ctl_env, const char *conf_file_json);
 struct json_object *na_get_ctl(struct json_object *conf_obj);
 struct json_object *na_get_environments(struct json_object *conf_obj, int *env_cnt);
 void na_conf_ctl_init(struct json_object *ctl_obj, na_ctl_env_t *na_ctl_env);

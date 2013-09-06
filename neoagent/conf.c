@@ -158,7 +158,7 @@ const char *na_log_format_name (na_log_format_t format)
     return na_log_formats[format];
 }
 
-struct json_object *na_get_conf (const char *conf_file_json)
+struct json_object *na_get_conf (na_ctl_env_t *ctl_env, const char *conf_file_json)
 {
     struct json_object *conf_obj;
 
@@ -166,17 +166,17 @@ struct json_object *na_get_conf (const char *conf_file_json)
     int json_fd, size;
 
     if ((json_fd = open(conf_file_json, O_RDONLY)) < 0) {
-        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_CONFPATH);
+        NA_CTL_DIE_WITH_ERROR(ctl_env, NA_ERROR_INVALID_CONFPATH);
     }
 
     memset(json_buf, 0, NA_JSON_BUF_MAX + 1);
     if ((size = read(json_fd, json_buf, NA_JSON_BUF_MAX)) < 0) {
-        NA_DIE_WITH_ERROR(NULL, NA_ERROR_INVALID_CONFPATH);
+        NA_CTL_DIE_WITH_ERROR(ctl_env, NA_ERROR_INVALID_CONFPATH);
     }
 
     conf_obj = json_tokener_parse(json_buf);
     if (is_error(conf_obj)) {
-        NA_DIE_WITH_ERROR(NULL, NA_ERROR_PARSE_JSON_CONFIG);
+        NA_CTL_DIE_WITH_ERROR(ctl_env, NA_ERROR_PARSE_JSON_CONFIG);
     }
 
     close(json_fd);

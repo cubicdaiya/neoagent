@@ -95,11 +95,11 @@ int main (int argc, char *argv[])
             break;
         case 'f':
             strncpy(conf_file, optarg, NA_PATH_MAX + 1);
-            conf_obj         = na_get_conf(optarg);
+            conf_obj         = na_get_conf(NULL, optarg);
             environments_obj = na_get_environments(conf_obj, &env_cnt);
             break;
         case 't':
-            conf_obj         = na_get_conf(optarg);
+            conf_obj         = na_get_conf(NULL, optarg);
             environments_obj = na_get_environments(conf_obj, &env_cnt);
             printf("JSON configuration is OK\n");
             return 0;
@@ -237,7 +237,7 @@ int main (int argc, char *argv[])
                 pid_t pid = fork();
                 void *th_ret;
                 int ridx;
-                conf_obj         = na_get_conf(conf_file);
+                conf_obj         = na_get_conf(&env_ctl, conf_file);
                 environments_obj = na_get_environments(conf_obj, &env_cnt);
                 ridx             = na_conf_get_environment_idx(environments_obj, env_ctl.restart_envname);
                 if (pid == -1) {
@@ -275,7 +275,7 @@ int main (int argc, char *argv[])
             int env_cnt_prev;
             int status;
             env_cnt_prev = env_cnt;
-            conf_obj         = na_get_conf(conf_file);
+            conf_obj         = na_get_conf(&env_ctl, conf_file);
             environments_obj = na_get_environments(conf_obj, &env_cnt);
             if (env_cnt_prev != env_cnt - 1) {
                 if (pid == 0) {
@@ -325,7 +325,7 @@ int main (int argc, char *argv[])
                     NA_CTL_DIE_WITH_ERROR(&env_ctl, NA_ERROR_UNKNOWN);
                 }
                 pid = fork();
-                conf_obj         = na_get_conf(conf_file);
+                conf_obj         = na_get_conf(&env_ctl, conf_file);
                 environments_obj = na_get_environments(conf_obj, &env_cnt);
                 if (pid == -1) {
                     NA_CTL_DIE_WITH_ERROR(&env_ctl, NA_ERROR_FAILED_CREATE_PROCESS);
