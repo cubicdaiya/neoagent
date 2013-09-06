@@ -261,7 +261,7 @@ int main (int argc, char *argv[])
                     json_object_put(conf_obj);
                 } else { // master
                     int status;
-                    waitpid(pids[ridx], &status, 0);
+                    waitpid(pids[ridx], &status, WNOHANG);
                     pids[ridx] = pid;
                 }
                 env_ctl.restart_envname[0] = '\0';
