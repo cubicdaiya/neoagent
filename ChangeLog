@@ -1,3 +1,9 @@
+2013-09-09 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* fix bug(single graceful restart sometimes fails)
+
+	* 0.8.7 released
+
 2013-09-03 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* remove request body of set request in slowlog(Some request could includes invalid UTF-8 sequence.)

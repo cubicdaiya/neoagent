@@ -1,3 +1,11 @@
+neoagent (0.8.7-1) UNRELEASED; urgency=low
+
+  * fix bug(single graceful restart sometimes fails)
+
+  * 0.8.7 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Mon, 09 Sep 2013 11:29:33 +0900
+
 neoagent (0.8.6-1) UNRELEASED; urgency=low
 
   * remove request body of set request in slowlog(Some request could includes invalid UTF-8 sequence.)
