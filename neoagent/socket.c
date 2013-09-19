@@ -108,9 +108,17 @@ void na_target_server_tcpsock_setup (int tsfd, bool is_keepalive)
 
 void na_target_server_hcsock_setup (int tsfd)
 {
+    struct timeval tv_recv, tv_send;
     na_set_sockopt(tsfd, SO_KEEPALIVE);
     na_set_sockopt(tsfd, SO_REUSEADDR);
     na_set_sockopt(tsfd, SO_LINGER);
+
+    tv_recv.tv_sec  = 4;
+    tv_recv.tv_usec = 0;
+    tv_send.tv_sec  = 4;
+    tv_send.tv_usec = 0;
+    setsockopt(tsfd, SOL_SOCKET, SO_RCVTIMEO, &tv_recv, sizeof(struct timeval));
+    setsockopt(tsfd, SOL_SOCKET, SO_SNDTIMEO, &tv_send, sizeof(struct timeval));
 }
 
 na_host_t na_create_host(char *host)
