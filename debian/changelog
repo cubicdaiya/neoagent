@@ -1,3 +1,11 @@
+neoagent (0.8.8-1) UNRELEASED; urgency=low
+
+  * set socket timeout for health-check
+
+  * 0.8.8 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Wed, 02 Oct 2013 15:02:32 +0900
+
 neoagent (0.8.7-1) UNRELEASED; urgency=low
 
   * fix bug(single graceful restart sometimes fails)
