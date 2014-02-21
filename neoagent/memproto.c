@@ -54,5 +54,70 @@ int na_memproto_count_request_get (char *buf, int bufsize)
 
 int na_memproto_count_response_get(char *buf, int bufsize)
 {
-    return na_bm_search(buf, "END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF], bufsize, 5);
+    //return na_bm_search(buf, "END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF], bufsize, 5);
+    //VALUE key flag len
+    char *p;
+    char *tk, *sp;
+    int i;
+    char sizbuf[10];
+    int c;
+    int count = 0;
+    int j;
+
+    if (!(buf[bufsize - 5] == 'E'  &&
+          buf[bufsize - 4] == 'N'  &&
+          buf[bufsize - 3] == 'D'  &&
+          buf[bufsize - 2] == '\r' &&
+          buf[bufsize - 1] == '\n'))
+    {
+        return 0;
+    } else {
+        if (bufsize == sizeof("END\r\n") - 1) {
+            return 1;
+        }
+    }
+
+    p = buf;
+    i = 0;
+ count:
+    c = 0;
+    while (c != 3) {
+        if (*p == ' ') {
+            c++;
+        }
+        i++;
+        if (i >= bufsize) {
+            return count;
+        }
+        p++;
+    }
+
+    j = 0;
+    while (*p != '\n') {
+        sizbuf[j++] = *p++;
+        i++;
+    }
+    if (i >= bufsize) {
+        return count;
+    }
+    sizbuf[j] = '\0';
+    int size = atoi(sizbuf);
+    p += size + 3;
+    i += size + 3;
+    if (i >= bufsize) {
+        return count;
+    }
+
+    if (strncmp("END\r\n", p, sizeof("END\r\n") - 1) == 0) {
+        count++;
+        i += sizeof("END\r\n") - 1;
+        p += sizeof("END\r\n") - 1;
+        if (i >= bufsize) {
+            return count;
+        }
+        goto count;
+    } else {
+        goto count;
+    }
+    //return na_bm_search(buf, "END\r\n", na_bm_skip[NA_MEMPROTO_BM_SKIP_ENDCRLF], bufsize, 5);
 }
