@@ -1,3 +1,9 @@
+2014-02-28 Tatsuhiko Kubo <cubicdaiya@gmail.com>
+
+	* optimize counting END+CRLF in response of get
+
+	* 0.8.9 released
+
 2013-10-02 Tatsuhiko Kubo <cubicdaiya@gmail.com>
 
 	* set socket timeout for health-check

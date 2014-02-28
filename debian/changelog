@@ -1,3 +1,11 @@
+neoagent (0.8.9-1) UNRELEASED; urgency=low
+
+  * optimize counting END+CRLF in response of get
+
+  * 0.8.9 released
+
+ -- Tatsuhiko Kubo <cubicdaiya@gmail.com>  Fri, 28 Feb 2014 12:15:46 +0900
+
 neoagent (0.8.8-1) UNRELEASED; urgency=low
 
   * set socket timeout for health-check
